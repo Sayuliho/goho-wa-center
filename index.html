@@ -414,8 +414,16 @@ function showToast(msg) {
 
 async function apiGet(params) {
   const url = API + '?' + new URLSearchParams(params);
-  const r = await fetch(url, { redirect: 'follow' });
-  return r.json();
+  try {
+    const r = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    const text = await r.text();
+    return JSON.parse(text);
+  } catch(e) {
+    return {ok: false, msg: 'CORS error'};
+  }
 }
 
 async function apiPost(body) {
