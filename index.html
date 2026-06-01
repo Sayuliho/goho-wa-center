@@ -413,16 +413,15 @@ function showToast(msg) {
 }
 
 async function apiGet(params) {
-  const url = API + '?' + new URLSearchParams(params);
+  params._t = Date.now();
+  const query = new URLSearchParams(params).toString();
+  const url = '/api/proxy?' + query;
   try {
-    const r = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow'
-    });
+    const r = await fetch(url, { method: 'GET', cache: 'no-store' });
     const text = await r.text();
     return JSON.parse(text);
   } catch(e) {
-    return {ok: false, msg: 'CORS error'};
+    return {ok: false, msg: e.toString()};
   }
 }
 
