@@ -1,22 +1,39 @@
 export default async function handler(req, res) {
-  const { action, ...rest } = req.query;
-  
-  let url = `https://script.google.com/macros/s/AKfycbycdw7-ZYJaPY5J2varxb82LagiCKAlmDfkLOxCZZYEZwi5ZrpH9GLkZYFX-fg6se2t/exec`;
-  
-  const params = new URLSearchParams(req.query);
-  url = url + '?' + params.toString();
-  
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  const baseUrl = 'https://script.google.com/macros/s/AKfycbycdw7-ZYJaPY5J2varxb82LagiCKAlmDfkLOxCZZYEZwi5ZrpH9GLkZYFX-fg6se2t/exec';
+
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      headers: { 'Cache-Control': 'no-cache' }
-    });
-    const data = await response.text();
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Cache-Control', 'no-store, no-cache');
-    res.status(200).send(data);
+    if (req.method === 'GET') {
+      const params = new URLSearchParams(req.query);
+      const url = baseUrl + '?' + params.toString();
+      const response = await fetch(url, {
+        redirect: 'follow',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      const data = await response.text();
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).send(data);
+
+    } else if (req.method === 'POST') {
+      const response = await fetch(baseUrl, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+      });
+      const data = await response.text();
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).send(data);
+    }
   } catch(e) {
     res.status(500).json({ok: false, msg: e.toString()});
   }
