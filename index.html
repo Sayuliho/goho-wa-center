@@ -686,8 +686,8 @@ async function openChat(roomId) {
   renderActionRow(chat);
   await loadMessages(roomId, true);
 
-  on mobile
-  if (window.innerWidth <= 700) {
+  
+    if (window.innerWidth <= 700) {
     document.getElementById('sidebar').classList.add('hide-mobile');
     document.getElementById('chat-panel').classList.add('show-mobile');
   }
