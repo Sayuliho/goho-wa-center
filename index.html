@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOHO WA Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+:root {
+  --green-dark: #0a2e2a;
+  --green-mid: #0F6E56;
+  --green-light: #25D366;
+  --green-bg: #E1F5EE;
+  --orange: #BA7517;
+  --orange-bg: #FAEEDA;
+  --purple: #534AB7;
+  --purple-bg: #EEEDFE;
+  --red: #A32D2D;
+  --red-bg: #FCEBEB;
+  --blue: #185FA5;
+  --blue-bg: #E6F1FB;
+  --chat-bg: #ECE5DD;
+  --bubble-staff: #DCF8C6;
+  --bubble-bot: #E6F1FB;
+  --text: #111;
+  --text-muted: #666;
+  --text-hint: #999;
+  --border: rgba(0,0,0,0.1);
+  --bg: #f5f5f5;
+  --white: #fff;
+  --radius: 10px;
+  --font: 'Plus Jakarta Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
+.hidden { display: none !important; }
+
+/* LOGIN */
+#login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--green-dark);
+}
+.login-box {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 360px;
+  margin: 1rem;
+}
+.login-logo {
+  width: 48px; height: 48px;
+  background: var(--green-light);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: var(--green-dark);
+  margin: 0 auto 1rem;
+}
+.login-title { text-align: center; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.login-sub { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 1.5rem; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
+.form-group input {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px; font-size: 14px;
+  font-family: var(--font);
+  outline: none; transition: border 0.2s;
+}
+.form-group input:focus { border-color: var(--green-mid); }
+.btn-login {
+  width: 100%; padding: 11px;
+  background: var(--green-mid); color: white;
+  border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 600;
+  font-family: var(--font); cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-login:hover { background: var(--green-dark); }
+.login-error { color: var(--red); font-size: 12px; text-align: center; margin-top: 8px; }
+
+/* APP LAYOUT */
+#app { display: none; height: 100vh; flex-direction: column; }
+#app.visible { display: flex; }
+
+/* TOP NAV */
+.topnav {
+  background: var(--green-dark);
+  padding: 0 16px; height: 48px;
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+.topnav-logo {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--green-light);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--green-dark); font-size: 14px;
+}
+.topnav-title { color: white; font-size: 14px; font-weight: 600; flex: 1; }
+.topnav-staff { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.75); font-size: 12px; }
+.topnav-av {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--green-light); color: var(--green-dark);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600;
+}
+.topnav-av.owner { background: #EF9F27; color: #412402; }
+.owner-badge {
+  background: rgba(239,159,39,0.25); color: #FAC775;
+  font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500;
+}
+
+/* MAIN AREA */
+.main-area { display: flex; flex: 1; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 300px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  background: var(--white); flex-shrink: 0;
+}
+@media (max-width: 700px) {
+  .sidebar { width: 100%; }
+  .sidebar.hide-mobile { display: none; }
+  .chat-panel { display: none; }
+  .chat-panel.show-mobile { display: flex; }
+}
+.sb-search { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.sb-search input {
+  width: 100%; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 10px; font-size: 12px;
+  font-family: var(--font); outline: none;
+}
+.sb-tabs { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--border); }
+.sb-tab {
+  padding: 8px 4px; text-align: center;
+  font-size: 10px; color: var(--text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.sb-tab i { display: block; font-size: 16px; margin-bottom: 2px; }
+.sb-tab.active { color: var(--green-mid); border-bottom-color: var(--green-mid); font-weight: 600; }
+.sb-stats {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 6px; padding: 8px;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+}
+.sb-stat {
+  background: white; border-radius: 7px; padding: 6px;
+  text-align: center; border: 1px solid var(--border);
+}
+.sb-stat-n { font-size: 18px; font-weight: 600; }
+.sb-stat-l { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
+.n-orange { color: var(--orange); }
+.n-green { color: var(--green-mid); }
+.n-purple { color: var(--purple); }
+.sect-lbl {
+  padding: 7px 10px 3px; font-size: 10px; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.chat-list { overflow-y: auto; flex: 1; }
+.ci {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 10px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s;
+}
+.ci:hover { background: var(--bg); }
+.ci.active { background: var(--green-bg); }
+.av {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; flex-shrink: 0;
+}
+.av-a { background: var(--orange-bg); color: #633806; }
+.av-b { background: var(--green-bg); color: #085041; }
+.av-c { background: var(--purple-bg); color: #3C3489; }
+.av-d { background: var(--blue-bg); color: #0C447C; }
+.ci-body { flex: 1; min-width: 0; }
+.ci-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.ci-prev { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.ci-meta { display: flex; align-items: center; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.pill {
+  font-size: 9px; padding: 2px 7px;
+  border-radius: 10px; font-weight: 600; white-space: nowrap;
+}
+.p-wait { background: var(--orange-bg); color: var(--orange); }
+.p-assign { background: var(--green-bg); color: var(--green-mid); }
+.p-follow { background: var(--purple-bg); color: var(--purple); }
+.p-alert { background: var(--red-bg); color: var(--red); }
+.p-booked { background: var(--green-bg); color: #085041; }
+.p-tiket { background: var(--blue-bg); color: var(--blue); }
+.p-hotel { background: var(--purple-bg); color: var(--purple); }
+.p-tour { background: var(--green-bg); color: var(--green-mid); }
+.p-atraksi { background: var(--orange-bg); color: var(--orange); }
+.ci-time { font-size: 10px; color: var(--text-hint); margin-left: auto; flex-shrink: 0; }
+.ci-by { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.empty-state { padding: 2rem; text-align: center; color: var(--text-muted); font-size: 12px; }
+
+/* CHAT PANEL */
+.chat-panel {
+  flex: 1; display: flex; flex-direction: column;
+  background: var(--white); overflow: hidden;
+}
+.chat-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--text-muted); gap: 8px;
+}
+.chat-empty i { font-size: 48px; color: var(--border); }
+.chat-top {
+  background: var(--green-mid); padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.chat-back { color: rgba(255,255,255,0.85); font-size: 20px; cursor: pointer; display: none; }
+@media (max-width: 700px) { .chat-back { display: block; } }
+.chat-top-av {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #5DCAA5; color: #04342C;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; flex-shrink: 0;
+}
+.chat-top-info { flex: 1; }
+.chat-top-name { color: white; font-size: 14px; font-weight: 600; }
+.chat-top-sub { color: rgba(255,255,255,0.75); font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+.chat-top-status { background: rgba(255,255,255,0.2); border-radius: 4px; padding: 1px 6px; }
+.chat-top-acts { display: flex; gap: 12px; color: rgba(255,255,255,0.8); font-size: 18px; }
+.chat-top-acts i { cursor: pointer; }
+.chat-area { background: var(--chat-bg); flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.bw { display: flex; flex-direction: column; }
+.bw.right { align-items: flex-end; }
+.bubble {
+  padding: 7px 10px 4px; border-radius: 10px;
+  max-width: 70%; display: inline-block;
+}
+.b-cust { background: white; border-radius: 0 10px 10px 10px; }
+.b-staff { background: var(--bubble-staff); border-radius: 10px 0 10px 10px; }
+.b-bot { background: var(--bubble-bot); border-radius: 10px; border: 1px solid #B5D4F4; }
+.b-txt { font-size: 13px; color: #111; line-height: 1.45; }
+.b-meta { font-size: 10px; color: #888; text-align: right; margin-top: 2px; }
+.b-bot-lbl { font-size: 10px; color: var(--blue); font-weight: 600; margin-bottom: 2px; }
+.alert-bar {
+  background: var(--orange-bg); border-top: 1px solid #EF9F27;
+  padding: 6px 14px; display: flex; align-items: center;
+  gap: 6px; font-size: 11px; color: #633806; flex-shrink: 0;
+}
+.action-row {
+  display: flex; gap: 6px; padding: 8px 12px;
+  background: var(--bg); border-top: 1px solid var(--border);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.abtn {
+  padding: 7px 12px; border-radius: 8px;
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  border: 1px solid; display: flex; align-items: center;
+  gap: 5px; font-family: var(--font);
+}
+.abtn-note { background: white; color: var(--text-muted); border-color: var(--border); }
+.abtn-booked { background: var(--green-bg); color: #085041; border-color: #5DCAA5; }
+.abtn-lepas { background: var(--orange-bg); color: #633806; border-color: #EF9F27; }
+.abtn-selesai { background: var(--green-mid); color: white; border-color: var(--green-mid); }
+.abtn-ambil { background: var(--green-mid); color: white; border-color: var(--green-mid); }
+.reply-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: white;
+  border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.reply-row i { font-size: 20px; color: var(--text-muted); cursor: pointer; }
+#reply-input {
+  flex: 1; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 20px; padding: 9px 14px; font-size: 13px;
+  font-family: var(--font); outline: none; resize: none;
+  max-height: 100px;
+}
+.reply-send {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--green-mid); color: white; border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer; flex-shrink: 0;
+}
+
+/* NOTES PANEL desktop */
+.notes-panel {
+  width: 200px; border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; background: white;
+  flex-shrink: 0;
+}
+@media (max-width: 900px) { .notes-panel { display: none; } }
+.np-title {
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+}
+.info-block { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.info-lbl { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.info-val { font-size: 12px; color: var(--text); }
+.note-item { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.note-txt { font-size: 11px; color: var(--text); line-height: 1.4; }
+.note-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+.note-add {
+  padding: 8px 12px; font-size: 11px; color: var(--blue);
+  cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+
+/* POLLING indicator */
+.poll-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green-light); display: inline-block;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #333; color: white; padding: 8px 16px;
+  border-radius: 20px; font-size: 12px; z-index: 999;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* LOADING */
+.loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo"><i class="ti ti-messages"></i></div>
+    <div class="login-title">GOHO WA Center</div>
+    <div class="login-sub">GohoTravel Customer Service</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Masukkan username" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Masukkan password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Masuk</button>
+    <div class="login-error hidden" id="login-error">Username atau password salah</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topnav">
+    <div class="topnav-logo"><i class="ti ti-messages"></i></div>
+    <span class="topnav-title">GOHO WA Center</span>
+    <div class="topnav-staff">
+      <span id="nav-badge" class="owner-badge hidden">Owner</span>
+      <div class="topnav-av" id="nav-av">SY</div>
+      <span id="nav-name">SY</span>
+      <i class="ti ti-refresh" style="font-size:16px;cursor:pointer;" onclick="refreshAll()" title="Refresh"></i>
+      <span class="poll-dot" title="Auto-refresh aktif"></span>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sb-search">
+        <input placeholder="Cari customer..." id="search-input" oninput="filterChats()">
+      </div>
+      <div class="sb-tabs">
+        <div class="sb-tab active" onclick="switchTab('waiting')" id="tab-waiting">
+          <i class="ti ti-clock"></i>Waiting
+        </div>
+        <div class="sb-tab" onclick="switchTab('mychats')" id="tab-mychats">
+          <i class="ti ti-message-circle"></i>My Chats
+        </div>
+        <div class="sb-tab" onclick="switchTab('all')" id="tab-all">
+          <i class="ti ti-layout-list"></i>Semua
+        </div>
+      </div>
+      <div class="sb-stats">
+        <div class="sb-stat"><div class="sb-stat-n n-orange" id="stat-waiting">0</div><div class="sb-stat-l">Waiting</div></div>
+        <div class="sb-stat"><div class="sb-stat-n n-green" id="stat-active">0</div><div class="sb-stat-l">Active</div></div>
+        <div class="sb-stat"><div class="sb-stat-n n-purple" id="stat-selesai">0</div><div class="sb-stat-l">Selesai</div></div>
+      </div>
+      <div class="chat-list" id="chat-list">
+        <div class="loading">Memuat...</div>
+      </div>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <div class="chat-panel" id="chat-panel">
+      <div class="chat-empty" id="chat-empty">
+        <i class="ti ti-messages"></i>
+        <span>Pilih chat untuk mulai</span>
+      </div>
+
+      <div id="chat-active" class="hidden" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+        <div class="chat-top">
+          <i class="ti ti-arrow-left chat-back" onclick="backToList()"></i>
+          <div class="chat-top-av" id="ct-av">DP</div>
+          <div class="chat-top-info">
+            <div class="chat-top-name" id="ct-name">-</div>
+            <div class="chat-top-sub">
+              <span id="ct-wa">-</span>
+              <span class="chat-top-status" id="ct-status">-</span>
+              <span id="ct-by"></span>
+            </div>
+          </div>
+          <div class="chat-top-acts">
+            <i class="ti ti-notes" onclick="showNoteInput()" title="Catatan internal"></i>
+            <i class="ti ti-dots-vertical"></i>
+          </div>
+        </div>
+
+        <div class="chat-area" id="chat-area"></div>
+
+        <div class="alert-bar hidden" id="alert-bar">
+          <i class="ti ti-clock" style="font-size:13px;"></i>
+          <span id="alert-text">-</span>
+        </div>
+
+        <div class="action-row" id="action-row"></div>
+
+        <div class="reply-row" id="reply-row" style="display:none;">
+          <i class="ti ti-mood-smile"></i>
+          <textarea id="reply-input" rows="1" placeholder="Ketik pesan..." onkeydown="handleReplyKey(event)"></textarea>
+          <button class="reply-send" onclick="kirimPesan()"><i class="ti ti-send"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES PANEL (desktop only) -->
+    <div class="notes-panel" id="notes-panel" style="display:none;">
+      <div class="np-title"><i class="ti ti-user" style="font-size:14px;"></i> Info customer</div>
+      <div class="info-block">
+        <div class="info-lbl">Nomor WA</div>
+        <div class="info-val" id="np-wa">-</div>
+      </div>
+      <div class="info-block">
+        <div class="info-lbl">Produk</div>
+        <div class="info-val" id="np-produk">-</div>
+      </div>
+      <div class="info-block">
+        <div class="info-lbl">Status</div>
+        <div class="info-val" id="np-status">-</div>
+      </div>
+      <div class="np-title" style="margin-top:4px;"><i class="ti ti-notes" style="font-size:14px;"></i> Catatan internal</div>
+      <div id="np-notes"></div>
+      <div class="note-add" onclick="showNoteInput()"><i class="ti ti-plus" style="font-size:12px;"></i> Tambah catatan</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbycdw7-ZYJaPY5J2varxb82LagiCKAlmDfkLOxCZZYEZwi5ZrpH9GLkZYFX-fg6se2t/exec';
+let currentStaff = null;
+let currentRoom = null;
+let currentTab = 'waiting';
+let allChats = [];
+let pollInterval = null;
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+async function apiGet(params) {
+  const url = API + '?' + new URLSearchParams(params);
+  const r = await fetch(url);
+  return r.json();
+}
+
+async function apiPost(body) {
+  const r = await fetch(API, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+async function doLogin() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
+  if (!u || !p) return;
+
+  try {
+    const res = await apiGet({action: 'login', username: u, password: p});
+    if (res.ok) {
+      currentStaff = res.staff;
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      document.getElementById('nav-name').textContent = currentStaff.nama;
+      document.getElementById('nav-av').textContent = currentStaff.nama.substring(0,2).toUpperCase();
+      if (currentStaff.role === 'OWNER') {
+        document.getElementById('nav-badge').classList.remove('hidden');
+        document.getElementById('nav-av').classList.add('owner');
+        document.getElementById('tab-all').style.display = '';
+      }
+      startPolling();
+      loadChats();
+    } else {
+      document.getElementById('login-error').classList.remove('hidden');
+    }
+  } catch(e) {
+    document.getElementById('login-error').classList.remove('hidden');
+  }
+}
+
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function startPolling() {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(() => {
+    loadStats();
+    if (currentRoom) loadMessages(currentRoom.roomId, false);
+    else loadChats(false);
+  }, 4000);
+}
+
+async function loadStats() {
+  try {
+    const res = await apiGet({action: 'getDashboardStats'});
+    if (res.ok) {
+      document.getElementById('stat-waiting').textContent = res.data.waiting;
+      document.getElementById('stat-active').textContent = res.data.active;
+      document.getElementById('stat-selesai').textContent = res.data.selesai;
+    }
+  } catch(e) {}
+}
+
+async function loadChats(showLoading = true) {
+  if (showLoading) document.getElementById('chat-list').innerHTML = '<div class="loading">Memuat...</div>';
+  try {
+    let res;
+    if (currentTab === 'waiting') {
+      res = await apiGet({action: 'getWaitingQueue'});
+    } else if (currentTab === 'mychats') {
+      res = await apiGet({action: 'getMyChats', staffName: currentStaff.nama});
+    } else {
+      res = await apiGet({action: 'getAllChats'});
+    }
+    if (res.ok) {
+      allChats = res.data;
+      renderChatList(allChats);
+    }
+    loadStats();
+  } catch(e) {
+    document.getElementById('chat-list').innerHTML = '<div class="empty-state">Gagal memuat data</div>';
+  }
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  ['waiting','mychats','all'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t === tab);
+  });
+  loadChats();
+}
+
+function filterChats() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = allChats.filter(c =>
+    c.nama.toLowerCase().includes(q) ||
+    c.noWa.toLowerCase().includes(q)
+  );
+  renderChatList(filtered);
+}
+
+function getProdukClass(produk) {
+  const p = (produk||'').toLowerCase();
+  if (p.includes('tiket')) return 'p-tiket';
+  if (p.includes('hotel')) return 'p-hotel';
+  if (p.includes('tour')) return 'p-tour';
+  if (p.includes('atraksi')) return 'p-atraksi';
+  return 'p-tiket';
+}
+
+function getStatusClass(status) {
+  if (status === 'WAITING') return 'p-wait';
+  if (status === 'ASSIGNED') return 'p-assign';
+  if (status === 'FOLLOW_UP') return 'p-follow';
+  if (status === 'BOOKED') return 'p-booked';
+  return 'p-assign';
+}
+
+function getAvatarClass(nama) {
+  const classes = ['av-a','av-b','av-c','av-d'];
+  let hash = 0;
+  for (let c of nama) hash += c.charCodeAt(0);
+  return classes[hash % classes.length];
+}
+
+function getInitials(nama) {
+  return nama.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'});
+}
+
+function renderChatList(chats) {
+  const el = document.getElementById('chat-list');
+  if (!chats || chats.length === 0) {
+    el.innerHTML = '<div class="empty-state">Tidak ada chat</div>';
+    return;
+  }
+
+  let html = '';
+  const sections = {};
+
+  if (currentTab === 'waiting') {
+    html += '<div class="sect-lbl">Menunggu staff</div>';
+    chats.forEach(c => { html += renderChatItem(c); });
+  } else if (currentTab === 'mychats') {
+    const assigned = chats.filter(c => c.status === 'ASSIGNED');
+    const followup = chats.filter(c => c.status === 'FOLLOW_UP');
+    const booked = chats.filter(c => c.status === 'BOOKED');
+    if (assigned.length) {
+      html += '<div class="sect-lbl">Sedang ditangani</div>';
+      assigned.forEach(c => { html += renderChatItem(c); });
+    }
+    if (followup.length) {
+      html += '<div class="sect-lbl">Follow up</div>';
+      followup.forEach(c => { html += renderChatItem(c); });
+    }
+    if (booked.length) {
+      html += '<div class="sect-lbl">Booked</div>';
+      booked.forEach(c => { html += renderChatItem(c); });
+    }
+  } else {
+    html += '<div class="sect-lbl">Semua chat aktif</div>';
+    chats.forEach(c => { html += renderChatItem(c); });
+  }
+
+  el.innerHTML = html;
+}
+
+function renderChatItem(c) {
+  const isActive = currentRoom && currentRoom.roomId === c.roomId;
+  const menitAlert = c.menitTunggu > 10;
+  return `
+    <div class="ci ${isActive?'active':''}" onclick="openChat('${c.roomId}')">
+      <div class="av ${getAvatarClass(c.nama)}">${getInitials(c.nama)}</div>
+      <div class="ci-body">
+        <div class="ci-name">${c.nama}</div>
+        <div class="ci-prev">${c.lastMsg||'...'}</div>
+        <div class="ci-meta">
+          <span class="pill ${getStatusClass(c.status)}">${c.status}</span>
+          ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
+          ${menitAlert ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
+        </div>
+        ${c.assignedTo ? `<div class="ci-by">Di-handle: ${c.assignedTo}</div>` : ''}
+      </div>
+      <div class="ci-time">${formatTime(c.lastMsgAt)}</div>
+    </div>`;
+}
+
+async function openChat(roomId) {
+  const chat = allChats.find(c => c.roomId === roomId);
+  if (!chat) return;
+  currentRoom = chat;
+
+  document.getElementById('chat-empty').classList.add('hidden');
+  document.getElementById('chat-active').classList.remove('hidden');
+  document.getElementById('notes-panel').style.display = 'flex';
+
+  document.getElementById('ct-av').textContent = getInitials(chat.nama);
+  document.getElementById('ct-name').textContent = chat.nama;
+  document.getElementById('ct-wa').textContent = chat.noWa;
+  document.getElementById('ct-status').textContent = chat.status;
+  document.getElementById('ct-by').textContent = chat.assignedTo ? 'Di-handle: ' + chat.assignedTo : '';
+  document.getElementById('np-wa').textContent = chat.noWa;
+  document.getElementById('np-produk').textContent = chat.produk || '-';
+  document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`;
+
+  renderActionRow(chat);
+  await loadMessages(roomId, true);
+
+  on mobile
+  if (window.innerWidth <= 700) {
+    document.getElementById('sidebar').classList.add('hide-mobile');
+    document.getElementById('chat-panel').classList.add('show-mobile');
+  }
+
+  renderChatList(allChats);
+}
+
+function renderActionRow(chat) {
+  const row = document.getElementById('action-row');
+  const reply = document.getElementById('reply-row');
+  const isMyChat = chat.assignedTo === currentStaff.nama;
+  const isOwner = currentStaff.role === 'OWNER';
+
+  if (chat.status === 'WAITING') {
+    row.innerHTML = `<button class="abtn abtn-ambil" onclick="ambilChat()"><i class="ti ti-hand-grab"></i> Ambil Chat</button>`;
+    reply.style.display = 'none';
+  } else if (isMyChat || isOwner) {
+    row.innerHTML = `
+      <button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button>
+      <button class="abtn abtn-booked" onclick="tandaiBooked()"><i class="ti ti-check"></i> Booked</button>
+      <button class="abtn abtn-lepas" onclick="lepasChat()"><i class="ti ti-logout"></i> Lepas</button>
+      <button class="abtn abtn-selesai" onclick="selesaiChat()"><i class="ti ti-circle-check"></i> Selesai</button>`;
+    reply.style.display = 'flex';
+  } else {
+    row.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px;">Di-handle oleh ${chat.assignedTo}</div>`;
+    reply.style.display = 'none';
+  }
+}
+
+async function loadMessages(roomId, scroll = true) {
+  try {
+    const res = await apiGet({action: 'getChatMessages', roomId});
+    if (!res.ok) return;
+    const area = document.getElementById('chat-area');
+    area.innerHTML = res.data.map(m => renderBubble(m)).join('');
+    if (scroll) area.scrollTop = area.scrollHeight;
+  } catch(e) {}
+}
+
+function renderBubble(m) {
+  const isStaff = m.sender === 'STAFF';
+  const isBot = m.sender === 'BOT';
+  const cls = isStaff ? 'b-staff right' : (isBot ? '' : '');
+  const bubbleCls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
+  const borderRadius = isStaff ? 'border-radius:10px 0 10px 10px' : (isBot ? '' : 'border-radius:0 10px 10px 10px');
+  return `
+    <div class="bw ${isStaff?'right':''}">
+      <div class="bubble ${bubbleCls}" style="${borderRadius}">
+        ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
+        <div class="b-txt">${m.message}</div>
+        <div class="b-meta">${formatTime(m.timestamp)}</div>
+      </div>
+    </div>`;
+}
+
+async function ambilChat() {
+  if (!currentRoom) return;
+  const res = await apiPost({action: 'assignChat', roomId: currentRoom.roomId, staffName: currentStaff.nama});
+  if (res.ok) {
+    showToast('Chat berhasil diambil');
+    currentRoom.status = 'ASSIGNED';
+    currentRoom.assignedTo = currentStaff.nama;
+    renderActionRow(currentRoom);
+    loadChats(false);
+  } else {
+    showToast(res.msg);
+  }
+}
+
+async function lepasChat() {
+  if (!currentRoom) return;
+  const res = await apiPost({action: 'releaseChat', roomId: currentRoom.roomId});
+  if (res.ok) {
+    showToast('Chat dilepas ke waiting queue');
+    currentRoom = null;
+    document.getElementById('chat-active').classList.add('hidden');
+    document.getElementById('chat-empty').classList.remove('hidden');
+    document.getElementById('notes-panel').style.display = 'none';
+    loadChats(false);
+  }
+}
+
+async function selesaiChat() {
+  if (!currentRoom) return;
+  if (!confirm('Tandai chat ini selesai?')) return;
+  const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId});
+  if (res.ok) {
+    showToast('Chat selesai');
+    currentRoom = null;
+    document.getElementById('chat-active').classList.add('hidden');
+    document.getElementById('chat-empty').classList.remove('hidden');
+    document.getElementById('notes-panel').style.display = 'none';
+    loadChats(false);
+  }
+}
+
+async function tandaiBooked() {
+  if (!currentRoom) return;
+  const res = await apiPost({action: 'markBooked', roomId: currentRoom.roomId});
+  if (res.ok) {
+    showToast('Ditandai Booked');
+    currentRoom.status = 'BOOKED';
+    renderActionRow(currentRoom);
+    loadChats(false);
+  }
+}
+
+async function kirimPesan() {
+  if (!currentRoom) return;
+  const input = document.getElementById('reply-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  const res = await apiPost({
+    action: 'sendMessage',
+    roomId: currentRoom.roomId,
+    staffName: currentStaff.nama,
+    noWa: currentRoom.noWa,
+    message: msg
+  });
+  if (res.ok) {
+    await loadMessages(currentRoom.roomId, true);
+    loadChats(false);
+  } else {
+    showToast('Gagal kirim pesan');
+    input.value = msg;
+  }
+}
+
+function handleReplyKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    kirimPesan();
+  }
+}
+
+async function showNoteInput() {
+  const note = prompt('Catatan internal:');
+  if (!note || !note.trim()) return;
+  const res = await apiPost({
+    action: 'addNote',
+    roomId: currentRoom.roomId,
+    staffName: currentStaff.nama,
+    note: note.trim()
+  });
+  if (res.ok) showToast('Catatan disimpan');
+}
+
+function backToList() {
+  document.getElementById('sidebar').classList.remove('hide-mobile');
+  document.getElementById('chat-panel').classList.remove('show-mobile');
+  currentRoom = null;
+}
+
+function refreshAll() {
+  loadChats();
+  showToast('Diperbarui');
+}
+</script>
+</body>
+</html>
