@@ -515,7 +515,7 @@ function switchTab(tab) {
 function filterChats() {
   const q = document.getElementById('search-input').value.toLowerCase();
   const filtered = allChats.filter(c =>
-    c.nama.toLowerCase().includes(q) || c.noWa.toLowerCase().includes(q)
+    String(c.nama).toLowerCase().includes(q) || String(c.noWa).toLowerCase().includes(q)
   );
   renderChatList(filtered);
 }
