@@ -36,8 +36,6 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
 .hidden { display: none !important; }
-
-/* LOGIN */
 #login-page {
   min-height: 100vh;
   display: flex;
@@ -69,8 +67,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   width: 100%; padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 8px; font-size: 14px;
-  font-family: var(--font);
-  outline: none; transition: border 0.2s;
+  font-family: var(--font); outline: none; transition: border 0.2s;
 }
 .form-group input:focus { border-color: var(--green-mid); }
 .btn-login {
@@ -79,16 +76,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   border: none; border-radius: 8px;
   font-size: 14px; font-weight: 600;
   font-family: var(--font); cursor: pointer;
-  transition: background 0.2s;
 }
-.btn-login:hover { background: var(--green-dark); }
 .login-error { color: var(--red); font-size: 12px; text-align: center; margin-top: 8px; }
-
-/* APP LAYOUT */
 #app { display: none; height: 100vh; flex-direction: column; }
 #app.visible { display: flex; }
-
-/* TOP NAV */
 .topnav {
   background: var(--green-dark);
   padding: 0 16px; height: 48px;
@@ -114,11 +105,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   background: rgba(239,159,39,0.25); color: #FAC775;
   font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500;
 }
-
-/* MAIN AREA */
 .main-area { display: flex; flex: 1; overflow: hidden; }
-
-/* SIDEBAR */
 .sidebar {
   width: 300px; border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
@@ -127,7 +114,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 @media (max-width: 700px) {
   .sidebar { width: 100%; }
   .sidebar.hide-mobile { display: none; }
-  .chat-panel { display: none; }
   .chat-panel.show-mobile { display: flex; }
 }
 .sb-search { padding: 8px 10px; border-bottom: 1px solid var(--border); }
@@ -184,10 +170,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .ci-name { font-size: 13px; font-weight: 600; color: var(--text); }
 .ci-prev { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .ci-meta { display: flex; align-items: center; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
-.pill {
-  font-size: 9px; padding: 2px 7px;
-  border-radius: 10px; font-weight: 600; white-space: nowrap;
-}
+.pill { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
 .p-wait { background: var(--orange-bg); color: var(--orange); }
 .p-assign { background: var(--green-bg); color: var(--green-mid); }
 .p-follow { background: var(--purple-bg); color: var(--purple); }
@@ -200,12 +183,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .ci-time { font-size: 10px; color: var(--text-hint); margin-left: auto; flex-shrink: 0; }
 .ci-by { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
 .empty-state { padding: 2rem; text-align: center; color: var(--text-muted); font-size: 12px; }
-
-/* CHAT PANEL */
-.chat-panel {
-  flex: 1; display: flex; flex-direction: column;
-  background: var(--white); overflow: hidden;
-}
+.chat-panel { flex: 1; display: flex; flex-direction: column; background: var(--white); overflow: hidden; }
 .chat-empty {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -233,21 +211,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .chat-area { background: var(--chat-bg); flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 .bw { display: flex; flex-direction: column; }
 .bw.right { align-items: flex-end; }
-.bubble {
-  padding: 7px 10px 4px; border-radius: 10px;
-  max-width: 70%; display: inline-block;
-}
+.bubble { padding: 7px 10px 4px; border-radius: 10px; max-width: 70%; display: inline-block; }
 .b-cust { background: white; border-radius: 0 10px 10px 10px; }
 .b-staff { background: var(--bubble-staff); border-radius: 10px 0 10px 10px; }
 .b-bot { background: var(--bubble-bot); border-radius: 10px; border: 1px solid #B5D4F4; }
 .b-txt { font-size: 13px; color: #111; line-height: 1.45; }
 .b-meta { font-size: 10px; color: #888; text-align: right; margin-top: 2px; }
 .b-bot-lbl { font-size: 10px; color: var(--blue); font-weight: 600; margin-bottom: 2px; }
-.alert-bar {
-  background: var(--orange-bg); border-top: 1px solid #EF9F27;
-  padding: 6px 14px; display: flex; align-items: center;
-  gap: 6px; font-size: 11px; color: #633806; flex-shrink: 0;
-}
 .action-row {
   display: flex; gap: 6px; padding: 8px 12px;
   background: var(--bg); border-top: 1px solid var(--border);
@@ -282,8 +252,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   display: flex; align-items: center; justify-content: center;
   font-size: 16px; cursor: pointer; flex-shrink: 0;
 }
-
-/* NOTES PANEL desktop */
 .notes-panel {
   width: 200px; border-left: 1px solid var(--border);
   display: flex; flex-direction: column; background: white;
@@ -301,20 +269,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .note-item { padding: 8px 12px; border-bottom: 1px solid var(--border); }
 .note-txt { font-size: 11px; color: var(--text); line-height: 1.4; }
 .note-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
-.note-add {
-  padding: 8px 12px; font-size: 11px; color: var(--blue);
-  cursor: pointer; display: flex; align-items: center; gap: 4px;
-}
-
-/* POLLING indicator */
-.poll-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green-light); display: inline-block;
-  animation: pulse 2s infinite;
-}
+.note-add { padding: 8px 12px; font-size: 11px; color: var(--blue); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.poll-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-light); display: inline-block; animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-/* TOAST */
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   background: #333; color: white; padding: 8px 16px;
@@ -322,14 +279,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   opacity: 0; transition: opacity 0.3s; pointer-events: none;
 }
 .toast.show { opacity: 1; }
-
-/* LOADING */
 .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 12px; }
 </style>
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
 <div id="login-page">
   <div class="login-box">
     <div class="login-logo"><i class="ti ti-messages"></i></div>
@@ -348,7 +302,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <div class="topnav">
     <div class="topnav-logo"><i class="ti ti-messages"></i></div>
@@ -357,13 +310,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       <span id="nav-badge" class="owner-badge hidden">Owner</span>
       <div class="topnav-av" id="nav-av">SY</div>
       <span id="nav-name">SY</span>
-      <i class="ti ti-refresh" style="font-size:16px;cursor:pointer;" onclick="refreshAll()" title="Refresh"></i>
-      <span class="poll-dot" title="Auto-refresh aktif"></span>
+      <i class="ti ti-refresh" style="font-size:16px;cursor:pointer;" onclick="refreshAll()"></i>
+      <span class="poll-dot"></span>
     </div>
   </div>
 
   <div class="main-area">
-    <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
       <div class="sb-search">
         <input placeholder="Cari customer..." id="search-input" oninput="filterChats()">
@@ -389,7 +341,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       </div>
     </div>
 
-    <!-- CHAT PANEL -->
     <div class="chat-panel" id="chat-panel">
       <div class="chat-empty" id="chat-empty">
         <i class="ti ti-messages"></i>
@@ -399,7 +350,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       <div id="chat-active" class="hidden" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
         <div class="chat-top">
           <i class="ti ti-arrow-left chat-back" onclick="backToList()"></i>
-          <div class="chat-top-av" id="ct-av">DP</div>
+          <div class="chat-top-av" id="ct-av">--</div>
           <div class="chat-top-info">
             <div class="chat-top-name" id="ct-name">-</div>
             <div class="chat-top-sub">
@@ -409,20 +360,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
             </div>
           </div>
           <div class="chat-top-acts">
-            <i class="ti ti-notes" onclick="showNoteInput()" title="Catatan internal"></i>
+            <i class="ti ti-notes" onclick="showNoteInput()"></i>
             <i class="ti ti-dots-vertical"></i>
           </div>
         </div>
-
         <div class="chat-area" id="chat-area"></div>
-
-        <div class="alert-bar hidden" id="alert-bar">
-          <i class="ti ti-clock" style="font-size:13px;"></i>
-          <span id="alert-text">-</span>
-        </div>
-
         <div class="action-row" id="action-row"></div>
-
         <div class="reply-row" id="reply-row" style="display:none;">
           <i class="ti ti-mood-smile"></i>
           <textarea id="reply-input" rows="1" placeholder="Ketik pesan..." onkeydown="handleReplyKey(event)"></textarea>
@@ -431,7 +374,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       </div>
     </div>
 
-    <!-- NOTES PANEL (desktop only) -->
     <div class="notes-panel" id="notes-panel" style="display:none;">
       <div class="np-title"><i class="ti ti-user" style="font-size:14px;"></i> Info customer</div>
       <div class="info-block">
@@ -472,7 +414,7 @@ function showToast(msg) {
 
 async function apiGet(params) {
   const url = API + '?' + new URLSearchParams(params);
-  const r = await fetch(url);
+  const r = await fetch(url, { redirect: 'follow' });
   return r.json();
 }
 
@@ -488,7 +430,6 @@ async function doLogin() {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value.trim();
   if (!u || !p) return;
-
   try {
     const res = await apiGet({action: 'login', username: u, password: p});
     if (res.ok) {
@@ -500,7 +441,6 @@ async function doLogin() {
       if (currentStaff.role === 'OWNER') {
         document.getElementById('nav-badge').classList.remove('hidden');
         document.getElementById('nav-av').classList.add('owner');
-        document.getElementById('tab-all').style.display = '';
       }
       startPolling();
       loadChats();
@@ -568,8 +508,7 @@ function switchTab(tab) {
 function filterChats() {
   const q = document.getElementById('search-input').value.toLowerCase();
   const filtered = allChats.filter(c =>
-    c.nama.toLowerCase().includes(q) ||
-    c.noWa.toLowerCase().includes(q)
+    c.nama.toLowerCase().includes(q) || c.noWa.toLowerCase().includes(q)
   );
   renderChatList(filtered);
 }
@@ -614,10 +553,7 @@ function renderChatList(chats) {
     el.innerHTML = '<div class="empty-state">Tidak ada chat</div>';
     return;
   }
-
   let html = '';
-  const sections = {};
-
   if (currentTab === 'waiting') {
     html += '<div class="sect-lbl">Menunggu staff</div>';
     chats.forEach(c => { html += renderChatItem(c); });
@@ -625,55 +561,42 @@ function renderChatList(chats) {
     const assigned = chats.filter(c => c.status === 'ASSIGNED');
     const followup = chats.filter(c => c.status === 'FOLLOW_UP');
     const booked = chats.filter(c => c.status === 'BOOKED');
-    if (assigned.length) {
-      html += '<div class="sect-lbl">Sedang ditangani</div>';
-      assigned.forEach(c => { html += renderChatItem(c); });
-    }
-    if (followup.length) {
-      html += '<div class="sect-lbl">Follow up</div>';
-      followup.forEach(c => { html += renderChatItem(c); });
-    }
-    if (booked.length) {
-      html += '<div class="sect-lbl">Booked</div>';
-      booked.forEach(c => { html += renderChatItem(c); });
-    }
+    if (assigned.length) { html += '<div class="sect-lbl">Sedang ditangani</div>'; assigned.forEach(c => { html += renderChatItem(c); }); }
+    if (followup.length) { html += '<div class="sect-lbl">Follow up</div>'; followup.forEach(c => { html += renderChatItem(c); }); }
+    if (booked.length) { html += '<div class="sect-lbl">Booked</div>'; booked.forEach(c => { html += renderChatItem(c); }); }
   } else {
     html += '<div class="sect-lbl">Semua chat aktif</div>';
     chats.forEach(c => { html += renderChatItem(c); });
   }
-
   el.innerHTML = html;
 }
 
 function renderChatItem(c) {
   const isActive = currentRoom && currentRoom.roomId === c.roomId;
   const menitAlert = c.menitTunggu > 10;
-  return `
-    <div class="ci ${isActive?'active':''}" onclick="openChat('${c.roomId}')">
-      <div class="av ${getAvatarClass(c.nama)}">${getInitials(c.nama)}</div>
-      <div class="ci-body">
-        <div class="ci-name">${c.nama}</div>
-        <div class="ci-prev">${c.lastMsg||'...'}</div>
-        <div class="ci-meta">
-          <span class="pill ${getStatusClass(c.status)}">${c.status}</span>
-          ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
-          ${menitAlert ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
-        </div>
-        ${c.assignedTo ? `<div class="ci-by">Di-handle: ${c.assignedTo}</div>` : ''}
+  return `<div class="ci ${isActive?'active':''}" onclick="openChat('${c.roomId}')">
+    <div class="av ${getAvatarClass(c.nama)}">${getInitials(c.nama)}</div>
+    <div class="ci-body">
+      <div class="ci-name">${c.nama}</div>
+      <div class="ci-prev">${c.lastMsg||'...'}</div>
+      <div class="ci-meta">
+        <span class="pill ${getStatusClass(c.status)}">${c.status}</span>
+        ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
+        ${menitAlert ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
       </div>
-      <div class="ci-time">${formatTime(c.lastMsgAt)}</div>
-    </div>`;
+      ${c.assignedTo ? `<div class="ci-by">Di-handle: ${c.assignedTo}</div>` : ''}
+    </div>
+    <div class="ci-time">${formatTime(c.lastMsgAt)}</div>
+  </div>`;
 }
 
 async function openChat(roomId) {
   const chat = allChats.find(c => c.roomId === roomId);
   if (!chat) return;
   currentRoom = chat;
-
   document.getElementById('chat-empty').classList.add('hidden');
   document.getElementById('chat-active').classList.remove('hidden');
   document.getElementById('notes-panel').style.display = 'flex';
-
   document.getElementById('ct-av').textContent = getInitials(chat.nama);
   document.getElementById('ct-name').textContent = chat.nama;
   document.getElementById('ct-wa').textContent = chat.noWa;
@@ -682,16 +605,12 @@ async function openChat(roomId) {
   document.getElementById('np-wa').textContent = chat.noWa;
   document.getElementById('np-produk').textContent = chat.produk || '-';
   document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`;
-
   renderActionRow(chat);
   await loadMessages(roomId, true);
-
-  
-    if (window.innerWidth <= 700) {
+  if (window.innerWidth <= 700) {
     document.getElementById('sidebar').classList.add('hide-mobile');
     document.getElementById('chat-panel').classList.add('show-mobile');
   }
-
   renderChatList(allChats);
 }
 
@@ -700,7 +619,6 @@ function renderActionRow(chat) {
   const reply = document.getElementById('reply-row');
   const isMyChat = chat.assignedTo === currentStaff.nama;
   const isOwner = currentStaff.role === 'OWNER';
-
   if (chat.status === 'WAITING') {
     row.innerHTML = `<button class="abtn abtn-ambil" onclick="ambilChat()"><i class="ti ti-hand-grab"></i> Ambil Chat</button>`;
     reply.style.display = 'none';
@@ -717,7 +635,7 @@ function renderActionRow(chat) {
   }
 }
 
-async function loadMessages(roomId, scroll = true) {
+async function loadMessages(roomId, scroll) {
   try {
     const res = await apiGet({action: 'getChatMessages', roomId});
     if (!res.ok) return;
@@ -730,17 +648,14 @@ async function loadMessages(roomId, scroll = true) {
 function renderBubble(m) {
   const isStaff = m.sender === 'STAFF';
   const isBot = m.sender === 'BOT';
-  const cls = isStaff ? 'b-staff right' : (isBot ? '' : '');
   const bubbleCls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
-  const borderRadius = isStaff ? 'border-radius:10px 0 10px 10px' : (isBot ? '' : 'border-radius:0 10px 10px 10px');
-  return `
-    <div class="bw ${isStaff?'right':''}">
-      <div class="bubble ${bubbleCls}" style="${borderRadius}">
-        ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
-        <div class="b-txt">${m.message}</div>
-        <div class="b-meta">${formatTime(m.timestamp)}</div>
-      </div>
-    </div>`;
+  return `<div class="bw ${isStaff?'right':''}">
+    <div class="bubble ${bubbleCls}">
+      ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
+      <div class="b-txt">${m.message}</div>
+      <div class="b-meta">${formatTime(m.timestamp)}</div>
+    </div>
+  </div>`;
 }
 
 async function ambilChat() {
@@ -752,9 +667,7 @@ async function ambilChat() {
     currentRoom.assignedTo = currentStaff.nama;
     renderActionRow(currentRoom);
     loadChats(false);
-  } else {
-    showToast(res.msg);
-  }
+  } else { showToast(res.msg); }
 }
 
 async function lepasChat() {
@@ -800,7 +713,6 @@ async function kirimPesan() {
   const input = document.getElementById('reply-input');
   const msg = input.value.trim();
   if (!msg) return;
-
   input.value = '';
   const res = await apiPost({
     action: 'sendMessage',
@@ -828,12 +740,7 @@ function handleReplyKey(e) {
 async function showNoteInput() {
   const note = prompt('Catatan internal:');
   if (!note || !note.trim()) return;
-  const res = await apiPost({
-    action: 'addNote',
-    roomId: currentRoom.roomId,
-    staffName: currentStaff.nama,
-    note: note.trim()
-  });
+  const res = await apiPost({action: 'addNote', roomId: currentRoom.roomId, staffName: currentStaff.nama, note: note.trim()});
   if (res.ok) showToast('Catatan disimpan');
 }
 
