@@ -24,16 +24,20 @@ export default async function handler(req, res) {
       res.status(200).send(data);
 
     } else if (req.method === 'POST') {
-      const response = await fetch(baseUrl, {
-        method: 'POST',
-        redirect: 'follow',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body)
-      });
-      const data = await response.text();
-      res.setHeader('Content-Type', 'application/json');
-      res.status(200).send(data);
-    }
+  let bodyData = req.body;
+  if (typeof bodyData === 'string') {
+    bodyData = JSON.parse(bodyData);
+  }
+  const response = await fetch(baseUrl, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(bodyData)
+  });
+  const data = await response.text();
+  res.setHeader('Content-Type', 'application/json');
+  res.status(200).send(data);
+}
   } catch(e) {
     res.status(500).json({ok: false, msg: e.toString()});
   }
