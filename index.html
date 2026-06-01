@@ -540,12 +540,12 @@ function getStatusClass(status) {
 function getAvatarClass(nama) {
   const classes = ['av-a','av-b','av-c','av-d'];
   let hash = 0;
-  for (let c of nama) hash += c.charCodeAt(0);
+  for (let c of String(nama)) hash += c.charCodeAt(0);
   return classes[hash % classes.length];
 }
 
 function getInitials(nama) {
-  return nama.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  return String(nama).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
 }
 
 function formatTime(ts) {
