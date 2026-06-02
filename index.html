@@ -969,24 +969,90 @@ async function openContactDetail(noWa, nama) {
 async function loadBookingHistory() {
   const box = document.getElementById('booking-history');
   box.innerHTML = '<div class="loading">Memuat riwayat... (harap tunggu)</div>';
+  window._bookingRaw = null;
   try {
     const res = await apiGet({action: 'getBookingHistory', noWa: currentContactNoWa});
-    const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
     if (res.history && res.history.length > 0) {
+      window._bookingRaw = res.history;
       document.getElementById('detail-booking').textContent = res.total;
-      box.innerHTML = res.history.map(h => `
-        <div class="history-item">
-          <div class="history-tipe">${icon[h.tipe]||'📋'} ${h.tipe}</div>
-          <div class="history-detail">${escH(h.detail)}</div>
-          <div class="history-meta">📅 ${h.tglEvent} &nbsp;|&nbsp; 🛒 ${h.tglBeli} &nbsp;|&nbsp; ${escH(h.extra)}</div>
-          <div class="history-meta">Tamu: ${escH(h.namaTamu)}</div>
-        </div>`).join('');
+      renderBookingHistory(res.history, 'all');
     } else {
       box.innerHTML = '<div class="empty-state">Belum ada riwayat booking</div>';
     }
   } catch(e) {
     box.innerHTML = '<div class="empty-state">Gagal memuat riwayat</div>';
   }
+}
+
+function renderBookingHistory(history, periode) {
+  const box = document.getElementById('booking-history');
+  const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
+  const monthNames = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+  // Build unique years dan months dari data
+  const years = [...new Set(history.map(h => {
+    if (!h.tglBeli) return '';
+    const p = h.tglBeli.split('/'); return p[2] || '';
+  }).filter(Boolean))].sort().reverse();
+
+  const months = [...new Set(history.map(h => {
+    if (!h.tglBeli) return '';
+    const p = h.tglBeli.split('/');
+    return (p[2] && p[1]) ? p[2] + '-' + p[1] : '';
+  }).filter(Boolean))].sort().reverse();
+
+  // Filter data
+  let filtered = history;
+  if (periode && periode !== 'all') {
+    if (periode.length === 4) {
+      filtered = history.filter(h => h.tglBeli && h.tglBeli.split('/')[2] === periode);
+    } else {
+      const [yr, mo] = periode.split('-');
+      filtered = history.filter(h => {
+        if (!h.tglBeli) return false;
+        const p = h.tglBeli.split('/');
+        return p[2] === yr && p[1] === mo;
+      });
+    }
+  }
+
+  const filterHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <span style="font-size:11px;color:var(--text-muted);">Periode:</span>
+      <select id="filter-periode" onchange="applyBookingFilter()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--font);outline:none;">
+        <option value="all" ${periode==='all'?'selected':''}>Semua</option>
+        <optgroup label="Per Tahun">
+          ${years.map(y => `<option value="${y}" ${periode===y?'selected':''}>${y}</option>`).join('')}
+        </optgroup>
+        <optgroup label="Per Bulan">
+          ${months.map(m => {
+            const [yr, mo] = m.split('-');
+            const label = monthNames[parseInt(mo)] + ' ' + yr;
+            return `<option value="${m}" ${periode===m?'selected':''}>${label}</option>`;
+          }).join('')}
+        </optgroup>
+      </select>
+      <span style="font-size:11px;color:var(--text-muted);">${filtered.length} dari ${history.length} booking</span>
+    </div>`;
+
+  if (filtered.length === 0) {
+    box.innerHTML = filterHTML + '<div class="empty-state">Tidak ada booking di periode ini</div>';
+    return;
+  }
+
+  box.innerHTML = filterHTML + filtered.map(h => `
+    <div class="history-item">
+      <div class="history-tipe">${icon[h.tipe]||'📋'} ${h.tipe}</div>
+      <div class="history-detail">${escH(h.detail)}</div>
+      <div class="history-meta">📅 ${h.tglEvent} &nbsp;|&nbsp; 🛒 ${h.tglBeli} &nbsp;|&nbsp; ${escH(h.extra)}</div>
+      <div class="history-meta">Tamu: ${escH(h.namaTamu)}</div>
+    </div>`).join('');
+}
+
+function applyBookingFilter() {
+  if (!window._bookingRaw) return;
+  const periode = document.getElementById('filter-periode').value;
+  renderBookingHistory(window._bookingRaw, periode);
 }
 
 async function loadPassengers() {
