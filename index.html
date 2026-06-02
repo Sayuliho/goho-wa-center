@@ -405,6 +405,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
         <div class="info-val" id="np-customer-name" style="font-weight:600;"></div>
         <div class="info-val" id="np-customer-booking" style="font-size:11px;color:var(--text-muted);"></div>
       </div>
+      <div class="info-block" id="np-history-block" style="display:none;">
+        <div class="info-lbl" style="display:flex;justify-content:space-between;align-items:center;">
+          Riwayat Booking
+          <span id="np-history-loading" style="font-size:9px;color:var(--text-hint);">memuat...</span>
+        </div>
+        <div id="np-history-list"></div>
+      </div>
       <div class="np-title" style="margin-top:4px;"><i class="ti ti-notes" style="font-size:14px;"></i> Catatan internal</div>
       <div id="np-notes"></div>
       <div class="note-add" onclick="showNoteInput()"><i class="ti ti-plus" style="font-size:12px;"></i> Tambah catatan</div>
@@ -913,14 +920,54 @@ async function loadCustomerInfoPanel(noWa) {
   try {
     const res = await apiGet({action: 'getCustomer', noWa});
     const panel = document.getElementById('np-customer-info');
-    if (res.customer && res.customer.nama) {
-      panel.style.display = 'block';
-      document.getElementById('np-customer-name').textContent = res.customer.nama;
-      document.getElementById('np-customer-booking').textContent = res.customer.totalBooking ? res.customer.totalBooking + 'x booking' : 'Belum ada booking';
+    const histBlock = document.getElementById('np-history-block');
+    if (res.customer) {
+      const c = res.customer;
+      if (c.nama) {
+        panel.style.display = 'block';
+        document.getElementById('np-customer-name').textContent = c.nama;
+        document.getElementById('np-customer-booking').textContent = c.totalBooking ? c.totalBooking + 'x booking' : 'Belum ada booking';
+      } else {
+        panel.style.display = 'none';
+      }
+      // Load riwayat booking ringkas di panel
+      histBlock.style.display = 'block';
+      document.getElementById('np-history-loading').textContent = 'memuat...';
+      document.getElementById('np-history-list').innerHTML = '';
+      loadPanelBookingHistory(noWa);
     } else {
       panel.style.display = 'none';
+      histBlock.style.display = 'none';
     }
   } catch(e) {}
+}
+
+async function loadPanelBookingHistory(noWa) {
+  try {
+    const res = await apiGet({action: 'getBookingHistory', noWa});
+    const loading = document.getElementById('np-history-loading');
+    const list = document.getElementById('np-history-list');
+    if (!loading || !list) return;
+
+    if (res.history && res.history.length > 0) {
+      loading.textContent = res.total + ' booking';
+      const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
+      // Tampilkan 5 terbaru saja di panel
+      const recent = res.history.slice(0, 5);
+      list.innerHTML = recent.map(h => `
+        <div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;">
+          <div style="font-weight:600;color:var(--text);">${icon[h.tipe]||'📋'} ${escH(h.detail)}</div>
+          <div style="color:var(--text-muted);">📅 ${h.tglEvent} · ${escH(h.extra)}</div>
+        </div>`).join('') +
+        (res.total > 5 ? `<div style="font-size:10px;color:var(--text-hint);padding-top:4px;">+${res.total - 5} booking lainnya</div>` : '');
+    } else {
+      loading.textContent = '';
+      list.innerHTML = '<div style="font-size:11px;color:var(--text-hint);">Belum ada booking</div>';
+    }
+  } catch(e) {
+    const loading = document.getElementById('np-history-loading');
+    if (loading) loading.textContent = '';
+  }
 }
 
 function openContactFromChat() {
