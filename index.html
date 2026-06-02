@@ -606,6 +606,7 @@ async function doLogin() {
       }
       startPolling();
       loadChats();
+      showSoundActivation();
     } else {
       document.getElementById('login-error').classList.remove('hidden');
     }
@@ -641,28 +642,22 @@ function playNotifSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === 'suspended') ctx.resume();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.4, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.5);
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(660, ctx.currentTime + 0.2);
-    osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.35);
-    gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.2);
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-    osc2.start(ctx.currentTime + 0.2);
-    osc2.stop(ctx.currentTime + 0.6);
+    // 3x beep — volume lebih keras
+    function beep(freq, start, duration) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+      gain.gain.setValueAtTime(0.8, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + duration);
+    }
+    beep(880, 0.0, 0.18);   // beep 1
+    beep(880, 0.25, 0.18);  // beep 2
+    beep(1050, 0.5, 0.25);  // beep 3 — nada lebih tinggi
   } catch(e) {}
 }
 
@@ -681,6 +676,21 @@ function unlockAudio() {
 }
 document.addEventListener('click', unlockAudio);
 document.addEventListener('keydown', unlockAudio);
+
+function showSoundActivation() {
+  const btn = document.createElement('div');
+  btn.id = 'sound-btn';
+  btn.innerHTML = '🔔 Aktifkan Suara Notif';
+  btn.style.cssText = 'position:fixed;top:56px;right:12px;background:#0F6E56;color:white;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;z-index:9998;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+  btn.onclick = function() {
+    unlockAudio();
+    playNotifSound();
+    btn.innerHTML = '✅ Suara Aktif';
+    btn.style.background = '#666';
+    setTimeout(() => btn.remove(), 2000);
+  };
+  document.body.appendChild(btn);
+}
 
 function showNotifPopup(nama, noWa, roomId) {
   const old = document.getElementById('notif-popup');
