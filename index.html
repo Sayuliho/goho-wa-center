@@ -36,75 +36,76 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
 .hidden { display: none !important; }
+
+/* LOGIN */
 #login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 100vh; display: flex;
+  align-items: center; justify-content: center;
   background: var(--green-dark);
 }
 .login-box {
-  background: var(--white);
-  border-radius: 16px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 360px;
-  margin: 1rem;
+  background: var(--white); border-radius: 16px;
+  padding: 2rem; width: 100%; max-width: 360px; margin: 1rem;
 }
 .login-logo {
-  width: 48px; height: 48px;
-  background: var(--green-light);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px; color: var(--green-dark);
+  width: 48px; height: 48px; background: var(--green-light);
+  border-radius: 12px; display: flex; align-items: center;
+  justify-content: center; font-size: 24px; color: var(--green-dark);
   margin: 0 auto 1rem;
 }
 .login-title { text-align: center; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
 .login-sub { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 1.5rem; }
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
-.form-group input {
-  width: 100%; padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px; font-size: 14px;
-  font-family: var(--font); outline: none; transition: border 0.2s;
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 14px; font-family: var(--font);
+  outline: none; transition: border 0.2s;
 }
-.form-group input:focus { border-color: var(--green-mid); }
+.form-group input:focus, .form-group textarea:focus { border-color: var(--green-mid); }
 .btn-login {
-  width: 100%; padding: 11px;
-  background: var(--green-mid); color: white;
-  border: none; border-radius: 8px;
-  font-size: 14px; font-weight: 600;
+  width: 100%; padding: 11px; background: var(--green-mid); color: white;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
   font-family: var(--font); cursor: pointer;
 }
 .login-error { color: var(--red); font-size: 12px; text-align: center; margin-top: 8px; }
+
+/* APP */
 #app { display: none; height: 100vh; flex-direction: column; }
 #app.visible { display: flex; }
 .topnav {
-  background: var(--green-dark);
-  padding: 0 16px; height: 48px;
-  display: flex; align-items: center; gap: 12px;
-  flex-shrink: 0;
+  background: var(--green-dark); padding: 0 16px; height: 48px;
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
 }
 .topnav-logo {
-  width: 28px; height: 28px; border-radius: 7px;
-  background: var(--green-light);
+  width: 28px; height: 28px; border-radius: 7px; background: var(--green-light);
   display: flex; align-items: center; justify-content: center;
   color: var(--green-dark); font-size: 14px;
 }
 .topnav-title { color: white; font-size: 14px; font-weight: 600; flex: 1; }
 .topnav-staff { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.75); font-size: 12px; }
 .topnav-av {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--green-light); color: var(--green-dark);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 600;
+  width: 26px; height: 26px; border-radius: 50%; background: var(--green-light);
+  color: var(--green-dark); display: flex; align-items: center;
+  justify-content: center; font-size: 10px; font-weight: 600;
 }
 .topnav-av.owner { background: #EF9F27; color: #412402; }
-.owner-badge {
-  background: rgba(239,159,39,0.25); color: #FAC775;
-  font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500;
+.owner-badge { background: rgba(239,159,39,0.25); color: #FAC775; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+
+/* MAIN TABS (owner) */
+.main-tabs {
+  display: none; background: #0d3d37;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+.main-tabs.visible { display: flex; }
+.main-tab {
+  padding: 8px 16px; color: rgba(255,255,255,0.6); font-size: 12px;
+  cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500;
+  display: flex; align-items: center; gap: 5px;
+}
+.main-tab.active { color: white; border-bottom-color: var(--green-light); }
+
+/* MAIN AREA */
 .main-area { display: flex; flex: 1; overflow: hidden; }
 .sidebar {
   width: 300px; border-right: 1px solid var(--border);
@@ -118,50 +119,37 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 }
 .sb-search { padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .sb-search input {
-  width: 100%; background: var(--bg);
-  border: 1px solid var(--border); border-radius: 8px;
-  padding: 7px 10px; font-size: 12px;
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 10px; font-size: 12px;
   font-family: var(--font); outline: none;
 }
 .sb-tabs { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--border); }
 .sb-tab {
-  padding: 8px 4px; text-align: center;
-  font-size: 10px; color: var(--text-muted); cursor: pointer;
-  border-bottom: 2px solid transparent;
+  padding: 8px 4px; text-align: center; font-size: 10px;
+  color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
 }
 .sb-tab i { display: block; font-size: 16px; margin-bottom: 2px; }
 .sb-tab.active { color: var(--green-mid); border-bottom-color: var(--green-mid); font-weight: 600; }
 .sb-stats {
   display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 6px; padding: 8px;
-  background: var(--bg); border-bottom: 1px solid var(--border);
+  gap: 6px; padding: 8px; background: var(--bg); border-bottom: 1px solid var(--border);
 }
-.sb-stat {
-  background: white; border-radius: 7px; padding: 6px;
-  text-align: center; border: 1px solid var(--border);
-}
+.sb-stat { background: white; border-radius: 7px; padding: 6px; text-align: center; border: 1px solid var(--border); }
 .sb-stat-n { font-size: 18px; font-weight: 600; }
 .sb-stat-l { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
 .n-orange { color: var(--orange); }
 .n-green { color: var(--green-mid); }
 .n-purple { color: var(--purple); }
-.sect-lbl {
-  padding: 7px 10px 3px; font-size: 10px; font-weight: 600;
-  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
-}
+.sect-lbl { padding: 7px 10px 3px; font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .chat-list { overflow-y: auto; flex: 1; }
 .ci {
   display: flex; align-items: flex-start; gap: 8px;
-  padding: 10px 10px; border-bottom: 1px solid var(--border);
+  padding: 10px; border-bottom: 1px solid var(--border);
   cursor: pointer; transition: background 0.15s;
 }
 .ci:hover { background: var(--bg); }
 .ci.active { background: var(--green-bg); }
-.av {
-  width: 38px; height: 38px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 600; flex-shrink: 0;
-}
+.av { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
 .av-a { background: var(--orange-bg); color: #633806; }
 .av-b { background: var(--green-bg); color: #085041; }
 .av-c { background: var(--purple-bg); color: #3C3489; }
@@ -183,25 +171,15 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .ci-time { font-size: 10px; color: var(--text-hint); margin-left: auto; flex-shrink: 0; }
 .ci-by { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
 .empty-state { padding: 2rem; text-align: center; color: var(--text-muted); font-size: 12px; }
+
+/* CHAT PANEL */
 .chat-panel { flex: 1; display: flex; flex-direction: column; background: var(--white); overflow: hidden; }
-.chat-empty {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  color: var(--text-muted); gap: 8px;
-}
+.chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); gap: 8px; }
 .chat-empty i { font-size: 48px; color: var(--border); }
-.chat-top {
-  background: var(--green-mid); padding: 10px 14px;
-  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-}
+.chat-top { background: var(--green-mid); padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .chat-back { color: rgba(255,255,255,0.85); font-size: 20px; cursor: pointer; display: none; }
 @media (max-width: 700px) { .chat-back { display: block; } }
-.chat-top-av {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: #5DCAA5; color: #04342C;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 600; flex-shrink: 0;
-}
+.chat-top-av { width: 36px; height: 36px; border-radius: 50%; background: #5DCAA5; color: #04342C; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
 .chat-top-info { flex: 1; }
 .chat-top-name { color: white; font-size: 14px; font-weight: 600; }
 .chat-top-sub { color: rgba(255,255,255,0.75); font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 1px; }
@@ -215,54 +193,25 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .b-cust { background: white; border-radius: 0 10px 10px 10px; }
 .b-staff { background: var(--bubble-staff); border-radius: 10px 0 10px 10px; }
 .b-bot { background: var(--bubble-bot); border-radius: 10px; border: 1px solid #B5D4F4; }
-.b-txt { font-size: 13px; color: #111; line-height: 1.45; }
+.b-txt { font-size: 13px; color: #111; line-height: 1.45; white-space: pre-wrap; }
 .b-meta { font-size: 10px; color: #888; text-align: right; margin-top: 2px; }
 .b-bot-lbl { font-size: 10px; color: var(--blue); font-weight: 600; margin-bottom: 2px; }
-.action-row {
-  display: flex; gap: 6px; padding: 8px 12px;
-  background: var(--bg); border-top: 1px solid var(--border);
-  flex-shrink: 0; flex-wrap: wrap;
-}
-.abtn {
-  padding: 7px 12px; border-radius: 8px;
-  font-size: 11px; font-weight: 600; cursor: pointer;
-  border: 1px solid; display: flex; align-items: center;
-  gap: 5px; font-family: var(--font);
-}
+.action-row { display: flex; gap: 6px; padding: 8px 12px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+.abtn { padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid; display: flex; align-items: center; gap: 5px; font-family: var(--font); }
 .abtn-note { background: white; color: var(--text-muted); border-color: var(--border); }
 .abtn-booked { background: var(--green-bg); color: #085041; border-color: #5DCAA5; }
 .abtn-lepas { background: var(--orange-bg); color: #633806; border-color: #EF9F27; }
 .abtn-selesai { background: var(--green-mid); color: white; border-color: var(--green-mid); }
 .abtn-ambil { background: var(--green-mid); color: white; border-color: var(--green-mid); }
-.reply-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; background: white;
-  border-top: 1px solid var(--border); flex-shrink: 0;
-}
+.reply-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: white; border-top: 1px solid var(--border); flex-shrink: 0; }
 .reply-row i { font-size: 20px; color: var(--text-muted); cursor: pointer; }
-#reply-input {
-  flex: 1; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 20px; padding: 9px 14px; font-size: 13px;
-  font-family: var(--font); outline: none; resize: none;
-  max-height: 100px;
-}
-.reply-send {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--green-mid); color: white; border: none;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; cursor: pointer; flex-shrink: 0;
-}
-.notes-panel {
-  width: 200px; border-left: 1px solid var(--border);
-  display: flex; flex-direction: column; background: white;
-  flex-shrink: 0;
-}
+#reply-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 9px 14px; font-size: 13px; font-family: var(--font); outline: none; resize: none; max-height: 100px; }
+.reply-send { width: 36px; height: 36px; border-radius: 50%; background: var(--green-mid); color: white; border: none; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+
+/* NOTES PANEL */
+.notes-panel { width: 200px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: white; flex-shrink: 0; }
 @media (max-width: 900px) { .notes-panel { display: none; } }
-.np-title {
-  padding: 10px 12px; border-bottom: 1px solid var(--border);
-  font-size: 12px; font-weight: 600;
-  display: flex; align-items: center; gap: 6px;
-}
+.np-title { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .info-block { padding: 8px 12px; border-bottom: 1px solid var(--border); }
 .info-lbl { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .info-val { font-size: 12px; color: var(--text); }
@@ -270,16 +219,91 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .note-txt { font-size: 11px; color: var(--text); line-height: 1.4; }
 .note-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
 .note-add { padding: 8px 12px; font-size: 11px; color: var(--blue); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+/* POLL DOT */
 .poll-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-light); display: inline-block; animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.toast {
-  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-  background: #333; color: white; padding: 8px 16px;
-  border-radius: 20px; font-size: 12px; z-index: 999;
-  opacity: 0; transition: opacity 0.3s; pointer-events: none;
-}
+
+/* TOAST */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
 .toast.show { opacity: 1; }
 .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 12px; }
+
+/* ===================== CONTACT BOOK ===================== */
+.page-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--white); }
+.page-panel.active { display: flex; }
+.page-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.page-header h3 { font-size: 14px; font-weight: 600; flex: 1; }
+.search-inp {
+  flex: 1; padding: 7px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 12px; font-family: var(--font); outline: none;
+}
+.btn-primary { background: var(--green-mid); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: var(--font); display: flex; align-items: center; gap: 5px; }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: var(--font); }
+.btn-wa { background: #25D366; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+
+.contact-list { overflow-y: auto; flex: 1; }
+.contact-card { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+.contact-card:hover { background: var(--bg); }
+.contact-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--green-bg); color: #085041; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; flex-shrink: 0; }
+.contact-info { flex: 1; }
+.contact-name { font-size: 13px; font-weight: 600; }
+.contact-wa { font-size: 11px; color: var(--text-muted); }
+.contact-meta { font-size: 11px; color: var(--text-hint); margin-top: 1px; }
+.contact-badge { background: var(--green-bg); color: var(--green-mid); border-radius: 10px; padding: 2px 8px; font-size: 10px; font-weight: 600; }
+
+/* MODAL */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-box { background: white; border-radius: 14px; width: 90%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal-wide { max-width: 640px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-header h3 { font-size: 15px; font-weight: 600; }
+.modal-header button { background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; line-height: 1; }
+.modal-body { padding: 16px 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* CONTACT DETAIL */
+.detail-grid { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 12px; }
+.detail-info p { margin: 4px 0; font-size: 12px; color: var(--text-muted); }
+.detail-info p strong { color: var(--text); }
+.detail-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.inner-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.inner-tab { padding: 5px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; cursor: pointer; background: white; font-family: var(--font); color: var(--text-muted); }
+.inner-tab.active { background: var(--green-mid); color: white; border-color: var(--green-mid); }
+.history-item { background: var(--bg); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid var(--green-mid); }
+.history-tipe { font-size: 10px; color: var(--green-mid); font-weight: 700; text-transform: uppercase; margin-bottom: 3px; }
+.history-detail { font-size: 13px; font-weight: 600; color: var(--text); }
+.history-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ===================== OWNER DASHBOARD ===================== */
+.owner-dash { overflow-y: auto; flex: 1; padding: 16px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.kpi-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid var(--border); text-align: center; }
+.kpi-number { font-size: 32px; font-weight: 700; }
+.kpi-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+.kpi-waiting .kpi-number { color: var(--orange); }
+.kpi-active .kpi-number { color: var(--blue); }
+.kpi-booked .kpi-number { color: var(--green-mid); }
+.kpi-closed .kpi-number { color: var(--text-hint); }
+.kpi-customers .kpi-number { color: var(--purple); }
+.alert-box { background: var(--red-bg); border: 1px solid #EFA5A5; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+.alert-box h4 { color: var(--red); font-size: 13px; margin-bottom: 8px; }
+.alert-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(163,45,45,0.1); font-size: 12px; color: var(--red); }
+.alert-item:last-child { border-bottom: none; }
+.alert-assign { background: var(--red); color: white; border: none; padding: 3px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-family: var(--font); }
+.section-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 16px 0 8px; }
+.staff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.staff-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
+.staff-card-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.staff-role { font-size: 9px; background: var(--green-bg); color: var(--green-mid); padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.staff-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.stat-row { font-size: 11px; color: var(--text-muted); }
+.stat-row span { color: var(--text); font-weight: 600; }
+
+/* ALL CHATS OWNER */
+.filter-bar { display: flex; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.filter-bar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--font); outline: none; }
 </style>
 </head>
 <body>
@@ -315,38 +339,35 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
     </div>
   </div>
 
-  <div class="main-area">
+  <!-- OWNER MAIN TABS -->
+  <div class="main-tabs" id="main-tabs">
+    <div class="main-tab active" onclick="switchMainTab('chat')" id="mtab-chat"><i class="ti ti-message-circle"></i> Chat</div>
+    <div class="main-tab" onclick="switchMainTab('contacts')" id="mtab-contacts"><i class="ti ti-users"></i> Contacts</div>
+    <div class="main-tab" onclick="switchMainTab('dashboard')" id="mtab-dashboard"><i class="ti ti-chart-bar"></i> Dashboard</div>
+    <div class="main-tab" onclick="switchMainTab('allchats')" id="mtab-allchats"><i class="ti ti-layout-list"></i> Semua Chat</div>
+  </div>
+
+  <!-- CHAT PAGE -->
+  <div class="main-area" id="page-chat" style="display:flex;">
     <div class="sidebar" id="sidebar">
       <div class="sb-search">
         <input placeholder="Cari customer..." id="search-input" oninput="filterChats()">
       </div>
       <div class="sb-tabs">
-        <div class="sb-tab active" onclick="switchTab('waiting')" id="tab-waiting">
-          <i class="ti ti-clock"></i>Waiting
-        </div>
-        <div class="sb-tab" onclick="switchTab('mychats')" id="tab-mychats">
-          <i class="ti ti-message-circle"></i>My Chats
-        </div>
-        <div class="sb-tab" onclick="switchTab('all')" id="tab-all">
-          <i class="ti ti-layout-list"></i>Semua
-        </div>
+        <div class="sb-tab active" onclick="switchTab('waiting')" id="tab-waiting"><i class="ti ti-clock"></i>Waiting</div>
+        <div class="sb-tab" onclick="switchTab('mychats')" id="tab-mychats"><i class="ti ti-message-circle"></i>My Chats</div>
+        <div class="sb-tab" onclick="switchTab('all')" id="tab-all"><i class="ti ti-layout-list"></i>Semua</div>
       </div>
       <div class="sb-stats">
         <div class="sb-stat"><div class="sb-stat-n n-orange" id="stat-waiting">0</div><div class="sb-stat-l">Waiting</div></div>
         <div class="sb-stat"><div class="sb-stat-n n-green" id="stat-active">0</div><div class="sb-stat-l">Active</div></div>
         <div class="sb-stat"><div class="sb-stat-n n-purple" id="stat-selesai">0</div><div class="sb-stat-l">Selesai</div></div>
       </div>
-      <div class="chat-list" id="chat-list">
-        <div class="loading">Memuat...</div>
-      </div>
+      <div class="chat-list" id="chat-list"><div class="loading">Memuat...</div></div>
     </div>
 
     <div class="chat-panel" id="chat-panel">
-      <div class="chat-empty" id="chat-empty">
-        <i class="ti ti-messages"></i>
-        <span>Pilih chat untuk mulai</span>
-      </div>
-
+      <div class="chat-empty" id="chat-empty"><i class="ti ti-messages"></i><span>Pilih chat untuk mulai</span></div>
       <div id="chat-active" class="hidden" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
         <div class="chat-top">
           <i class="ti ti-arrow-left chat-back" onclick="backToList()"></i>
@@ -360,8 +381,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
             </div>
           </div>
           <div class="chat-top-acts">
+            <i class="ti ti-user-circle" title="Lihat Contact" onclick="openContactFromChat()"></i>
             <i class="ti ti-notes" onclick="showNoteInput()"></i>
-            <i class="ti ti-dots-vertical"></i>
           </div>
         </div>
         <div class="chat-area" id="chat-area"></div>
@@ -376,35 +397,167 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 
     <div class="notes-panel" id="notes-panel" style="display:none;">
       <div class="np-title"><i class="ti ti-user" style="font-size:14px;"></i> Info customer</div>
-      <div class="info-block">
-        <div class="info-lbl">Nomor WA</div>
-        <div class="info-val" id="np-wa">-</div>
-      </div>
-      <div class="info-block">
-        <div class="info-lbl">Produk</div>
-        <div class="info-val" id="np-produk">-</div>
-      </div>
-      <div class="info-block">
-        <div class="info-lbl">Status</div>
-        <div class="info-val" id="np-status">-</div>
+      <div class="info-block"><div class="info-lbl">Nomor WA</div><div class="info-val" id="np-wa">-</div></div>
+      <div class="info-block"><div class="info-lbl">Produk</div><div class="info-val" id="np-produk">-</div></div>
+      <div class="info-block"><div class="info-lbl">Status</div><div class="info-val" id="np-status">-</div></div>
+      <div class="info-block" id="np-customer-info" style="display:none;">
+        <div class="info-lbl">Customer</div>
+        <div class="info-val" id="np-customer-name" style="font-weight:600;"></div>
+        <div class="info-val" id="np-customer-booking" style="font-size:11px;color:var(--text-muted);"></div>
       </div>
       <div class="np-title" style="margin-top:4px;"><i class="ti ti-notes" style="font-size:14px;"></i> Catatan internal</div>
       <div id="np-notes"></div>
       <div class="note-add" onclick="showNoteInput()"><i class="ti ti-plus" style="font-size:12px;"></i> Tambah catatan</div>
     </div>
   </div>
+
+  <!-- CONTACTS PAGE -->
+  <div class="page-panel" id="page-contacts">
+    <div class="page-header">
+      <h3><i class="ti ti-users" style="font-size:16px;"></i> Contact Book</h3>
+      <input type="text" class="search-inp" id="contact-search" placeholder="Cari nama / nomor / kota..." oninput="searchContacts()">
+      <button class="btn-primary" onclick="showAddContact()"><i class="ti ti-plus"></i> Tambah</button>
+    </div>
+    <div class="contact-list" id="contact-list"><div class="loading">Memuat contacts...</div></div>
+  </div>
+
+  <!-- OWNER DASHBOARD PAGE -->
+  <div class="page-panel" id="page-dashboard">
+    <div class="owner-dash" id="owner-dash-content">
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-waiting"><div class="kpi-number" id="kpi-waiting">-</div><div class="kpi-label">⏳ Waiting</div></div>
+        <div class="kpi-card kpi-active"><div class="kpi-number" id="kpi-active">-</div><div class="kpi-label">💬 Active</div></div>
+        <div class="kpi-card kpi-booked"><div class="kpi-number" id="kpi-booked">-</div><div class="kpi-label">✅ Booked</div></div>
+        <div class="kpi-card kpi-closed"><div class="kpi-number" id="kpi-closed">-</div><div class="kpi-label">🔒 Closed</div></div>
+        <div class="kpi-card kpi-customers"><div class="kpi-number" id="kpi-customers">-</div><div class="kpi-label">👥 Customers</div></div>
+      </div>
+      <div id="alert-box" style="display:none;" class="alert-box">
+        <h4>⚠️ Chat menunggu terlalu lama</h4>
+        <div id="alert-list"></div>
+      </div>
+      <div class="section-title">Performa Staff</div>
+      <div class="staff-grid" id="staff-grid"><div class="loading">Memuat...</div></div>
+    </div>
+  </div>
+
+  <!-- ALL CHATS PAGE (OWNER) -->
+  <div class="page-panel" id="page-allchats">
+    <div class="page-header">
+      <h3><i class="ti ti-layout-list" style="font-size:16px;"></i> Semua Chat</h3>
+    </div>
+    <div class="filter-bar">
+      <select id="filter-status" onchange="filterAllChats()">
+        <option value="">Semua Status</option>
+        <option value="WAITING">Waiting</option>
+        <option value="ASSIGNED">Assigned</option>
+        <option value="FOLLOW_UP">Follow Up</option>
+        <option value="BOOKED">Booked</option>
+        <option value="CLOSED">Closed</option>
+      </select>
+      <select id="filter-staff" onchange="filterAllChats()">
+        <option value="">Semua Staff</option>
+      </select>
+    </div>
+    <div class="contact-list" id="all-chats-list"><div class="loading">Memuat...</div></div>
+  </div>
 </div>
 
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- MODAL: ADD/EDIT CONTACT -->
+<div class="modal" id="modal-contact" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-contact-title">Tambah Contact</h3>
+      <button onclick="closeModal('modal-contact')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="c-original-nowa">
+      <div class="form-group"><label>Nama Customer *</label><input type="text" id="c-nama" placeholder="Nama pemilik nomor WA"></div>
+      <div class="form-group"><label>No WA *</label><input type="text" id="c-nowa" placeholder="628xxxxxxxxx atau 08xxxxxxxxx"></div>
+      <div class="form-group"><label>Email</label><input type="text" id="c-email" placeholder="email@example.com"></div>
+      <div class="form-group"><label>Kota</label><input type="text" id="c-kota" placeholder="Medan, Jakarta, dll"></div>
+      <div class="form-group"><label>Catatan</label><textarea id="c-catatan" rows="3" placeholder="Catatan internal..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-contact')">Batal</button>
+      <button class="btn-primary" onclick="submitContact()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONTACT DETAIL -->
+<div class="modal" id="modal-detail" style="display:none;">
+  <div class="modal-box modal-wide">
+    <div class="modal-header">
+      <h3 id="detail-name">Detail Contact</h3>
+      <button onclick="closeModal('modal-detail')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-info">
+          <p><strong>No WA:</strong> <span id="detail-nowa">-</span></p>
+          <p><strong>Email:</strong> <span id="detail-email">-</span></p>
+          <p><strong>Kota:</strong> <span id="detail-kota">-</span></p>
+          <p><strong>Total Booking:</strong> <span id="detail-booking">-</span></p>
+          <p><strong>Catatan:</strong> <span id="detail-catatan">-</span></p>
+        </div>
+        <div class="detail-actions">
+          <button class="btn-wa btn-sm" onclick="waFromContact()"><i class="ti ti-brand-whatsapp"></i> WA</button>
+          <button class="btn-secondary btn-sm" onclick="editContact()"><i class="ti ti-edit"></i> Edit</button>
+        </div>
+      </div>
+      <div class="inner-tabs">
+        <button class="inner-tab active" onclick="showInnerTab('riwayat', event)">📋 Riwayat Booking</button>
+        <button class="inner-tab" onclick="showInnerTab('passenger', event)">👤 Penumpang</button>
+      </div>
+      <div id="inner-riwayat">
+        <div id="booking-history"><button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">🔍 Muat Riwayat Booking</button></div>
+      </div>
+      <div id="inner-passenger" style="display:none;">
+        <button class="btn-primary btn-sm" style="margin-bottom:10px;" onclick="showAddPassenger()"><i class="ti ti-plus"></i> Tambah Penumpang</button>
+        <div id="passenger-list"><div class="loading">Klik tab untuk muat...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD PASSENGER -->
+<div class="modal" id="modal-passenger" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Tambah Data Penumpang</h3>
+      <button onclick="closeModal('modal-passenger')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nama Lengkap *</label><input type="text" id="p-nama" placeholder="Sesuai KTP/Paspor"></div>
+      <div class="form-group"><label>Jenis Kelamin</label><select id="p-jk"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+      <div class="form-group"><label>Tanggal Lahir</label><input type="date" id="p-tgl"></div>
+      <div class="form-group"><label>No KTP</label><input type="text" id="p-ktp" placeholder="16 digit"></div>
+      <div class="form-group"><label>No Paspor</label><input type="text" id="p-paspor"></div>
+      <div class="form-group"><label>Expiry Paspor</label><input type="date" id="p-expiry"></div>
+      <div class="form-group"><label>Kewarganegaraan</label><input type="text" id="p-warga" value="WNI"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-passenger')">Batal</button>
+      <button class="btn-primary" onclick="submitPassenger()">Simpan</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const API = '/api/proxy';
 let currentStaff = null;
 let currentRoom = null;
 let currentTab = 'waiting';
+let currentMainTab = 'chat';
 let allChats = [];
+let allRoomsCache = [];
+let currentContactNoWa = '';
 let pollInterval = null;
 
+// ==================== UTILS ====================
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -412,27 +565,28 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function escH(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 async function apiGet(params) {
   params._t = Date.now();
   const query = new URLSearchParams(params).toString();
-  const url = '/api/proxy?' + query;
   try {
-    const r = await fetch(url, { method: 'GET', cache: 'no-store' });
-    const text = await r.text();
-    return JSON.parse(text);
-  } catch(e) {
-    return {ok: false, msg: e.toString()};
-  }
+    const r = await fetch('/api/proxy?' + query, { method: 'GET', cache: 'no-store' });
+    return JSON.parse(await r.text());
+  } catch(e) { return {ok: false, msg: e.toString()}; }
 }
 
 async function apiPost(body) {
-  const r = await fetch(API, {
-    method: 'POST',
-    body: JSON.stringify(body)
-  });
+  const r = await fetch(API, { method: 'POST', body: JSON.stringify(body) });
   return r.json();
 }
 
+// ==================== LOGIN ====================
 async function doLogin() {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value.trim();
@@ -448,6 +602,7 @@ async function doLogin() {
       if (currentStaff.role === 'OWNER') {
         document.getElementById('nav-badge').classList.remove('hidden');
         document.getElementById('nav-av').classList.add('owner');
+        document.getElementById('main-tabs').classList.add('visible');
       }
       startPolling();
       loadChats();
@@ -458,17 +613,35 @@ async function doLogin() {
     document.getElementById('login-error').classList.remove('hidden');
   }
 }
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
-document.getElementById('password').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
+// ==================== MAIN TABS (OWNER) ====================
+function switchMainTab(tab) {
+  currentMainTab = tab;
+  ['chat','contacts','dashboard','allchats'].forEach(t => {
+    document.getElementById('mtab-' + t)?.classList.toggle('active', t === tab);
+    const page = document.getElementById('page-' + t);
+    if (page) page.style.display = t === tab ? (t === 'chat' ? 'flex' : 'flex') : 'none';
+    if (page && t !== tab) page.classList.remove('active');
+    if (page && t === tab) page.classList.add('active');
+  });
+  // page-chat pakai display:flex langsung
+  const chatPage = document.getElementById('page-chat');
+  if (chatPage) chatPage.style.display = tab === 'chat' ? 'flex' : 'none';
 
+  if (tab === 'contacts')  loadContacts();
+  if (tab === 'dashboard') loadOwnerStats();
+  if (tab === 'allchats')  loadAllChats();
+}
+
+// ==================== POLLING ====================
 function startPolling() {
   if (pollInterval) clearInterval(pollInterval);
   pollInterval = setInterval(() => {
     loadStats();
     if (currentRoom) loadMessages(currentRoom.roomId, false);
-    else loadChats(false);
+    else if (currentMainTab === 'chat') loadChats(false);
+    if (currentMainTab === 'dashboard') loadOwnerStats();
   }, 4000);
 }
 
@@ -483,21 +656,15 @@ async function loadStats() {
   } catch(e) {}
 }
 
+// ==================== CHAT LIST ====================
 async function loadChats(showLoading = true) {
   if (showLoading) document.getElementById('chat-list').innerHTML = '<div class="loading">Memuat...</div>';
   try {
     let res;
-    if (currentTab === 'waiting') {
-      res = await apiGet({action: 'getWaitingQueue'});
-    } else if (currentTab === 'mychats') {
-      res = await apiGet({action: 'getMyChats', staffName: currentStaff.nama});
-    } else {
-      res = await apiGet({action: 'getAllChats'});
-    }
-    if (res.ok) {
-      allChats = res.data;
-      renderChatList(allChats);
-    }
+    if (currentTab === 'waiting') res = await apiGet({action: 'getWaitingQueue'});
+    else if (currentTab === 'mychats') res = await apiGet({action: 'getMyChats', staffName: currentStaff.nama});
+    else res = await apiGet({action: 'getAllChats'});
+    if (res.ok) { allChats = res.data; renderChatList(allChats); }
     loadStats();
   } catch(e) {
     document.getElementById('chat-list').innerHTML = '<div class="empty-state">Gagal memuat data</div>';
@@ -506,60 +673,41 @@ async function loadChats(showLoading = true) {
 
 function switchTab(tab) {
   currentTab = tab;
-  ['waiting','mychats','all'].forEach(t => {
-    document.getElementById('tab-'+t).classList.toggle('active', t === tab);
-  });
+  ['waiting','mychats','all'].forEach(t => document.getElementById('tab-'+t).classList.toggle('active', t === tab));
   loadChats();
 }
 
 function filterChats() {
   const q = document.getElementById('search-input').value.toLowerCase();
-  const filtered = allChats.filter(c =>
-    String(c.nama).toLowerCase().includes(q) || String(c.noWa).toLowerCase().includes(q)
-  );
-  renderChatList(filtered);
+  renderChatList(allChats.filter(c => String(c.nama).toLowerCase().includes(q) || String(c.noWa).toLowerCase().includes(q)));
 }
 
-function getProdukClass(produk) {
-  const p = (produk||'').toLowerCase();
+function getProdukClass(p) {
+  p = (p||'').toLowerCase();
   if (p.includes('tiket')) return 'p-tiket';
   if (p.includes('hotel')) return 'p-hotel';
   if (p.includes('tour')) return 'p-tour';
   if (p.includes('atraksi')) return 'p-atraksi';
   return 'p-tiket';
 }
-
-function getStatusClass(status) {
-  if (status === 'WAITING') return 'p-wait';
-  if (status === 'ASSIGNED') return 'p-assign';
-  if (status === 'FOLLOW_UP') return 'p-follow';
-  if (status === 'BOOKED') return 'p-booked';
+function getStatusClass(s) {
+  if (s === 'WAITING') return 'p-wait';
+  if (s === 'ASSIGNED') return 'p-assign';
+  if (s === 'FOLLOW_UP') return 'p-follow';
+  if (s === 'BOOKED') return 'p-booked';
   return 'p-assign';
 }
-
-function getAvatarClass(nama) {
-  const classes = ['av-a','av-b','av-c','av-d'];
-  let hash = 0;
-  for (let c of String(nama)) hash += c.charCodeAt(0);
-  return classes[hash % classes.length];
+function getAvatarClass(n) {
+  const cls = ['av-a','av-b','av-c','av-d'];
+  let h = 0; for (let c of String(n)) h += c.charCodeAt(0);
+  return cls[h % cls.length];
 }
-
-function getInitials(nama) {
-  return String(nama).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-}
-
-function formatTime(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  return d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'});
-}
+function getInitials(n) { return String(n).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); }
+function formatTime(ts) { if (!ts) return ''; const d = new Date(ts); return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
 
 function renderChatList(chats) {
   const el = document.getElementById('chat-list');
-  if (!chats || chats.length === 0) {
-    el.innerHTML = '<div class="empty-state">Tidak ada chat</div>';
-    return;
-  }
+  if (!chats || !chats.length) { el.innerHTML = '<div class="empty-state">Tidak ada chat</div>'; return; }
   let html = '';
   if (currentTab === 'waiting') {
     html += '<div class="sect-lbl">Menunggu staff</div>';
@@ -584,19 +732,20 @@ function renderChatItem(c) {
   return `<div class="ci ${isActive?'active':''}" onclick="openChat('${c.roomId}')">
     <div class="av ${getAvatarClass(c.nama)}">${getInitials(c.nama)}</div>
     <div class="ci-body">
-      <div class="ci-name">${c.nama}</div>
-      <div class="ci-prev">${c.lastMsg||'...'}</div>
+      <div class="ci-name">${escH(c.nama)}</div>
+      <div class="ci-prev">${escH(c.lastMsg||'...')}</div>
       <div class="ci-meta">
         <span class="pill ${getStatusClass(c.status)}">${c.status}</span>
         ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
         ${menitAlert ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
       </div>
-      ${c.assignedTo ? `<div class="ci-by">Di-handle: ${c.assignedTo}</div>` : ''}
+      ${c.assignedTo ? `<div class="ci-by">Di-handle: ${escH(c.assignedTo)}</div>` : ''}
     </div>
     <div class="ci-time">${formatTime(c.lastMsgAt)}</div>
   </div>`;
 }
 
+// ==================== OPEN CHAT ====================
 async function openChat(roomId) {
   const chat = allChats.find(c => c.roomId === roomId);
   if (!chat) return;
@@ -612,6 +761,8 @@ async function openChat(roomId) {
   document.getElementById('np-wa').textContent = chat.noWa;
   document.getElementById('np-produk').textContent = chat.produk || '-';
   document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`;
+  // Load customer info di panel kanan
+  loadCustomerInfoPanel(chat.noWa);
   renderActionRow(chat);
   await loadMessages(roomId, true);
   if (window.innerWidth <= 700) {
@@ -619,6 +770,27 @@ async function openChat(roomId) {
     document.getElementById('chat-panel').classList.add('show-mobile');
   }
   renderChatList(allChats);
+}
+
+async function loadCustomerInfoPanel(noWa) {
+  try {
+    const res = await apiGet({action: 'getCustomer', noWa});
+    const panel = document.getElementById('np-customer-info');
+    if (res.customer && res.customer.nama) {
+      panel.style.display = 'block';
+      document.getElementById('np-customer-name').textContent = res.customer.nama;
+      document.getElementById('np-customer-booking').textContent = res.customer.totalBooking ? res.customer.totalBooking + 'x booking' : 'Belum ada booking';
+    } else {
+      panel.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+function openContactFromChat() {
+  if (!currentRoom) return;
+  if (currentStaff.role === 'OWNER') switchMainTab('contacts');
+  currentContactNoWa = currentRoom.noWa;
+  openContactDetail(currentRoom.noWa, currentRoom.nama);
 }
 
 function renderActionRow(chat) {
@@ -637,7 +809,7 @@ function renderActionRow(chat) {
       <button class="abtn abtn-selesai" onclick="selesaiChat()"><i class="ti ti-circle-check"></i> Selesai</button>`;
     reply.style.display = 'flex';
   } else {
-    row.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px;">Di-handle oleh ${chat.assignedTo}</div>`;
+    row.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px;">Di-handle oleh ${escH(chat.assignedTo)}</div>`;
     reply.style.display = 'none';
   }
 }
@@ -655,11 +827,11 @@ async function loadMessages(roomId, scroll) {
 function renderBubble(m) {
   const isStaff = m.sender === 'STAFF';
   const isBot = m.sender === 'BOT';
-  const bubbleCls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
+  const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
   return `<div class="bw ${isStaff?'right':''}">
-    <div class="bubble ${bubbleCls}">
+    <div class="bubble ${cls}">
       ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
-      <div class="b-txt">${m.message}</div>
+      <div class="b-txt">${escH(m.message)}</div>
       <div class="b-meta">${formatTime(m.timestamp)}</div>
     </div>
   </div>`;
@@ -668,98 +840,297 @@ function renderBubble(m) {
 async function ambilChat() {
   if (!currentRoom) return;
   const res = await apiPost({action: 'assignChat', roomId: currentRoom.roomId, staffName: currentStaff.nama});
-  if (res.ok) {
-    showToast('Chat berhasil diambil');
-    currentRoom.status = 'ASSIGNED';
-    currentRoom.assignedTo = currentStaff.nama;
-    renderActionRow(currentRoom);
-    loadChats(false);
-  } else { showToast(res.msg); }
+  if (res.ok) { showToast('Chat berhasil diambil'); currentRoom.status = 'ASSIGNED'; currentRoom.assignedTo = currentStaff.nama; renderActionRow(currentRoom); loadChats(false); }
+  else showToast(res.msg);
 }
-
 async function lepasChat() {
   if (!currentRoom) return;
   const res = await apiPost({action: 'releaseChat', roomId: currentRoom.roomId});
-  if (res.ok) {
-    showToast('Chat dilepas ke waiting queue');
-    currentRoom = null;
-    document.getElementById('chat-active').classList.add('hidden');
-    document.getElementById('chat-empty').classList.remove('hidden');
-    document.getElementById('notes-panel').style.display = 'none';
-    loadChats(false);
-  }
+  if (res.ok) { showToast('Chat dilepas'); currentRoom = null; document.getElementById('chat-active').classList.add('hidden'); document.getElementById('chat-empty').classList.remove('hidden'); document.getElementById('notes-panel').style.display = 'none'; loadChats(false); }
 }
-
 async function selesaiChat() {
   if (!currentRoom) return;
   if (!confirm('Tandai chat ini selesai?')) return;
   const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId});
-  if (res.ok) {
-    showToast('Chat selesai');
-    currentRoom = null;
-    document.getElementById('chat-active').classList.add('hidden');
-    document.getElementById('chat-empty').classList.remove('hidden');
-    document.getElementById('notes-panel').style.display = 'none';
-    loadChats(false);
-  }
+  if (res.ok) { showToast('Chat selesai'); currentRoom = null; document.getElementById('chat-active').classList.add('hidden'); document.getElementById('chat-empty').classList.remove('hidden'); document.getElementById('notes-panel').style.display = 'none'; loadChats(false); }
 }
-
 async function tandaiBooked() {
   if (!currentRoom) return;
   const res = await apiPost({action: 'markBooked', roomId: currentRoom.roomId});
-  if (res.ok) {
-    showToast('Ditandai Booked');
-    currentRoom.status = 'BOOKED';
-    renderActionRow(currentRoom);
-    loadChats(false);
-  }
+  if (res.ok) { showToast('Ditandai Booked'); currentRoom.status = 'BOOKED'; renderActionRow(currentRoom); loadChats(false); }
 }
-
 async function kirimPesan() {
   if (!currentRoom) return;
   const input = document.getElementById('reply-input');
   const msg = input.value.trim();
   if (!msg) return;
   input.value = '';
-  const res = await apiPost({
-    action: 'sendMessage',
-    roomId: currentRoom.roomId,
-    staffName: currentStaff.nama,
-    noWa: currentRoom.noWa,
-    message: msg
-  });
-  if (res.ok) {
-    await loadMessages(currentRoom.roomId, true);
-    loadChats(false);
-  } else {
-    showToast('Gagal kirim pesan');
-    input.value = msg;
-  }
+  const res = await apiPost({action: 'sendMessage', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, message: msg});
+  if (res.ok) { await loadMessages(currentRoom.roomId, true); loadChats(false); }
+  else { showToast('Gagal kirim pesan'); input.value = msg; }
 }
-
-function handleReplyKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    kirimPesan();
-  }
-}
-
+function handleReplyKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kirimPesan(); } }
 async function showNoteInput() {
   const note = prompt('Catatan internal:');
   if (!note || !note.trim()) return;
   const res = await apiPost({action: 'addNote', roomId: currentRoom.roomId, staffName: currentStaff.nama, note: note.trim()});
   if (res.ok) showToast('Catatan disimpan');
 }
-
 function backToList() {
   document.getElementById('sidebar').classList.remove('hide-mobile');
   document.getElementById('chat-panel').classList.remove('show-mobile');
   currentRoom = null;
 }
+function refreshAll() { loadChats(); showToast('Diperbarui'); }
 
-function refreshAll() {
-  loadChats();
-  showToast('Diperbarui');
+// ==================== CONTACT BOOK ====================
+async function loadContacts(query) {
+  const list = document.getElementById('contact-list');
+  list.innerHTML = '<div class="loading">Memuat...</div>';
+  try {
+    const q = query !== undefined ? query : (document.getElementById('contact-search')?.value || '');
+    const res = await apiGet({action: 'getAllCustomers', query: q});
+    if (res.customers && res.customers.length > 0) {
+      list.innerHTML = res.customers.map(c => `
+        <div class="contact-card" onclick="openContactDetail('${escH(c.noWa)}', '${escH(c.nama)}')">
+          <div class="contact-avatar">${(c.nama || '?').charAt(0).toUpperCase()}</div>
+          <div class="contact-info">
+            <div class="contact-name">${c.nama ? escH(c.nama) : '<span style="color:var(--text-hint);font-style:italic;">Belum ada nama</span>'}</div>
+            <div class="contact-wa">📱 ${c.noWa}</div>
+            <div class="contact-meta">${c.kota ? '📍 '+escH(c.kota)+' · ' : ''}${c.source || 'WA'}</div>
+          </div>
+          ${c.totalBooking > 0 ? `<div class="contact-badge">${c.totalBooking}x booking</div>` : ''}
+        </div>`).join('');
+    } else {
+      list.innerHTML = '<div class="empty-state">Belum ada contact</div>';
+    }
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">Gagal memuat</div>';
+  }
+}
+
+function searchContacts() {
+  clearTimeout(window._st);
+  window._st = setTimeout(() => loadContacts(), 400);
+}
+
+function showAddContact() {
+  document.getElementById('modal-contact-title').textContent = 'Tambah Contact';
+  document.getElementById('c-nama').value = '';
+  document.getElementById('c-nowa').value = '';
+  document.getElementById('c-email').value = '';
+  document.getElementById('c-kota').value = '';
+  document.getElementById('c-catatan').value = '';
+  document.getElementById('c-original-nowa').value = '';
+  document.getElementById('modal-contact').style.display = 'flex';
+}
+
+async function submitContact() {
+  const nama = document.getElementById('c-nama').value.trim();
+  const noWa = document.getElementById('c-nowa').value.trim();
+  if (!nama || !noWa) { alert('Nama dan No WA wajib diisi'); return; }
+  try {
+    const res = await apiPost({
+      action: 'saveCustomer', nama, noWa,
+      email: document.getElementById('c-email').value.trim(),
+      kota: document.getElementById('c-kota').value.trim(),
+      catatan: document.getElementById('c-catatan').value.trim(),
+      source: 'MANUAL'
+    });
+    if (res.success) { closeModal('modal-contact'); loadContacts(); showToast('Contact disimpan!'); }
+    else showToast('Gagal menyimpan');
+  } catch(e) { showToast('Error: ' + e); }
+}
+
+async function openContactDetail(noWa, nama) {
+  currentContactNoWa = noWa;
+  document.getElementById('detail-name').textContent = nama || noWa;
+  document.getElementById('detail-nowa').textContent = noWa;
+  document.getElementById('detail-email').textContent = '-';
+  document.getElementById('detail-kota').textContent = '-';
+  document.getElementById('detail-booking').textContent = '-';
+  document.getElementById('detail-catatan').textContent = '-';
+  document.getElementById('booking-history').innerHTML = '<button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">🔍 Muat Riwayat Booking</button>';
+  document.getElementById('passenger-list').innerHTML = '<div class="loading">Klik tab untuk muat...</div>';
+  document.getElementById('modal-detail').style.display = 'flex';
+  showInnerTabById('riwayat');
+  try {
+    const res = await apiGet({action: 'getCustomer', noWa});
+    if (res.customer) {
+      const c = res.customer;
+      document.getElementById('detail-email').textContent = c.email || '-';
+      document.getElementById('detail-kota').textContent = c.kota || '-';
+      document.getElementById('detail-booking').textContent = c.totalBooking || 0;
+      document.getElementById('detail-catatan').textContent = c.catatan || '-';
+    }
+  } catch(e) {}
+}
+
+async function loadBookingHistory() {
+  const box = document.getElementById('booking-history');
+  box.innerHTML = '<div class="loading">Memuat riwayat... (harap tunggu)</div>';
+  try {
+    const res = await apiGet({action: 'getBookingHistory', noWa: currentContactNoWa});
+    const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
+    if (res.history && res.history.length > 0) {
+      document.getElementById('detail-booking').textContent = res.total;
+      box.innerHTML = res.history.map(h => `
+        <div class="history-item">
+          <div class="history-tipe">${icon[h.tipe]||'📋'} ${h.tipe}</div>
+          <div class="history-detail">${escH(h.detail)}</div>
+          <div class="history-meta">📅 ${h.tglEvent} &nbsp;|&nbsp; 🛒 ${h.tglBeli} &nbsp;|&nbsp; ${escH(h.extra)}</div>
+          <div class="history-meta">Tamu: ${escH(h.namaTamu)}</div>
+        </div>`).join('');
+    } else {
+      box.innerHTML = '<div class="empty-state">Belum ada riwayat booking</div>';
+    }
+  } catch(e) {
+    box.innerHTML = '<div class="empty-state">Gagal memuat riwayat</div>';
+  }
+}
+
+async function loadPassengers() {
+  const list = document.getElementById('passenger-list');
+  list.innerHTML = '<div class="loading">Memuat...</div>';
+  try {
+    const res = await apiGet({action: 'getPassengers', noWa: currentContactNoWa});
+    if (res.passengers && res.passengers.length > 0) {
+      list.innerHTML = res.passengers.map(p => `
+        <div class="history-item">
+          <div class="history-tipe">👤 ${escH(p.namaLengkap)}</div>
+          <div class="history-meta">${p.jenisKelamin==='L'?'♂️':'♀️'} &nbsp;|&nbsp; Lahir: ${p.tglLahir||'-'}</div>
+          <div class="history-meta">KTP: ${p.noKtp||'-'} &nbsp;|&nbsp; Paspor: ${p.noPaspor||'-'} (exp: ${p.expiryPaspor||'-'})</div>
+        </div>`).join('');
+    } else {
+      list.innerHTML = '<div class="empty-state">Belum ada data penumpang</div>';
+    }
+  } catch(e) {}
+}
+
+function showInnerTab(tab, e) {
+  if (e) { document.querySelectorAll('.inner-tab').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); }
+  showInnerTabById(tab);
+}
+
+function showInnerTabById(tab) {
+  document.getElementById('inner-riwayat').style.display = tab === 'riwayat' ? 'block' : 'none';
+  document.getElementById('inner-passenger').style.display = tab === 'passenger' ? 'block' : 'none';
+  if (tab === 'passenger') loadPassengers();
+}
+
+function waFromContact() { window.open('https://wa.me/' + currentContactNoWa, '_blank'); }
+
+function editContact() {
+  closeModal('modal-detail');
+  document.getElementById('modal-contact-title').textContent = 'Edit Contact';
+  document.getElementById('c-nowa').value = currentContactNoWa;
+  document.getElementById('c-original-nowa').value = currentContactNoWa;
+  document.getElementById('modal-contact').style.display = 'flex';
+}
+
+function showAddPassenger() { document.getElementById('modal-passenger').style.display = 'flex'; }
+
+async function submitPassenger() {
+  const nama = document.getElementById('p-nama').value.trim();
+  if (!nama) { alert('Nama lengkap wajib diisi'); return; }
+  try {
+    const res = await apiPost({
+      action: 'savePassenger', noWaCustomer: currentContactNoWa,
+      namaLengkap: nama, jenisKelamin: document.getElementById('p-jk').value,
+      tglLahir: document.getElementById('p-tgl').value,
+      noKtp: document.getElementById('p-ktp').value.trim(),
+      noPaspor: document.getElementById('p-paspor').value.trim(),
+      expiryPaspor: document.getElementById('p-expiry').value,
+      kewarganegaraan: document.getElementById('p-warga').value.trim()
+    });
+    if (res.success) { closeModal('modal-passenger'); loadPassengers(); showToast('Penumpang disimpan!'); }
+  } catch(e) { showToast('Error: ' + e); }
+}
+
+// ==================== OWNER DASHBOARD ====================
+async function loadOwnerStats() {
+  try {
+    const res = await apiGet({action: 'getOwnerStats'});
+    if (!res.success) return;
+    const s = res.stats;
+    document.getElementById('kpi-waiting').textContent = s.waiting;
+    document.getElementById('kpi-active').textContent = s.assigned + s.followUp;
+    document.getElementById('kpi-booked').textContent = s.booked;
+    document.getElementById('kpi-closed').textContent = s.closed;
+    document.getElementById('kpi-customers').textContent = s.totalCustomers;
+    const alertBox = document.getElementById('alert-box');
+    if (res.alertChats && res.alertChats.length > 0) {
+      alertBox.style.display = 'block';
+      document.getElementById('alert-list').innerHTML = res.alertChats.map(a => `
+        <div class="alert-item">
+          <span>${a.roomId} — ${escH(a.namaCustomer)} (${a.menitWaiting} mnt)</span>
+          <button class="alert-assign" onclick="quickAssign('${a.roomId}')">Assign</button>
+        </div>`).join('');
+    } else { alertBox.style.display = 'none'; }
+    const grid = document.getElementById('staff-grid');
+    if (res.staffStats && res.staffStats.length > 0) {
+      grid.innerHTML = res.staffStats.map(s => `
+        <div class="staff-card">
+          <div class="staff-card-name">
+            <div class="av av-b" style="width:28px;height:28px;font-size:10px;">${getInitials(s.nama)}</div>
+            ${escH(s.nama)} <span class="staff-role">${s.role}</span>
+          </div>
+          <div class="staff-stats">
+            <div class="stat-row">Active: <span>${s.assigned}</span></div>
+            <div class="stat-row">Booked: <span>${s.booked}</span></div>
+            <div class="stat-row">Closed: <span>${s.closed}</span></div>
+          </div>
+        </div>`).join('');
+    } else { grid.innerHTML = '<div class="empty-state">Belum ada data staff</div>'; }
+  } catch(e) { console.error(e); }
+}
+
+// ==================== ALL CHATS (OWNER) ====================
+async function loadAllChats() {
+  const list = document.getElementById('all-chats-list');
+  list.innerHTML = '<div class="loading">Memuat...</div>';
+  try {
+    const res = await apiGet({action: 'getAllChatsOwner'});
+    allRoomsCache = res.rooms || [];
+    const staffSet = new Set(allRoomsCache.map(r => r.assignedTo).filter(Boolean));
+    const sel = document.getElementById('filter-staff');
+    sel.innerHTML = '<option value="">Semua Staff</option>' + [...staffSet].map(s => `<option value="${s}">${s}</option>`).join('');
+    renderAllChats(allRoomsCache);
+  } catch(e) { list.innerHTML = '<div class="empty-state">Gagal memuat</div>'; }
+}
+
+function filterAllChats() {
+  const sf = document.getElementById('filter-status').value;
+  const stf = document.getElementById('filter-staff').value;
+  let filtered = allRoomsCache;
+  if (sf) filtered = filtered.filter(r => r.status === sf);
+  if (stf) filtered = filtered.filter(r => r.assignedTo === stf);
+  renderAllChats(filtered);
+}
+
+function renderAllChats(rooms) {
+  const list = document.getElementById('all-chats-list');
+  const sc = {WAITING:'p-wait',ASSIGNED:'p-assign',FOLLOW_UP:'p-follow',BOOKED:'p-booked',CLOSED:'p-assign'};
+  if (!rooms.length) { list.innerHTML = '<div class="empty-state">Tidak ada chat</div>'; return; }
+  list.innerHTML = rooms.map(r => `
+    <div class="contact-card">
+      <div class="av ${getAvatarClass(r.namaCustomer)}">${getInitials(r.namaCustomer)}</div>
+      <div class="contact-info">
+        <div class="contact-name">${escH(r.namaCustomer)} <span class="pill ${sc[r.status]||'p-assign'}" style="margin-left:4px;">${r.status}</span></div>
+        <div class="contact-wa">📱 ${r.noWa} ${r.assignedTo ? '· '+escH(r.assignedTo) : ''}</div>
+        <div class="contact-meta">${escH(r.lastMessage||'-')}</div>
+      </div>
+      <button class="btn-secondary btn-sm" onclick="quickAssign('${r.roomId}')">Assign</button>
+    </div>`).join('');
+}
+
+async function quickAssign(roomId) {
+  const staffName = prompt('Assign ke staff (masukkan nama):');
+  if (!staffName) return;
+  try {
+    const res = await apiPost({action: 'assignChatOwner', roomId, staffName});
+    if (res.success) { showToast(res.message); loadAllChats(); loadOwnerStats(); }
+  } catch(e) { showToast('Gagal assign'); }
 }
 </script>
 </body>
