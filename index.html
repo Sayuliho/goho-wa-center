@@ -634,15 +634,113 @@ function switchMainTab(tab) {
   if (tab === 'allchats')  loadAllChats();
 }
 
+// ==================== NOTIFICATION SYSTEM ====================
+let lastWaitingRooms = new Set();
+
+function playNotifSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(660, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+function showNotifPopup(nama, noWa, roomId) {
+  const old = document.getElementById('notif-popup');
+  if (old) old.remove();
+  const popup = document.createElement('div');
+  popup.id = 'notif-popup';
+  popup.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💬</div>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:13px;margin-bottom:2px;">Chat Baru Masuk!</div>
+        <div style="font-size:12px;color:#555;">${escH(nama)}</div>
+        <div style="font-size:11px;color:#888;">${noWa} · ${roomId}</div>
+      </div>
+      <button onclick="dismissNotif()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <button onclick="goToWaitingChat('${roomId}')" style="margin-top:8px;width:100%;padding:6px;background:#0F6E56;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);">Ambil Chat →</button>`;
+  popup.style.cssText = 'position:fixed;bottom:24px;right:24px;background:white;border-radius:12px;padding:14px;width:280px;box-shadow:0 8px 30px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(0,0,0,0.08);';
+  document.body.appendChild(popup);
+  setTimeout(() => dismissNotif(), 8000);
+}
+
+function dismissNotif() {
+  const p = document.getElementById('notif-popup');
+  if (p) p.remove();
+}
+
+async function goToWaitingChat(roomId) {
+  dismissNotif();
+  if (currentStaff.role === 'OWNER') switchMainTab('chat');
+  currentTab = 'waiting';
+  ['waiting','mychats','all'].forEach(t => document.getElementById('tab-'+t).classList.toggle('active', t === 'waiting'));
+  await loadChats(false);
+  setTimeout(() => {
+    const chat = allChats.find(c => c.roomId === roomId);
+    if (chat) openChat(roomId);
+  }, 500);
+}
+
+function updateNotifBadge(count) {
+  const tabEl = document.getElementById('mtab-chat') || document.getElementById('tab-waiting');
+  let badge = document.getElementById('notif-badge');
+  if (count > 0) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = 'notif-badge';
+      badge.style.cssText = 'background:#ef4444;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px;vertical-align:middle;';
+      if (tabEl) tabEl.appendChild(badge);
+    }
+    badge.textContent = count;
+    document.title = '(' + count + ') GOHO WA Center';
+  } else {
+    if (badge) badge.remove();
+    document.title = 'GOHO WA Center';
+  }
+}
+
+function checkNewChats(waitingChats) {
+  const newWaitingIds = new Set(waitingChats.map(c => c.roomId));
+  const brandNew = waitingChats.filter(c => !lastWaitingRooms.has(c.roomId));
+  if (brandNew.length > 0 && lastWaitingRooms.size > 0) {
+    playNotifSound();
+    const first = brandNew[0];
+    showNotifPopup(first.nama, first.noWa, first.roomId);
+  }
+  lastWaitingRooms = newWaitingIds;
+  updateNotifBadge(waitingChats.length);
+}
+
 // ==================== POLLING ====================
 function startPolling() {
   if (pollInterval) clearInterval(pollInterval);
+  // Init lastWaitingRooms tanpa trigger notif
+  apiGet({action: 'getWaitingQueue'}).then(res => {
+    if (res.ok) lastWaitingRooms = new Set(res.data.map(c => c.roomId));
+  });
   pollInterval = setInterval(() => {
     loadStats();
     if (currentRoom) loadMessages(currentRoom.roomId, false);
     else if (currentMainTab === 'chat') loadChats(false);
     if (currentMainTab === 'dashboard') loadOwnerStats();
   }, 4000);
+  // Cek chat baru setiap 5 detik
+  setInterval(async () => {
+    try {
+      const res = await apiGet({action: 'getWaitingQueue'});
+      if (res.ok) checkNewChats(res.data);
+    } catch(e) {}
+  }, 5000);
 }
 
 async function loadStats() {
