@@ -209,7 +209,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .reply-send { width: 36px; height: 36px; border-radius: 50%; background: var(--green-mid); color: white; border: none; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; flex-shrink: 0; }
 
 /* NOTES PANEL */
-.notes-panel { width: 200px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: white; flex-shrink: 0; }
+.notes-panel { width: 200px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: white; flex-shrink: 0; overflow-y: auto; }
 @media (max-width: 900px) { .notes-panel { display: none; } }
 .np-title { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .info-block { padding: 8px 12px; border-bottom: 1px solid var(--border); }
