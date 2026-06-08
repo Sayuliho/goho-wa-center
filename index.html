@@ -196,6 +196,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .b-txt { font-size: 13px; color: #111; line-height: 1.45; white-space: pre-wrap; }
 .b-meta { font-size: 10px; color: #888; text-align: right; margin-top: 2px; }
 .b-bot-lbl { font-size: 10px; color: var(--blue); font-weight: 600; margin-bottom: 2px; }
+.b-file { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.04); border-radius: 8px; padding: 8px 10px; margin-bottom: 2px; }
+.b-file i { font-size: 20px; color: var(--red); flex-shrink: 0; }
+.b-file-info { flex: 1; min-width: 0; }
+.b-file-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.b-file-link { font-size: 11px; color: var(--blue); text-decoration: none; }
+.b-file-link:hover { text-decoration: underline; }
+
 .action-row { display: flex; gap: 6px; padding: 8px 12px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
 .abtn { padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid; display: flex; align-items: center; gap: 5px; font-family: var(--font); }
 .abtn-note { background: white; color: var(--text-muted); border-color: var(--border); }
@@ -203,10 +210,34 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .abtn-lepas { background: var(--orange-bg); color: #633806; border-color: #EF9F27; }
 .abtn-selesai { background: var(--green-mid); color: white; border-color: var(--green-mid); }
 .abtn-ambil { background: var(--green-mid); color: white; border-color: var(--green-mid); }
+
+/* REPLY ROW */
 .reply-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: white; border-top: 1px solid var(--border); flex-shrink: 0; }
 .reply-row i { font-size: 20px; color: var(--text-muted); cursor: pointer; }
 #reply-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 9px 14px; font-size: 13px; font-family: var(--font); outline: none; resize: none; max-height: 100px; }
 .reply-send { width: 36px; height: 36px; border-radius: 50%; background: var(--green-mid); color: white; border: none; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+
+/* FILE UPLOAD */
+.file-upload-label {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; position: relative; transition: background 0.15s;
+}
+.file-upload-label:hover { background: var(--green-bg); border-color: var(--green-mid); }
+.file-upload-label i { font-size: 18px; color: var(--text-muted); pointer-events: none; }
+.file-upload-label input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  width: 100%; height: 100%; font-size: 0;
+}
+.upload-bar {
+  display: none; align-items: center; gap: 8px;
+  padding: 6px 14px; background: var(--blue-bg);
+  border-top: 1px solid #B5D4F4; font-size: 11px; color: var(--blue);
+  flex-shrink: 0;
+}
+.upload-bar.show { display: flex; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.spin { animation: spin 1s linear infinite; display: inline-block; }
 
 /* NOTES PANEL */
 .notes-panel { width: 200px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: white; flex-shrink: 0; overflow-y: auto; }
@@ -229,7 +260,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .toast.show { opacity: 1; }
 .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 12px; }
 
-/* ===================== CONTACT BOOK ===================== */
+/* CONTACT BOOK */
 .page-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--white); }
 .page-panel.active { display: flex; }
 .page-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -252,11 +283,15 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .contact-wa { font-size: 11px; color: var(--text-muted); }
 .contact-meta { font-size: 11px; color: var(--text-hint); margin-top: 1px; }
 .contact-badge { background: var(--green-bg); color: var(--green-mid); border-radius: 10px; padding: 2px 8px; font-size: 10px; font-weight: 600; }
+.contact-actions { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0; }
+.btn-chat { background: var(--green-mid); color: white; border: none; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: var(--font); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.btn-chat:hover { background: #0a5a44; }
 
 /* MODAL */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-box { background: white; border-radius: 14px; width: 90%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .modal-wide { max-width: 640px; }
+.modal-sm { max-width: 380px; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
 .modal-header h3 { font-size: 15px; font-weight: 600; }
 .modal-header button { background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; line-height: 1; }
@@ -276,7 +311,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .history-detail { font-size: 13px; font-weight: 600; color: var(--text); }
 .history-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-/* ===================== OWNER DASHBOARD ===================== */
+/* OWNER DASHBOARD */
 .owner-dash { overflow-y: auto; flex: 1; padding: 16px; }
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .kpi-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid var(--border); text-align: center; }
@@ -304,6 +339,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 /* ALL CHATS OWNER */
 .filter-bar { display: flex; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .filter-bar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--font); outline: none; }
+
+/* NEW CHAT MODAL - customer info box */
+.nc-customer-box {
+  background: var(--green-bg); border-radius: 8px; padding: 10px 12px;
+  margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
+}
+.nc-customer-box .av { width: 36px; height: 36px; font-size: 12px; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -389,8 +431,20 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
         <div class="action-row" id="action-row"></div>
         <div class="reply-row" id="reply-row" style="display:none;">
           <i class="ti ti-mood-smile"></i>
-          <textarea id="reply-input" rows="1" placeholder="Ketik pesan..." onkeydown="handleReplyKey(event)"></textarea>
+          <!-- Tombol upload file PDF -->
+          <label class="file-upload-label" title="Kirim file / PDF ke customer">
+            <i class="ti ti-paperclip"></i>
+            <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                   onchange="handleFileUpload(this)">
+          </label>
+          <textarea id="reply-input" rows="1" placeholder="Ketik pesan..."
+                    onkeydown="handleReplyKey(event)"></textarea>
           <button class="reply-send" onclick="kirimPesan()"><i class="ti ti-send"></i></button>
+        </div>
+        <!-- Progress bar upload file -->
+        <div class="upload-bar" id="upload-bar">
+          <i class="ti ti-loader spin"></i>
+          <span id="upload-status">Mengupload file...</span>
         </div>
       </div>
     </div>
@@ -511,6 +565,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
           <p><strong>Catatan:</strong> <span id="detail-catatan">-</span></p>
         </div>
         <div class="detail-actions">
+          <button class="btn-chat btn-sm" onclick="openNewChatFromDetail()"><i class="ti ti-message-circle"></i> Chat</button>
           <button class="btn-wa btn-sm" onclick="waFromContact()"><i class="ti ti-brand-whatsapp"></i> WA</button>
           <button class="btn-secondary btn-sm" onclick="editContact()"><i class="ti ti-edit"></i> Edit</button>
         </div>
@@ -553,6 +608,38 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   </div>
 </div>
 
+<!-- MODAL: NEW CHAT -->
+<div class="modal" id="modal-new-chat" style="display:none;">
+  <div class="modal-box modal-sm">
+    <div class="modal-header">
+      <h3>💬 Kirim Pesan ke Customer</h3>
+      <button onclick="closeModal('modal-new-chat')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="nc-customer-box">
+        <div class="av av-b" id="nc-av">?</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;" id="nc-nama">-</div>
+          <div style="font-size:11px;color:var(--text-muted);" id="nc-nowa">-</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Pesan *</label>
+        <textarea id="nc-pesan" rows="4" placeholder="Ketik pesan yang akan dikirim ke customer..."></textarea>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:-6px;">
+        💡 Pesan akan dikirim via Fonnte (0818132230). Room chat baru akan dibuat di tab My Chats.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-new-chat')">Batal</button>
+      <button class="btn-primary" id="nc-send-btn" onclick="submitNewChat()">
+        <i class="ti ti-send"></i> Kirim
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = '/api/proxy';
 let currentStaff = null;
@@ -562,8 +649,9 @@ let currentMainTab = 'chat';
 let allChats = [];
 let allRoomsCache = [];
 let currentContactNoWa = '';
+let currentContactNama = '';
 let pollInterval = null;
-let lastMsgCount = 0; // ← track jumlah pesan untuk auto-scroll
+let lastMsgCount = 0;
 
 // ==================== UTILS ====================
 function showToast(msg) {
@@ -630,9 +718,10 @@ function switchMainTab(tab) {
   ['chat','contacts','dashboard','allchats'].forEach(t => {
     document.getElementById('mtab-' + t)?.classList.toggle('active', t === tab);
     const page = document.getElementById('page-' + t);
-    if (page) page.style.display = t === tab ? (t === 'chat' ? 'flex' : 'flex') : 'none';
-    if (page && t !== tab) page.classList.remove('active');
-    if (page && t === tab) page.classList.add('active');
+    if (page) {
+      page.style.display = t === tab ? 'flex' : 'none';
+      page.classList.toggle('active', t === tab);
+    }
   });
   const chatPage = document.getElementById('page-chat');
   if (chatPage) chatPage.style.display = tab === 'chat' ? 'flex' : 'none';
@@ -891,7 +980,7 @@ async function openChat(roomId) {
   const chat = allChats.find(c => c.roomId === roomId);
   if (!chat) return;
   currentRoom = chat;
-  lastMsgCount = 0; // reset counter saat buka chat baru
+  lastMsgCount = 0;
   document.getElementById('chat-empty').classList.add('hidden');
   document.getElementById('chat-active').classList.remove('hidden');
   document.getElementById('notes-panel').style.display = 'flex';
@@ -968,17 +1057,20 @@ function openContactFromChat() {
   if (!currentRoom) return;
   if (currentStaff.role === 'OWNER') switchMainTab('contacts');
   currentContactNoWa = currentRoom.noWa;
+  currentContactNama = currentRoom.nama;
   openContactDetail(currentRoom.noWa, currentRoom.nama);
 }
 
 function renderActionRow(chat) {
   const row = document.getElementById('action-row');
   const reply = document.getElementById('reply-row');
+  const uploadBar = document.getElementById('upload-bar');
   const isMyChat = chat.assignedTo === currentStaff.nama;
   const isOwner = currentStaff.role === 'OWNER';
   if (chat.status === 'WAITING') {
     row.innerHTML = `<button class="abtn abtn-ambil" onclick="ambilChat()"><i class="ti ti-hand-grab"></i> Ambil Chat</button>`;
     reply.style.display = 'none';
+    uploadBar.classList.remove('show');
   } else if (isMyChat || isOwner) {
     row.innerHTML = `
       <button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button>
@@ -989,31 +1081,25 @@ function renderActionRow(chat) {
   } else {
     row.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px;">Di-handle oleh ${escH(chat.assignedTo)}</div>`;
     reply.style.display = 'none';
+    uploadBar.classList.remove('show');
   }
 }
 
-// ==================== LOAD MESSAGES (dengan auto-scroll fix) ====================
+// ==================== LOAD MESSAGES ====================
 async function loadMessages(roomId, forceScroll) {
   try {
     const res = await apiGet({action: 'getChatMessages', roomId});
     if (!res.ok) return;
     const area = document.getElementById('chat-area');
-
-    // Cek apakah user sedang scroll di bawah (dalam 100px dari bawah)
     const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
     const newCount = res.data.length;
     const hasNewMessages = newCount > lastMsgCount;
 
     area.innerHTML = res.data.map(m => renderBubble(m)).join('');
 
-    // Auto-scroll jika:
-    // 1. Pertama buka chat (forceScroll = true)
-    // 2. Ada pesan baru DAN user sudah di posisi bawah
-    // 3. Ada pesan baru (untuk memastikan pesan terbaru selalu terlihat)
     if (forceScroll || isNearBottom || hasNewMessages) {
       area.scrollTop = area.scrollHeight;
     }
-
     lastMsgCount = newCount;
   } catch(e) {}
 }
@@ -1022,6 +1108,28 @@ function renderBubble(m) {
   const isStaff = m.sender === 'STAFF';
   const isBot = m.sender === 'BOT';
   const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
+
+  // Deteksi apakah pesan berisi file (format: "📎 filename\nurl")
+  const fileMatch = m.message && m.message.match(/^📎 (.+)\n(https?:\/\/.+)$/);
+  if (fileMatch) {
+    const fileName = fileMatch[1];
+    const fileUrl = fileMatch[2];
+    const ispdf = fileName.toLowerCase().endsWith('.pdf');
+    return `<div class="bw ${isStaff?'right':''}">
+      <div class="bubble ${cls}">
+        ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
+        <div class="b-file">
+          <i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i>
+          <div class="b-file-info">
+            <div class="b-file-name">${escH(fileName)}</div>
+            <a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a>
+          </div>
+        </div>
+        <div class="b-meta">${formatTime(m.timestamp)}</div>
+      </div>
+    </div>`;
+  }
+
   return `<div class="bw ${isStaff?'right':''}">
     <div class="bubble ${cls}">
       ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
@@ -1038,7 +1146,6 @@ async function ambilChat() {
     showToast('Chat berhasil diambil');
     currentRoom.status = 'ASSIGNED';
     currentRoom.assignedTo = currentStaff.nama;
-    // Update header status
     document.getElementById('ct-status').textContent = 'ASSIGNED';
     document.getElementById('ct-by').textContent = 'Di-handle: ' + currentStaff.nama;
     document.getElementById('np-status').innerHTML = `<span class="pill p-assign">ASSIGNED</span>`;
@@ -1052,8 +1159,7 @@ async function lepasChat() {
   const res = await apiPost({action: 'releaseChat', roomId: currentRoom.roomId});
   if (res.ok) {
     showToast('Chat dilepas');
-    currentRoom = null;
-    lastMsgCount = 0;
+    currentRoom = null; lastMsgCount = 0;
     document.getElementById('chat-active').classList.add('hidden');
     document.getElementById('chat-empty').classList.remove('hidden');
     document.getElementById('notes-panel').style.display = 'none';
@@ -1067,8 +1173,7 @@ async function selesaiChat() {
   const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId});
   if (res.ok) {
     showToast('Chat selesai');
-    currentRoom = null;
-    lastMsgCount = 0;
+    currentRoom = null; lastMsgCount = 0;
     document.getElementById('chat-active').classList.add('hidden');
     document.getElementById('chat-empty').classList.remove('hidden');
     document.getElementById('notes-panel').style.display = 'none';
@@ -1090,7 +1195,7 @@ async function kirimPesan() {
   input.value = '';
   const res = await apiPost({action: 'sendMessage', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, message: msg});
   if (res.ok) {
-    lastMsgCount = 0; // reset agar loadMessages tahu ada pesan baru
+    lastMsgCount = 0;
     await loadMessages(currentRoom.roomId, true);
     loadChats(false);
   } else {
@@ -1111,11 +1216,130 @@ async function showNoteInput() {
 function backToList() {
   document.getElementById('sidebar').classList.remove('hide-mobile');
   document.getElementById('chat-panel').classList.remove('show-mobile');
-  currentRoom = null;
-  lastMsgCount = 0;
+  currentRoom = null; lastMsgCount = 0;
 }
 
 function refreshAll() { loadChats(); showToast('Diperbarui'); }
+
+// ==================== KIRIM FILE / PDF ====================
+async function handleFileUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
+
+  const file = input.files[0];
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  if (file.size > maxSize) {
+    showToast('File terlalu besar, maksimal 10MB');
+    input.value = '';
+    return;
+  }
+
+  const bar = document.getElementById('upload-bar');
+  const status = document.getElementById('upload-status');
+  bar.classList.add('show');
+  status.textContent = 'Mengupload ' + file.name + '...';
+
+  try {
+    const base64 = await fileToBase64(file);
+
+    const res = await apiPost({
+      action: 'sendFile',
+      roomId: currentRoom.roomId,
+      staffName: currentStaff.nama,
+      noWa: currentRoom.noWa,
+      fileName: file.name,
+      fileType: file.type || 'application/octet-stream',
+      fileData: base64
+    });
+
+    if (res.ok) {
+      status.textContent = '✅ ' + file.name + ' berhasil dikirim!';
+      setTimeout(() => bar.classList.remove('show'), 3000);
+      lastMsgCount = 0;
+      await loadMessages(currentRoom.roomId, true);
+      loadChats(false);
+      showToast('File berhasil dikirim ke customer');
+    } else {
+      status.textContent = '❌ Gagal: ' + (res.msg || 'Error tidak diketahui');
+      setTimeout(() => bar.classList.remove('show'), 4000);
+      showToast('Gagal kirim file: ' + (res.msg || ''));
+    }
+  } catch(e) {
+    status.textContent = '❌ Error: ' + e.toString();
+    setTimeout(() => bar.classList.remove('show'), 4000);
+    showToast('Error upload file');
+  } finally {
+    input.value = '';
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// ==================== NEW CHAT FROM CONTACT ====================
+let newChatTarget = { noWa: '', nama: '' };
+
+function openNewChatModal(noWa, nama) {
+  newChatTarget = { noWa, nama };
+  document.getElementById('nc-av').textContent = getInitials(nama || noWa);
+  document.getElementById('nc-nama').textContent = nama || noWa;
+  document.getElementById('nc-nowa').textContent = noWa;
+  document.getElementById('nc-pesan').value = '';
+  document.getElementById('modal-new-chat').style.display = 'flex';
+  setTimeout(() => document.getElementById('nc-pesan').focus(), 150);
+}
+
+function openNewChatFromDetail() {
+  closeModal('modal-detail');
+  openNewChatModal(currentContactNoWa, currentContactNama);
+}
+
+async function submitNewChat() {
+  const pesan = document.getElementById('nc-pesan').value.trim();
+  if (!pesan) { showToast('Pesan tidak boleh kosong'); return; }
+
+  const btn = document.getElementById('nc-send-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
+
+  try {
+    const res = await apiPost({
+      action: 'startNewChat',
+      noWa: newChatTarget.noWa,
+      nama: newChatTarget.nama,
+      message: pesan,
+      staffName: currentStaff.nama
+    });
+
+    if (res.ok) {
+      closeModal('modal-new-chat');
+      showToast('✅ Pesan terkirim ke ' + newChatTarget.nama);
+
+      // Pindah ke tab My Chats dan buka room
+      if (currentStaff.role === 'OWNER') switchMainTab('chat');
+      currentTab = 'mychats';
+      ['waiting','mychats','all'].forEach(t =>
+        document.getElementById('tab-'+t).classList.toggle('active', t === 'mychats'));
+      await loadChats(false);
+      if (res.roomId) {
+        setTimeout(() => openChat(res.roomId), 600);
+      }
+    } else {
+      showToast('Gagal kirim: ' + (res.msg || 'Error'));
+    }
+  } catch(e) {
+    showToast('Error: ' + e.toString());
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-send"></i> Kirim';
+  }
+}
 
 // ==================== CONTACT BOOK ====================
 async function loadContacts(query) {
@@ -1133,7 +1357,12 @@ async function loadContacts(query) {
             <div class="contact-wa">📱 ${c.noWa}</div>
             <div class="contact-meta">${c.kota ? '📍 '+escH(c.kota)+' · ' : ''}${c.source || 'WA'}</div>
           </div>
-          ${c.totalBooking > 0 ? `<div class="contact-badge">${c.totalBooking}x booking</div>` : ''}
+          <div class="contact-actions">
+            ${c.totalBooking > 0 ? `<div class="contact-badge">${c.totalBooking}x booking</div>` : ''}
+            <button class="btn-chat" onclick="event.stopPropagation();openNewChatModal('${escH(c.noWa)}','${escH(c.nama)}')">
+              <i class="ti ti-message-circle"></i> Chat
+            </button>
+          </div>
         </div>`).join('');
     } else {
       list.innerHTML = '<div class="empty-state">Belum ada contact</div>';
@@ -1178,6 +1407,7 @@ async function submitContact() {
 
 async function openContactDetail(noWa, nama) {
   currentContactNoWa = noWa;
+  currentContactNama = nama || noWa;
   document.getElementById('detail-name').textContent = nama || noWa;
   document.getElementById('detail-nowa').textContent = noWa;
   document.getElementById('detail-email').textContent = '-';
