@@ -1068,7 +1068,9 @@ function renderActionRow(chat) {
   const isMyChat = chat.assignedTo === currentStaff.nama;
   const isOwner = currentStaff.role === 'OWNER';
   if (chat.status === 'WAITING') {
-    row.innerHTML = `<button class="abtn abtn-ambil" onclick="ambilChat()"><i class="ti ti-hand-grab"></i> Ambil Chat</button>`;
+    row.innerHTML = `
+      <button class="abtn abtn-ambil" onclick="ambilChat()"><i class="ti ti-hand-grab"></i> Ambil Chat</button>
+      <button class="abtn abtn-selesai" onclick="selesaiChatDariWaiting()"><i class="ti ti-circle-check"></i> Selesai</button>`;
     reply.style.display = 'none';
     uploadBar.classList.remove('show');
   } else if (isMyChat || isOwner) {
@@ -1180,7 +1182,19 @@ async function selesaiChat() {
     loadChats(false);
   }
 }
-
+async function selesaiChatDariWaiting() {
+  if (!currentRoom) return;
+  if (!confirm('Tutup chat ini tanpa dibalas?')) return;
+  const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId});
+  if (res.ok) {
+    showToast('Chat ditutup');
+    currentRoom = null; lastMsgCount = 0;
+    document.getElementById('chat-active').classList.add('hidden');
+    document.getElementById('chat-empty').classList.remove('hidden');
+    document.getElementById('notes-panel').style.display = 'none';
+    loadChats(false);
+  }
+}
 async function tandaiBooked() {
   if (!currentRoom) return;
   const res = await apiPost({action: 'markBooked', roomId: currentRoom.roomId});
