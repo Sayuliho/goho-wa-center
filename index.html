@@ -344,9 +344,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .notes-panel {
   width: 210px; border-left: 1px solid var(--border);
   display: flex; flex-direction: column; background: white;
-  flex-shrink: 0; overflow-y: auto; overflow-x: hidden;
+  flex-shrink: 0; overflow-y: scroll; overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  height: 100%;
+  position: relative;
 }
 .np-title {
   padding: 10px 12px; border-bottom: 1px solid var(--border);
