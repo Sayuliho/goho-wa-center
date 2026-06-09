@@ -2,8 +2,15 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GOHO WA Center</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a2e2a">
+<meta name="mobile-web-app-capable" content="true">
+<meta name="apple-mobile-web-app-capable" content="true">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GOHO WA">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
@@ -32,12 +39,19 @@
   --white: #fff;
   --radius: 10px;
   --font: 'Plus Jakarta Sans', sans-serif;
+
+  /* STATUS COLORS - Fase 1 */
+  --bot-bg: #EAF3FF;
+  --bot-border: #B5D4F4;
+  --needhuman-bg: #FFF3CD;
+  --needhuman-border: #EFC96A;
+  --unread-badge: #25D366;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; overflow: hidden; }
 .hidden { display: none !important; }
 
-/* LOGIN */
+/* ===================== LOGIN ===================== */
 #login-page {
   min-height: 100vh; display: flex;
   align-items: center; justify-content: center;
@@ -70,12 +84,14 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 }
 .login-error { color: var(--red); font-size: 12px; text-align: center; margin-top: 8px; }
 
-/* APP */
-#app { display: none; height: 100vh; flex-direction: column; }
+/* ===================== APP SHELL ===================== */
+#app { display: none; height: 100dvh; flex-direction: column; }
 #app.visible { display: flex; }
+
 .topnav {
   background: var(--green-dark); padding: 0 16px; height: 48px;
   display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  position: relative; z-index: 10;
 }
 .topnav-logo {
   width: 28px; height: 28px; border-radius: 7px; background: var(--green-light);
@@ -92,73 +108,118 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .topnav-av.owner { background: #EF9F27; color: #412402; }
 .owner-badge { background: rgba(239,159,39,0.25); color: #FAC775; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
 
-/* MAIN TABS (owner) */
+/* ===================== MAIN TABS ===================== */
 .main-tabs {
   display: none; background: #0d3d37;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
 }
 .main-tabs.visible { display: flex; }
 .main-tab {
   padding: 8px 16px; color: rgba(255,255,255,0.6); font-size: 12px;
   cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500;
-  display: flex; align-items: center; gap: 5px;
+  display: flex; align-items: center; gap: 5px; position: relative;
 }
 .main-tab.active { color: white; border-bottom-color: var(--green-light); }
+.tab-badge {
+  background: #ef4444; color: white; border-radius: 10px;
+  padding: 1px 5px; font-size: 9px; font-weight: 700; min-width: 16px; text-align: center;
+}
 
-/* MAIN AREA */
-.main-area { display: flex; flex: 1; overflow: hidden; }
+/* ===================== LAYOUT ===================== */
+.main-area { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+/* ===================== SIDEBAR ===================== */
 .sidebar {
   width: 300px; border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
   background: var(--white); flex-shrink: 0;
-}
-@media (max-width: 700px) {
-  .sidebar { width: 100%; }
-  .sidebar.hide-mobile { display: none; }
-  .chat-panel.show-mobile { display: flex; }
+  transition: transform 0.25s ease;
 }
 .sb-search { padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .sb-search input {
   width: 100%; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 8px; padding: 7px 10px; font-size: 12px;
+  border-radius: 20px; padding: 7px 12px; font-size: 12px;
   font-family: var(--font); outline: none;
 }
-.sb-tabs { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--border); }
+
+/* ===================== SIDEBAR TABS — simplified ===================== */
+.sb-tabs { display: grid; grid-template-columns: repeat(2,1fr); border-bottom: 1px solid var(--border); }
 .sb-tab {
-  padding: 8px 4px; text-align: center; font-size: 10px;
+  padding: 9px 4px; text-align: center; font-size: 11px;
   color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+  font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: color 0.15s;
 }
-.sb-tab i { display: block; font-size: 16px; margin-bottom: 2px; }
+.sb-tab i { font-size: 15px; }
 .sb-tab.active { color: var(--green-mid); border-bottom-color: var(--green-mid); font-weight: 600; }
-.sb-stats {
-  display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 6px; padding: 8px; background: var(--bg); border-bottom: 1px solid var(--border);
+.sb-tab-badge {
+  background: #ef4444; color: white; border-radius: 10px;
+  padding: 1px 5px; font-size: 9px; font-weight: 700;
+  min-width: 16px; text-align: center; line-height: 14px;
 }
-.sb-stat { background: white; border-radius: 7px; padding: 6px; text-align: center; border: 1px solid var(--border); }
-.sb-stat-n { font-size: 18px; font-weight: 600; }
+
+/* Stats row — compact */
+.sb-stats-row {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.sb-stat-pill {
+  flex: 1; padding: 5px 4px; text-align: center;
+  border-right: 1px solid var(--border);
+}
+.sb-stat-pill:last-child { border-right: none; }
+.sb-stat-n { font-size: 16px; font-weight: 700; }
 .sb-stat-l { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
 .n-orange { color: var(--orange); }
 .n-green { color: var(--green-mid); }
 .n-purple { color: var(--purple); }
+
 .sect-lbl { padding: 7px 10px 3px; font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.chat-list { overflow-y: auto; flex: 1; }
+.chat-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+
+/* ===================== CHAT ITEM — WA-style ===================== */
 .ci {
-  display: flex; align-items: flex-start; gap: 8px;
-  padding: 10px; border-bottom: 1px solid var(--border);
-  cursor: pointer; transition: background 0.15s;
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s; position: relative;
 }
+.ci:active { background: var(--bg); }
 .ci:hover { background: var(--bg); }
-.ci.active { background: var(--green-bg); }
-.av { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.ci.selected { background: var(--green-bg); }
+
+/* Status color strip on left edge */
+.ci.status-bot { border-left: 3px solid var(--bot-border); background: var(--bot-bg); }
+.ci.status-bot:hover { background: #d8eafc; }
+.ci.status-needhuman { border-left: 3px solid var(--needhuman-border); background: var(--needhuman-bg); }
+.ci.status-needhuman:hover { background: #fde8b0; }
+.ci.status-assigned { border-left: 3px solid transparent; background: white; }
+.ci.selected { background: var(--green-bg) !important; border-left-color: var(--green-mid) !important; }
+
+.av { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
 .av-a { background: var(--orange-bg); color: #633806; }
 .av-b { background: var(--green-bg); color: #085041; }
 .av-c { background: var(--purple-bg); color: #3C3489; }
 .av-d { background: var(--blue-bg); color: #0C447C; }
-.ci-body { flex: 1; min-width: 0; }
-.ci-name { font-size: 13px; font-weight: 600; color: var(--text); }
-.ci-prev { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
-.ci-meta { display: flex; align-items: center; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+
+.ci-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ci-row1 { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.ci-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.ci-time { font-size: 10px; color: var(--text-hint); flex-shrink: 0; }
+.ci-row2 { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.ci-prev { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+
+/* Unread badge — WA style */
+.unread-badge {
+  background: var(--unread-badge); color: white;
+  border-radius: 50%; min-width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+  padding: 0 4px;
+}
+.ci-row3 { display: flex; align-items: center; gap: 4px; margin-top: 1px; flex-wrap: wrap; }
 .pill { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+.p-bot { background: var(--bot-bg); color: var(--blue); border: 1px solid var(--bot-border); }
 .p-wait { background: var(--orange-bg); color: var(--orange); }
 .p-assign { background: var(--green-bg); color: var(--green-mid); }
 .p-follow { background: var(--purple-bg); color: var(--purple); }
@@ -168,62 +229,95 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .p-hotel { background: var(--purple-bg); color: var(--purple); }
 .p-tour { background: var(--green-bg); color: var(--green-mid); }
 .p-atraksi { background: var(--orange-bg); color: var(--orange); }
-.ci-time { font-size: 10px; color: var(--text-hint); margin-left: auto; flex-shrink: 0; }
-.ci-by { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.ci-handler { font-size: 10px; color: var(--text-muted); }
+
 .empty-state { padding: 2rem; text-align: center; color: var(--text-muted); font-size: 12px; }
 
-/* CHAT PANEL */
-.chat-panel { flex: 1; display: flex; flex-direction: column; background: var(--white); overflow: hidden; }
-.chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); gap: 8px; }
-.chat-empty i { font-size: 48px; color: var(--border); }
-.chat-top { background: var(--green-mid); padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.chat-back { color: rgba(255,255,255,0.85); font-size: 20px; cursor: pointer; display: none; }
-@media (max-width: 700px) { .chat-back { display: block; } }
-.chat-top-av { width: 36px; height: 36px; border-radius: 50%; background: #5DCAA5; color: #04342C; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
-.chat-top-info { flex: 1; }
+/* ===================== CHAT PANEL ===================== */
+.chat-panel { flex: 1; display: flex; flex-direction: column; background: var(--white); overflow: hidden; min-width: 0; }
+.chat-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; color: var(--text-muted); gap: 10px;
+  background: var(--chat-bg);
+}
+.chat-empty i { font-size: 56px; color: rgba(0,0,0,0.1); }
+.chat-empty p { font-size: 14px; color: rgba(0,0,0,0.35); }
+
+.chat-top {
+  background: var(--green-mid); padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.chat-back { color: rgba(255,255,255,0.85); font-size: 22px; cursor: pointer; display: none; }
+.chat-top-av {
+  width: 38px; height: 38px; border-radius: 50%; background: #5DCAA5;
+  color: #04342C; display: flex; align-items: center;
+  justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0;
+}
+.chat-top-info { flex: 1; min-width: 0; }
 .chat-top-name { color: white; font-size: 14px; font-weight: 600; }
-.chat-top-sub { color: rgba(255,255,255,0.75); font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 1px; }
-.chat-top-status { background: rgba(255,255,255,0.2); border-radius: 4px; padding: 1px 6px; }
-.chat-top-acts { display: flex; gap: 12px; color: rgba(255,255,255,0.8); font-size: 18px; }
+.chat-top-sub { color: rgba(255,255,255,0.75); font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+.chat-top-status { background: rgba(255,255,255,0.2); border-radius: 4px; padding: 1px 6px; font-size: 10px; }
+.chat-top-acts { display: flex; gap: 14px; color: rgba(255,255,255,0.85); font-size: 19px; }
 .chat-top-acts i { cursor: pointer; }
-.chat-area { background: var(--chat-bg); flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+.chat-area {
+  background: var(--chat-bg); flex: 1; overflow-y: auto;
+  padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  -webkit-overflow-scrolling: touch;
+}
 .bw { display: flex; flex-direction: column; }
 .bw.right { align-items: flex-end; }
-.bubble { padding: 7px 10px 4px; border-radius: 10px; max-width: 70%; display: inline-block; }
-.b-cust { background: white; border-radius: 0 10px 10px 10px; }
-.b-staff { background: var(--bubble-staff); border-radius: 10px 0 10px 10px; }
+.bubble { padding: 7px 10px 4px; border-radius: 10px; max-width: 75%; display: inline-block; }
+.b-cust { background: white; border-radius: 0 10px 10px 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+.b-staff { background: var(--bubble-staff); border-radius: 10px 0 10px 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 .b-bot { background: var(--bubble-bot); border-radius: 10px; border: 1px solid #B5D4F4; }
-.b-txt { font-size: 13px; color: #111; line-height: 1.45; white-space: pre-wrap; }
+.b-txt { font-size: 13px; color: #111; line-height: 1.5; white-space: pre-wrap; }
 .b-meta { font-size: 10px; color: #888; text-align: right; margin-top: 2px; }
 .b-bot-lbl { font-size: 10px; color: var(--blue); font-weight: 600; margin-bottom: 2px; }
 .b-file { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.04); border-radius: 8px; padding: 8px 10px; margin-bottom: 2px; }
-.b-file i { font-size: 20px; color: var(--red); flex-shrink: 0; }
+.b-file i { font-size: 22px; color: var(--red); flex-shrink: 0; }
 .b-file-info { flex: 1; min-width: 0; }
 .b-file-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .b-file-link { font-size: 11px; color: var(--blue); text-decoration: none; }
 .b-file-link:hover { text-decoration: underline; }
 
-.action-row { display: flex; gap: 6px; padding: 8px 12px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
-.abtn { padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid; display: flex; align-items: center; gap: 5px; font-family: var(--font); }
+/* ===================== ACTION ROW ===================== */
+.action-row {
+  display: flex; gap: 6px; padding: 8px 12px;
+  background: var(--bg); border-top: 1px solid var(--border);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.abtn {
+  padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 600;
+  cursor: pointer; border: 1px solid; display: flex; align-items: center;
+  gap: 5px; font-family: var(--font);
+}
 .abtn-note { background: white; color: var(--text-muted); border-color: var(--border); }
 .abtn-booked { background: var(--green-bg); color: #085041; border-color: #5DCAA5; }
 .abtn-lepas { background: var(--orange-bg); color: #633806; border-color: #EF9F27; }
 .abtn-selesai { background: var(--green-mid); color: white; border-color: var(--green-mid); }
-.abtn-ambil { background: var(--green-mid); color: white; border-color: var(--green-mid); }
 
-/* REPLY ROW — FIX: textarea auto-expand */
-.reply-row { display: flex; align-items: flex-end; gap: 8px; padding: 8px 12px; background: white; border-top: 1px solid var(--border); flex-shrink: 0; }
+/* ===================== REPLY ROW ===================== */
+.reply-row {
+  display: flex; align-items: flex-end; gap: 8px;
+  padding: 8px 12px; background: white;
+  border-top: 1px solid var(--border); flex-shrink: 0;
+}
 .reply-row i { font-size: 20px; color: var(--text-muted); cursor: pointer; margin-bottom: 6px; }
 #reply-input {
   flex: 1; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 16px; padding: 9px 14px; font-size: 13px;
+  border-radius: 20px; padding: 9px 14px; font-size: 13px;
   font-family: var(--font); outline: none; resize: none;
-  min-height: 40px; max-height: 200px; overflow-y: auto;
-  line-height: 1.45; transition: height 0.1s;
+  min-height: 40px; max-height: 160px; overflow-y: auto;
+  line-height: 1.45;
 }
-.reply-send { width: 36px; height: 36px; border-radius: 50%; background: var(--green-mid); color: white; border: none; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; flex-shrink: 0; margin-bottom: 0; }
+.reply-send {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--green-mid);
+  color: white; border: none; display: flex; align-items: center;
+  justify-content: center; font-size: 17px; cursor: pointer; flex-shrink: 0;
+}
 
-/* FILE UPLOAD */
+/* ===================== FILE UPLOAD ===================== */
 .file-upload-label {
   width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
   background: var(--bg); display: flex; align-items: center; justify-content: center;
@@ -246,10 +340,16 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 
-/* NOTES PANEL */
-.notes-panel { width: 200px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: white; flex-shrink: 0; overflow-y: auto; }
-@media (max-width: 900px) { .notes-panel { display: none; } }
-.np-title { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+/* ===================== NOTES PANEL ===================== */
+.notes-panel {
+  width: 210px; border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; background: white;
+  flex-shrink: 0; overflow-y: auto;
+}
+.np-title {
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;
+}
 .info-block { padding: 8px 12px; border-bottom: 1px solid var(--border); }
 .info-lbl { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .info-val { font-size: 12px; color: var(--text); }
@@ -258,34 +358,35 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .note-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
 .note-add { padding: 8px 12px; font-size: 11px; color: var(--blue); cursor: pointer; display: flex; align-items: center; gap: 4px; }
 
-/* POLL DOT */
-.poll-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-light); display: inline-block; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-/* TOAST */
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+/* ===================== TOAST ===================== */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #222; color: white; padding: 9px 18px; border-radius: 20px;
+  font-size: 12px; z-index: 9999; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
 .toast.show { opacity: 1; }
 .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 12px; }
 
-/* CONTACT BOOK */
+/* ===================== CONTACT BOOK ===================== */
 .page-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--white); }
 .page-panel.active { display: flex; }
-.page-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.page-header h3 { font-size: 14px; font-weight: 600; flex: 1; }
+.page-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+.page-header h3 { font-size: 14px; font-weight: 600; flex: 1; min-width: 120px; }
 .search-inp {
-  flex: 1; padding: 7px 12px; border: 1px solid var(--border);
+  flex: 1; min-width: 120px; padding: 7px 12px; border: 1px solid var(--border);
   border-radius: 8px; font-size: 12px; font-family: var(--font); outline: none;
 }
-.btn-primary { background: var(--green-mid); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: var(--font); display: flex; align-items: center; gap: 5px; }
+.btn-primary { background: var(--green-mid); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: var(--font); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
 .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: var(--font); }
 .btn-wa { background: #25D366; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
 .btn-sm { padding: 5px 10px; font-size: 11px; }
 
-.contact-list { overflow-y: auto; flex: 1; }
+.contact-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
 .contact-card { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
 .contact-card:hover { background: var(--bg); }
 .contact-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--green-bg); color: #085041; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; flex-shrink: 0; }
-.contact-info { flex: 1; }
+.contact-info { flex: 1; min-width: 0; }
 .contact-name { font-size: 13px; font-weight: 600; }
 .contact-wa { font-size: 11px; color: var(--text-muted); }
 .contact-meta { font-size: 11px; color: var(--text-hint); margin-top: 1px; }
@@ -294,9 +395,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .btn-chat { background: var(--green-mid); color: white; border: none; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: var(--font); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .btn-chat:hover { background: #0a5a44; }
 
-/* MODAL */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-box { background: white; border-radius: 14px; width: 90%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+/* ===================== MODAL ===================== */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+.modal-box { background: white; border-radius: 14px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .modal-wide { max-width: 640px; }
 .modal-sm { max-width: 380px; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
@@ -305,7 +406,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .modal-body { padding: 16px 20px; }
 .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
 
-/* CONTACT DETAIL */
+/* ===================== CONTACT DETAIL ===================== */
 .detail-grid { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 12px; }
 .detail-info p { margin: 4px 0; font-size: 12px; color: var(--text-muted); }
 .detail-info p strong { color: var(--text); }
@@ -318,11 +419,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .history-detail { font-size: 13px; font-weight: 600; color: var(--text); }
 .history-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-/* OWNER DASHBOARD */
+/* ===================== OWNER DASHBOARD ===================== */
 .owner-dash { overflow-y: auto; flex: 1; padding: 16px; }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .kpi-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid var(--border); text-align: center; }
-.kpi-number { font-size: 32px; font-weight: 700; }
+.kpi-number { font-size: 30px; font-weight: 700; }
 .kpi-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 .kpi-waiting .kpi-number { color: var(--orange); }
 .kpi-active .kpi-number { color: var(--blue); }
@@ -343,20 +444,69 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .stat-row { font-size: 11px; color: var(--text-muted); }
 .stat-row span { color: var(--text); font-weight: 600; }
 
-/* ALL CHATS OWNER */
-.filter-bar { display: flex; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+/* ===================== ALL CHATS ===================== */
+.filter-bar { display: flex; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
 .filter-bar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--font); outline: none; }
 
-/* NEW CHAT MODAL - customer info box */
+/* ===================== NEW CHAT MODAL ===================== */
 .nc-customer-box {
   background: var(--green-bg); border-radius: 8px; padding: 10px 12px;
   margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
 }
 .nc-customer-box .av { width: 36px; height: 36px; font-size: 12px; flex-shrink: 0; }
+
+/* ===================== POLL DOT ===================== */
+.poll-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-light); display: inline-block; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ===================== RESPONSIVE — Mobile / Tablet ===================== */
+@media (max-width: 768px) {
+  .sidebar {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    z-index: 100; width: 100%;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.1);
+  }
+  .sidebar.slide-out {
+    transform: translateX(-100%);
+  }
+  .chat-panel {
+    width: 100%;
+  }
+  .notes-panel { display: none !important; }
+  .chat-back { display: block !important; }
+  .main-area { position: relative; }
+}
+@media (min-width: 769px) and (max-width: 1100px) {
+  .sidebar { width: 260px; }
+  .notes-panel { display: none; }
+}
+@media (min-width: 1100px) {
+  .notes-panel { display: flex; }
+}
+
+/* ===================== LEGEND STRIP ===================== */
+.legend-strip {
+  display: flex; gap: 10px; padding: 5px 10px;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  font-size: 10px; color: var(--text-muted); flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.ld-bot { background: var(--bot-border); }
+.ld-human { background: var(--needhuman-border); }
+.ld-assigned { background: var(--green-light); }
+
+/* ===================== ARSIP LABEL ===================== */
+.arsip-badge {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 2px 7px; font-size: 10px;
+  color: var(--text-muted); font-weight: 600;
+}
 </style>
 </head>
 <body>
 
+<!-- ==================== LOGIN ==================== -->
 <div id="login-page">
   <div class="login-box">
     <div class="login-logo"><i class="ti ti-messages"></i></div>
@@ -375,6 +525,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   </div>
 </div>
 
+<!-- ==================== APP ==================== -->
 <div id="app">
   <div class="topnav">
     <div class="topnav-logo"><i class="ti ti-messages"></i></div>
@@ -383,40 +534,65 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       <span id="nav-badge" class="owner-badge hidden">Owner</span>
       <div class="topnav-av" id="nav-av">SY</div>
       <span id="nav-name">SY</span>
-      <i class="ti ti-refresh" style="font-size:16px;cursor:pointer;" onclick="refreshAll()"></i>
+      <i class="ti ti-refresh" style="font-size:16px;cursor:pointer;" onclick="refreshAll()" title="Refresh"></i>
       <span class="poll-dot"></span>
     </div>
   </div>
 
-  <!-- OWNER MAIN TABS -->
+  <!-- OWNER TABS -->
   <div class="main-tabs" id="main-tabs">
-    <div class="main-tab active" onclick="switchMainTab('chat')" id="mtab-chat"><i class="ti ti-message-circle"></i> Chat</div>
+    <div class="main-tab active" onclick="switchMainTab('chat')" id="mtab-chat">
+      <i class="ti ti-message-circle"></i> Chat
+      <span class="tab-badge hidden" id="mtab-chat-badge">0</span>
+    </div>
     <div class="main-tab" onclick="switchMainTab('contacts')" id="mtab-contacts"><i class="ti ti-users"></i> Contacts</div>
     <div class="main-tab" onclick="switchMainTab('dashboard')" id="mtab-dashboard"><i class="ti ti-chart-bar"></i> Dashboard</div>
     <div class="main-tab" onclick="switchMainTab('allchats')" id="mtab-allchats"><i class="ti ti-layout-list"></i> Semua Chat</div>
   </div>
 
-  <!-- CHAT PAGE -->
+  <!-- ==================== CHAT PAGE ==================== -->
   <div class="main-area" id="page-chat" style="display:flex;">
+    <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
       <div class="sb-search">
-        <input placeholder="Cari customer..." id="search-input" oninput="filterChats()">
+        <input placeholder="🔍 Cari customer..." id="search-input" oninput="filterChats()">
       </div>
+
+      <!-- 2 tabs: Aktif & Arsip -->
       <div class="sb-tabs">
-        <div class="sb-tab active" onclick="switchTab('waiting')" id="tab-waiting"><i class="ti ti-clock"></i>Waiting</div>
-        <div class="sb-tab" onclick="switchTab('mychats')" id="tab-mychats"><i class="ti ti-message-circle"></i>My Chats</div>
-        <div class="sb-tab" onclick="switchTab('all')" id="tab-all"><i class="ti ti-layout-list"></i>Semua</div>
+        <div class="sb-tab active" onclick="switchTab('aktif')" id="tab-aktif">
+          <i class="ti ti-message-circle"></i> Aktif
+          <span class="sb-tab-badge hidden" id="badge-aktif">0</span>
+        </div>
+        <div class="sb-tab" onclick="switchTab('arsip')" id="tab-arsip">
+          <i class="ti ti-archive"></i> Arsip
+        </div>
       </div>
-      <div class="sb-stats">
-        <div class="sb-stat"><div class="sb-stat-n n-orange" id="stat-waiting">0</div><div class="sb-stat-l">Waiting</div></div>
-        <div class="sb-stat"><div class="sb-stat-n n-green" id="stat-active">0</div><div class="sb-stat-l">Active</div></div>
-        <div class="sb-stat"><div class="sb-stat-n n-purple" id="stat-selesai">0</div><div class="sb-stat-l">Selesai</div></div>
+
+      <!-- Stats -->
+      <div class="sb-stats-row">
+        <div class="sb-stat-pill"><div class="sb-stat-n n-orange" id="stat-bot">0</div><div class="sb-stat-l">Bot</div></div>
+        <div class="sb-stat-pill"><div class="sb-stat-n n-orange" id="stat-waiting">0</div><div class="sb-stat-l">Menunggu</div></div>
+        <div class="sb-stat-pill"><div class="sb-stat-n n-green" id="stat-active">0</div><div class="sb-stat-l">Ditangani</div></div>
+        <div class="sb-stat-pill" style="border-right:none;"><div class="sb-stat-n n-purple" id="stat-selesai">0</div><div class="sb-stat-l">Arsip</div></div>
       </div>
+
+      <!-- Legend -->
+      <div class="legend-strip">
+        <div class="legend-item"><div class="legend-dot ld-bot"></div>Bot handle</div>
+        <div class="legend-item"><div class="legend-dot ld-human"></div>Perlu staff</div>
+        <div class="legend-item"><div class="legend-dot ld-assigned"></div>Staff handle</div>
+      </div>
+
       <div class="chat-list" id="chat-list"><div class="loading">Memuat...</div></div>
     </div>
 
+    <!-- CHAT PANEL -->
     <div class="chat-panel" id="chat-panel">
-      <div class="chat-empty" id="chat-empty"><i class="ti ti-messages"></i><span>Pilih chat untuk mulai</span></div>
+      <div class="chat-empty" id="chat-empty">
+        <i class="ti ti-messages"></i>
+        <p>Pilih chat untuk mulai</p>
+      </div>
       <div id="chat-active" class="hidden" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
         <div class="chat-top">
           <i class="ti ti-arrow-left chat-back" onclick="backToList()"></i>
@@ -426,12 +602,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
             <div class="chat-top-sub">
               <span id="ct-wa">-</span>
               <span class="chat-top-status" id="ct-status">-</span>
-              <span id="ct-by"></span>
+              <span id="ct-by" style="font-size:10px;"></span>
             </div>
           </div>
           <div class="chat-top-acts">
             <i class="ti ti-user-circle" title="Lihat Contact" onclick="openContactFromChat()"></i>
-            <i class="ti ti-notes" onclick="showNoteInput()"></i>
+            <i class="ti ti-notes" onclick="showNoteInput()" title="Catatan"></i>
           </div>
         </div>
         <div class="chat-area" id="chat-area"></div>
@@ -440,8 +616,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
           <i class="ti ti-mood-smile" style="margin-bottom:6px;"></i>
           <label class="file-upload-label" title="Kirim file / PDF ke customer">
             <i class="ti ti-paperclip"></i>
-            <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                   onchange="handleFileUpload(this)">
+            <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFileUpload(this)">
           </label>
           <textarea id="reply-input" rows="1" placeholder="Ketik pesan..."
                     oninput="autoExpandTextarea(this)"
@@ -455,6 +630,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       </div>
     </div>
 
+    <!-- NOTES PANEL -->
     <div class="notes-panel" id="notes-panel" style="display:none;">
       <div class="np-title"><i class="ti ti-user" style="font-size:14px;"></i> Info customer</div>
       <div class="info-block"><div class="info-lbl">Nomor WA</div><div class="info-val" id="np-wa">-</div></div>
@@ -478,7 +654,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
     </div>
   </div>
 
-  <!-- CONTACTS PAGE -->
+  <!-- ==================== CONTACTS PAGE ==================== -->
   <div class="page-panel" id="page-contacts">
     <div class="page-header">
       <h3><i class="ti ti-users" style="font-size:16px;"></i> Contact Book</h3>
@@ -488,14 +664,14 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
     <div class="contact-list" id="contact-list"><div class="loading">Memuat contacts...</div></div>
   </div>
 
-  <!-- OWNER DASHBOARD PAGE -->
+  <!-- ==================== OWNER DASHBOARD ==================== -->
   <div class="page-panel" id="page-dashboard">
     <div class="owner-dash" id="owner-dash-content">
       <div class="kpi-grid">
-        <div class="kpi-card kpi-waiting"><div class="kpi-number" id="kpi-waiting">-</div><div class="kpi-label">⏳ Waiting</div></div>
-        <div class="kpi-card kpi-active"><div class="kpi-number" id="kpi-active">-</div><div class="kpi-label">💬 Active</div></div>
+        <div class="kpi-card kpi-waiting"><div class="kpi-number" id="kpi-waiting">-</div><div class="kpi-label">⏳ Menunggu</div></div>
+        <div class="kpi-card kpi-active"><div class="kpi-number" id="kpi-active">-</div><div class="kpi-label">💬 Ditangani</div></div>
         <div class="kpi-card kpi-booked"><div class="kpi-number" id="kpi-booked">-</div><div class="kpi-label">✅ Booked</div></div>
-        <div class="kpi-card kpi-closed"><div class="kpi-number" id="kpi-closed">-</div><div class="kpi-label">🔒 Closed</div></div>
+        <div class="kpi-card kpi-closed"><div class="kpi-number" id="kpi-closed">-</div><div class="kpi-label">🔒 Arsip</div></div>
         <div class="kpi-card kpi-customers"><div class="kpi-number" id="kpi-customers">-</div><div class="kpi-label">👥 Customers</div></div>
       </div>
       <div id="alert-box" style="display:none;" class="alert-box">
@@ -507,7 +683,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
     </div>
   </div>
 
-  <!-- ALL CHATS PAGE (OWNER) -->
+  <!-- ==================== ALL CHATS (OWNER) ==================== -->
   <div class="page-panel" id="page-allchats">
     <div class="page-header">
       <h3><i class="ti ti-layout-list" style="font-size:16px;"></i> Semua Chat</h3>
@@ -515,11 +691,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
     <div class="filter-bar">
       <select id="filter-status" onchange="filterAllChats()">
         <option value="">Semua Status</option>
-        <option value="WAITING">Waiting</option>
-        <option value="ASSIGNED">Assigned</option>
+        <option value="WAITING">Menunggu</option>
+        <option value="ASSIGNED">Ditangani</option>
         <option value="FOLLOW_UP">Follow Up</option>
         <option value="BOOKED">Booked</option>
-        <option value="CLOSED">Closed</option>
+        <option value="CLOSED">Arsip</option>
       </select>
       <select id="filter-staff" onchange="filterAllChats()">
         <option value="">Semua Staff</option>
@@ -532,7 +708,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- MODAL: ADD/EDIT CONTACT -->
+<!-- ==================== MODALS ==================== -->
+<!-- ADD/EDIT CONTACT -->
 <div class="modal" id="modal-contact" style="display:none;">
   <div class="modal-box">
     <div class="modal-header">
@@ -554,7 +731,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   </div>
 </div>
 
-<!-- MODAL: CONTACT DETAIL -->
+<!-- CONTACT DETAIL -->
 <div class="modal" id="modal-detail" style="display:none;">
   <div class="modal-box modal-wide">
     <div class="modal-header">
@@ -591,7 +768,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   </div>
 </div>
 
-<!-- MODAL: ADD PASSENGER -->
+<!-- ADD PASSENGER -->
 <div class="modal" id="modal-passenger" style="display:none;">
   <div class="modal-box">
     <div class="modal-header">
@@ -614,7 +791,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   </div>
 </div>
 
-<!-- MODAL: NEW CHAT -->
+<!-- NEW CHAT -->
 <div class="modal" id="modal-new-chat" style="display:none;">
   <div class="modal-box modal-sm">
     <div class="modal-header">
@@ -634,7 +811,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
         <textarea id="nc-pesan" rows="4" placeholder="Ketik pesan yang akan dikirim ke customer..."></textarea>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-top:-6px;">
-        💡 Pesan akan dikirim via Fonnte (0818132230). Room chat baru akan dibuat di tab My Chats.
+        💡 Pesan akan dikirim via Fonnte. Room chat baru akan dibuat di tab Aktif.
       </div>
     </div>
     <div class="modal-footer">
@@ -646,35 +823,38 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   </div>
 </div>
 
+<!-- ==================== JAVASCRIPT ==================== -->
 <script>
 const API = '/api/proxy';
 let currentStaff = null;
 let currentRoom = null;
-let currentTab = 'waiting';
+let currentTab = 'aktif';
 let currentMainTab = 'chat';
 let allChats = [];
 let allRoomsCache = [];
-let allContactsCache = []; // ← FIX: cache untuk search lokal
+let allContactsCache = [];
 let currentContactNoWa = '';
 let currentContactNama = '';
 let pollInterval = null;
 let lastMsgCount = 0;
 
-// ==================== UTILS ====================
+// Unread tracking per room: { roomId: count }
+let unreadCounts = {};
+// Last seen timestamp per room to detect new messages
+let lastSeenAt = {};
+
+// ===================== UTILS =====================
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
-
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
 function escH(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 async function apiGet(params) {
   params._t = Date.now();
   const query = new URLSearchParams(params).toString();
@@ -683,19 +863,31 @@ async function apiGet(params) {
     return JSON.parse(await r.text());
   } catch(e) { return {ok: false, msg: e.toString()}; }
 }
-
 async function apiPost(body) {
   const r = await fetch(API, { method: 'POST', body: JSON.stringify(body) });
   return r.json();
 }
-
-// ==================== TEXTAREA AUTO-EXPAND ====================
 function autoExpandTextarea(el) {
   el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
 }
 
-// ==================== LOGIN ====================
+// ===================== PWA / SERVICE WORKER =====================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// App badge API (for PWA taskbar badge)
+function updateAppBadge(count) {
+  if ('setAppBadge' in navigator) {
+    if (count > 0) navigator.setAppBadge(count).catch(() => {});
+    else navigator.clearAppBadge().catch(() => {});
+  }
+}
+
+// ===================== LOGIN =====================
 async function doLogin() {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value.trim();
@@ -725,7 +917,7 @@ async function doLogin() {
 }
 document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
-// ==================== MAIN TABS (OWNER) ====================
+// ===================== MAIN TABS =====================
 function switchMainTab(tab) {
   currentMainTab = tab;
   ['chat','contacts','dashboard','allchats'].forEach(t => {
@@ -738,13 +930,12 @@ function switchMainTab(tab) {
   });
   const chatPage = document.getElementById('page-chat');
   if (chatPage) chatPage.style.display = tab === 'chat' ? 'flex' : 'none';
-
   if (tab === 'contacts')  loadContacts();
   if (tab === 'dashboard') loadOwnerStats();
   if (tab === 'allchats')  loadAllChats();
 }
 
-// ==================== NOTIFICATION SYSTEM ====================
+// ===================== SOUND & NOTIFICATION =====================
 let lastWaitingRooms = new Set();
 
 function playNotifSound() {
@@ -754,8 +945,7 @@ function playNotifSound() {
     function beep(freq, start, duration) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
       gain.gain.setValueAtTime(0.8, ctx.currentTime + start);
@@ -763,9 +953,7 @@ function playNotifSound() {
       osc.start(ctx.currentTime + start);
       osc.stop(ctx.currentTime + start + duration);
     }
-    beep(880, 0.0, 0.18);
-    beep(880, 0.25, 0.18);
-    beep(1050, 0.5, 0.25);
+    beep(880, 0.0, 0.18); beep(880, 0.25, 0.18); beep(1050, 0.5, 0.25);
   } catch(e) {}
 }
 
@@ -774,10 +962,7 @@ function unlockAudio() {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const buf = ctx.createBuffer(1, 1, 22050);
     const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.connect(ctx.destination);
-    src.start(0);
-    ctx.resume();
+    src.buffer = buf; src.connect(ctx.destination); src.start(0); ctx.resume();
   } catch(e) {}
   document.removeEventListener('click', unlockAudio);
   document.removeEventListener('keydown', unlockAudio);
@@ -791,8 +976,7 @@ function showSoundActivation() {
   btn.innerHTML = '🔔 Aktifkan Suara Notif';
   btn.style.cssText = 'position:fixed;top:56px;right:12px;background:#0F6E56;color:white;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;z-index:9998;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
   btn.onclick = function() {
-    unlockAudio();
-    playNotifSound();
+    unlockAudio(); playNotifSound();
     btn.innerHTML = '✅ Suara Aktif';
     btn.style.background = '#666';
     setTimeout(() => btn.remove(), 2000);
@@ -811,49 +995,44 @@ function showNotifPopup(nama, noWa, roomId) {
       <div style="flex:1;">
         <div style="font-weight:600;font-size:13px;margin-bottom:2px;">Chat Baru Masuk!</div>
         <div style="font-size:12px;color:#555;">${escH(nama)}</div>
-        <div style="font-size:11px;color:#888;">${noWa} · ${roomId}</div>
+        <div style="font-size:11px;color:#888;">${noWa}</div>
       </div>
       <button onclick="dismissNotif()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;line-height:1;">✕</button>
     </div>
-    <button onclick="goToWaitingChat('${roomId}')" style="margin-top:8px;width:100%;padding:6px;background:#0F6E56;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);">Ambil Chat →</button>`;
+    <button onclick="goToChat('${roomId}')" style="margin-top:8px;width:100%;padding:6px;background:#0F6E56;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);">Buka Chat →</button>`;
   popup.style.cssText = 'position:fixed;bottom:24px;right:24px;background:white;border-radius:12px;padding:14px;width:280px;box-shadow:0 8px 30px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(0,0,0,0.08);';
   document.body.appendChild(popup);
   setTimeout(() => dismissNotif(), 8000);
 }
+function dismissNotif() { const p = document.getElementById('notif-popup'); if (p) p.remove(); }
 
-function dismissNotif() {
-  const p = document.getElementById('notif-popup');
-  if (p) p.remove();
-}
-
-async function goToWaitingChat(roomId) {
+async function goToChat(roomId) {
   dismissNotif();
   if (currentStaff.role === 'OWNER') switchMainTab('chat');
-  currentTab = 'waiting';
-  ['waiting','mychats','all'].forEach(t => document.getElementById('tab-'+t).classList.toggle('active', t === 'waiting'));
+  currentTab = 'aktif';
+  setActiveTab('aktif');
   await loadChats(false);
   setTimeout(() => {
     const chat = allChats.find(c => c.roomId === roomId);
     if (chat) openChat(roomId);
-  }, 500);
+  }, 400);
 }
 
-function updateNotifBadge(count) {
-  const tabEl = document.getElementById('mtab-chat') || document.getElementById('tab-waiting');
-  let badge = document.getElementById('notif-badge');
-  if (count > 0) {
-    if (!badge) {
-      badge = document.createElement('span');
-      badge.id = 'notif-badge';
-      badge.style.cssText = 'background:#ef4444;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px;vertical-align:middle;';
-      if (tabEl) tabEl.appendChild(badge);
-    }
-    badge.textContent = count;
-    document.title = '(' + count + ') GOHO WA Center';
+// ===================== BADGE / TITLE UPDATE =====================
+function updateGlobalBadge(totalUnread) {
+  // Tab badge
+  const badge = document.getElementById('mtab-chat-badge');
+  const tabBadge = document.getElementById('badge-aktif');
+  if (totalUnread > 0) {
+    if (badge) { badge.textContent = totalUnread; badge.classList.remove('hidden'); }
+    if (tabBadge) { tabBadge.textContent = totalUnread; tabBadge.classList.remove('hidden'); }
+    document.title = '(' + totalUnread + ') GOHO WA Center';
   } else {
-    if (badge) badge.remove();
+    if (badge) badge.classList.add('hidden');
+    if (tabBadge) tabBadge.classList.add('hidden');
     document.title = 'GOHO WA Center';
   }
+  updateAppBadge(totalUnread);
 }
 
 function checkNewChats(waitingChats) {
@@ -865,21 +1044,22 @@ function checkNewChats(waitingChats) {
     showNotifPopup(first.nama, first.noWa, first.roomId);
   }
   lastWaitingRooms = newWaitingIds;
-  updateNotifBadge(waitingChats.length);
 }
 
-// ==================== POLLING ====================
+// ===================== POLLING =====================
 function startPolling() {
   if (pollInterval) clearInterval(pollInterval);
   apiGet({action: 'getWaitingQueue'}).then(res => {
     if (res.ok) lastWaitingRooms = new Set(res.data.map(c => c.roomId));
   });
+  // Main poll — every 4s
   pollInterval = setInterval(() => {
     loadStats();
     if (currentRoom) loadMessages(currentRoom.roomId, false);
     else if (currentMainTab === 'chat') loadChats(false);
     if (currentMainTab === 'dashboard') loadOwnerStats();
   }, 4000);
+  // New chat check — every 5s
   setInterval(async () => {
     try {
       const res = await apiGet({action: 'getWaitingQueue'});
@@ -892,22 +1072,60 @@ async function loadStats() {
   try {
     const res = await apiGet({action: 'getDashboardStats'});
     if (res.ok) {
-      document.getElementById('stat-waiting').textContent = res.data.waiting;
-      document.getElementById('stat-active').textContent = res.data.active;
-      document.getElementById('stat-selesai').textContent = res.data.selesai;
+      document.getElementById('stat-bot').textContent = res.data.bot || 0;
+      document.getElementById('stat-waiting').textContent = res.data.waiting || 0;
+      document.getElementById('stat-active').textContent = res.data.active || 0;
+      document.getElementById('stat-selesai').textContent = res.data.selesai || 0;
     }
   } catch(e) {}
 }
 
-// ==================== CHAT LIST ====================
+// ===================== CHAT LIST =====================
 async function loadChats(showLoading = true) {
   if (showLoading) document.getElementById('chat-list').innerHTML = '<div class="loading">Memuat...</div>';
   try {
     let res;
-    if (currentTab === 'waiting') res = await apiGet({action: 'getWaitingQueue'});
-    else if (currentTab === 'mychats') res = await apiGet({action: 'getMyChats', staffName: currentStaff.nama});
-    else res = await apiGet({action: 'getAllChats'});
-    if (res.ok) { allChats = res.data; renderChatList(allChats); }
+    if (currentTab === 'aktif') {
+      // Load semua chat aktif (WAITING + BOT + ASSIGNED + FOLLOW_UP + BOOKED)
+      if (currentStaff.role === 'OWNER') {
+        res = await apiGet({action: 'getAllChats'});
+      } else {
+        // Staff: gabung waiting + mychats
+        const [waitRes, myRes] = await Promise.all([
+          apiGet({action: 'getWaitingQueue'}),
+          apiGet({action: 'getMyChats', staffName: currentStaff.nama})
+        ]);
+        const combined = [];
+        const seen = new Set();
+        // Merge & deduplicate
+        [...(waitRes.data || []), ...(myRes.data || [])].forEach(c => {
+          if (!seen.has(c.roomId)) { seen.add(c.roomId); combined.push(c); }
+        });
+        res = { ok: true, data: combined };
+      }
+    } else {
+      // Arsip (CLOSED)
+      res = await apiGet({action: 'getClosedChats'});
+    }
+    if (res.ok) {
+      allChats = res.data || [];
+      // Sort by lastMsgAt descending (newest first) — WA style
+      allChats.sort((a, b) => {
+        const ta = a.lastMsgAt ? new Date(a.lastMsgAt).getTime() : 0;
+        const tb = b.lastMsgAt ? new Date(b.lastMsgAt).getTime() : 0;
+        return tb - ta;
+      });
+      // Update unread counts from server data
+      allChats.forEach(c => {
+        if (c.unreadCount !== undefined) {
+          unreadCounts[c.roomId] = c.unreadCount;
+        }
+      });
+      renderChatList(allChats);
+      // Update global badge
+      const totalUnread = Object.values(unreadCounts).reduce((s, v) => s + v, 0);
+      updateGlobalBadge(totalUnread);
+    }
     loadStats();
   } catch(e) {
     document.getElementById('chat-list').innerHTML = '<div class="empty-state">Gagal memuat data</div>';
@@ -916,13 +1134,29 @@ async function loadChats(showLoading = true) {
 
 function switchTab(tab) {
   currentTab = tab;
-  ['waiting','mychats','all'].forEach(t => document.getElementById('tab-'+t).classList.toggle('active', t === tab));
+  setActiveTab(tab);
   loadChats();
+}
+
+function setActiveTab(tab) {
+  ['aktif','arsip'].forEach(t => document.getElementById('tab-' + t)?.classList.toggle('active', t === tab));
 }
 
 function filterChats() {
   const q = document.getElementById('search-input').value.toLowerCase();
-  renderChatList(allChats.filter(c => String(c.nama).toLowerCase().includes(q) || String(c.noWa).toLowerCase().includes(q)));
+  const filtered = allChats.filter(c =>
+    String(c.nama).toLowerCase().includes(q) ||
+    String(c.noWa).toLowerCase().includes(q)
+  );
+  renderChatList(filtered);
+}
+
+// Determine status class for chat item background
+function getChatStatusClass(c) {
+  if (c.status === 'WAITING' && c.handledBy === 'BOT') return 'status-bot';
+  if (c.status === 'WAITING') return 'status-needhuman';
+  if (c.status === 'NEED_HUMAN') return 'status-needhuman';
+  return 'status-assigned';
 }
 
 function getProdukClass(p) {
@@ -938,6 +1172,7 @@ function getStatusClass(s) {
   if (s === 'ASSIGNED') return 'p-assign';
   if (s === 'FOLLOW_UP') return 'p-follow';
   if (s === 'BOOKED') return 'p-booked';
+  if (s === 'NEED_HUMAN') return 'p-alert';
   return 'p-assign';
 }
 function getAvatarClass(n) {
@@ -946,54 +1181,87 @@ function getAvatarClass(n) {
   return cls[h % cls.length];
 }
 function getInitials(n) { return String(n).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); }
-function formatTime(ts) { if (!ts) return ''; const d = new Date(ts); return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const diffDays = Math.floor((now - d) / 86400000);
+  if (diffDays === 0) return d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+  if (diffDays === 1) return 'Kemarin';
+  if (diffDays < 7) return d.toLocaleDateString('id-ID', {weekday:'short'});
+  return d.toLocaleDateString('id-ID', {day:'2-digit', month:'short'});
+}
 
 function renderChatList(chats) {
   const el = document.getElementById('chat-list');
-  if (!chats || !chats.length) { el.innerHTML = '<div class="empty-state">Tidak ada chat</div>'; return; }
-  let html = '';
-  if (currentTab === 'waiting') {
-    html += '<div class="sect-lbl">Menunggu staff</div>';
-    chats.forEach(c => { html += renderChatItem(c); });
-  } else if (currentTab === 'mychats') {
-    const assigned = chats.filter(c => c.status === 'ASSIGNED');
-    const followup = chats.filter(c => c.status === 'FOLLOW_UP');
-    const booked = chats.filter(c => c.status === 'BOOKED');
-    if (assigned.length) { html += '<div class="sect-lbl">Sedang ditangani</div>'; assigned.forEach(c => { html += renderChatItem(c); }); }
-    if (followup.length) { html += '<div class="sect-lbl">Follow up</div>'; followup.forEach(c => { html += renderChatItem(c); }); }
-    if (booked.length) { html += '<div class="sect-lbl">Booked</div>'; booked.forEach(c => { html += renderChatItem(c); }); }
-  } else {
-    html += '<div class="sect-lbl">Semua chat aktif</div>';
-    chats.forEach(c => { html += renderChatItem(c); });
+  if (!chats || !chats.length) {
+    el.innerHTML = currentTab === 'arsip'
+      ? '<div class="empty-state">Tidak ada chat di arsip</div>'
+      : '<div class="empty-state">Tidak ada chat aktif</div>';
+    return;
   }
-  el.innerHTML = html;
+  el.innerHTML = chats.map(c => renderChatItem(c)).join('');
 }
 
 function renderChatItem(c) {
-  const isActive = currentRoom && currentRoom.roomId === c.roomId;
-  const menitAlert = c.menitTunggu > 10;
-  return `<div class="ci ${isActive?'active':''}" onclick="openChat('${c.roomId}')">
+  const isSelected = currentRoom && currentRoom.roomId === c.roomId;
+  const statusClass = getChatStatusClass(c);
+  const unread = unreadCounts[c.roomId] || 0;
+  const isBot = c.handledBy === 'BOT' || (c.status === 'WAITING' && !c.assignedTo);
+
+  // Status pill
+  let statusLabel = c.status;
+  if (c.status === 'WAITING' && isBot) statusLabel = 'BOT';
+  else if (c.status === 'WAITING') statusLabel = 'MENUNGGU';
+  else if (c.status === 'ASSIGNED') statusLabel = 'DITANGANI';
+  else if (c.status === 'NEED_HUMAN') statusLabel = 'PERLU STAFF';
+  else if (c.status === 'CLOSED') statusLabel = 'ARSIP';
+
+  return `<div class="ci ${statusClass} ${isSelected ? 'selected' : ''}" onclick="openChat('${c.roomId}')">
     <div class="av ${getAvatarClass(c.nama)}">${getInitials(c.nama)}</div>
-    <div class="ci-body">
-      <div class="ci-name">${escH(c.nama)}</div>
-      <div class="ci-prev">${escH(c.lastMsg||'...')}</div>
-      <div class="ci-meta">
-        <span class="pill ${getStatusClass(c.status)}">${c.status}</span>
-        ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
-        ${menitAlert ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
+    <div class="ci-right">
+      <div class="ci-row1">
+        <span class="ci-name">${escH(c.nama)}</span>
+        <span class="ci-time">${formatTime(c.lastMsgAt)}</span>
       </div>
-      ${c.assignedTo ? `<div class="ci-by">Di-handle: ${escH(c.assignedTo)}</div>` : ''}
+      <div class="ci-row2">
+        <span class="ci-prev">${escH(c.lastMsg || '...')}</span>
+        ${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}
+      </div>
+      <div class="ci-row3">
+        <span class="pill ${getStatusClass(c.status)}">${statusLabel}</span>
+        ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
+        ${c.assignedTo ? `<span class="ci-handler">👤 ${escH(c.assignedTo)}</span>` : ''}
+        ${c.menitTunggu > 10 ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
+      </div>
     </div>
-    <div class="ci-time">${formatTime(c.lastMsgAt)}</div>
   </div>`;
 }
 
-// ==================== OPEN CHAT ====================
+// ===================== OPEN CHAT =====================
+// KEY CHANGE: Opening a chat auto-assigns if WAITING (no separate "Ambil Chat" needed)
 async function openChat(roomId) {
   const chat = allChats.find(c => c.roomId === roomId);
   if (!chat) return;
+
+  // Auto-assign if WAITING and not yet assigned
+  if ((chat.status === 'WAITING' || chat.status === 'NEED_HUMAN') && !chat.assignedTo) {
+    const res = await apiPost({action: 'assignChat', roomId: chat.roomId, staffName: currentStaff.nama});
+    if (res.ok) {
+      chat.status = 'ASSIGNED';
+      chat.assignedTo = currentStaff.nama;
+    }
+  }
+
   currentRoom = chat;
   lastMsgCount = 0;
+
+  // Reset unread count for this room
+  unreadCounts[roomId] = 0;
+  const totalUnread = Object.values(unreadCounts).reduce((s, v) => s + v, 0);
+  updateGlobalBadge(totalUnread);
+
+  // Update UI
   document.getElementById('chat-empty').classList.add('hidden');
   document.getElementById('chat-active').classList.remove('hidden');
   document.getElementById('notes-panel').style.display = 'flex';
@@ -1001,17 +1269,20 @@ async function openChat(roomId) {
   document.getElementById('ct-name').textContent = chat.nama;
   document.getElementById('ct-wa').textContent = chat.noWa;
   document.getElementById('ct-status').textContent = chat.status;
-  document.getElementById('ct-by').textContent = chat.assignedTo ? 'Di-handle: ' + chat.assignedTo : '';
+  document.getElementById('ct-by').textContent = chat.assignedTo ? '· ' + chat.assignedTo : '';
   document.getElementById('np-wa').textContent = chat.noWa;
   document.getElementById('np-produk').textContent = chat.produk || '-';
   document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`;
+
   loadCustomerInfoPanel(chat.noWa);
   renderActionRow(chat);
   await loadMessages(roomId, true);
-  if (window.innerWidth <= 700) {
-    document.getElementById('sidebar').classList.add('hide-mobile');
-    document.getElementById('chat-panel').classList.add('show-mobile');
+
+  // Mobile: slide sidebar out
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.add('slide-out');
   }
+
   renderChatList(allChats);
 }
 
@@ -1026,17 +1297,12 @@ async function loadCustomerInfoPanel(noWa) {
         panel.style.display = 'block';
         document.getElementById('np-customer-name').textContent = c.nama;
         document.getElementById('np-customer-booking').textContent = c.totalBooking ? c.totalBooking + 'x booking' : 'Belum ada booking';
-      } else {
-        panel.style.display = 'none';
-      }
+      } else { panel.style.display = 'none'; }
       histBlock.style.display = 'block';
       document.getElementById('np-history-loading').textContent = 'memuat...';
       document.getElementById('np-history-list').innerHTML = '';
       loadPanelBookingHistory(noWa);
-    } else {
-      panel.style.display = 'none';
-      histBlock.style.display = 'none';
-    }
+    } else { panel.style.display = 'none'; histBlock.style.display = 'none'; }
   } catch(e) {}
 }
 
@@ -1060,10 +1326,7 @@ async function loadPanelBookingHistory(noWa) {
       loading.textContent = '';
       list.innerHTML = '<div style="font-size:11px;color:var(--text-hint);">Belum ada booking</div>';
     }
-  } catch(e) {
-    const loading = document.getElementById('np-history-loading');
-    if (loading) loading.textContent = '';
-  }
+  } catch(e) { const l = document.getElementById('np-history-loading'); if (l) l.textContent = ''; }
 }
 
 function openContactFromChat() {
@@ -1080,13 +1343,9 @@ function renderActionRow(chat) {
   const uploadBar = document.getElementById('upload-bar');
   const isMyChat = chat.assignedTo === currentStaff.nama;
   const isOwner = currentStaff.role === 'OWNER';
-  if (chat.status === 'WAITING') {
-    row.innerHTML = `
-      <button class="abtn abtn-ambil" onclick="ambilChat()"><i class="ti ti-hand-grab"></i> Ambil Chat</button>
-      <button class="abtn abtn-selesai" onclick="selesaiChatDariWaiting()"><i class="ti ti-circle-check"></i> Selesai</button>`;
-    reply.style.display = 'none';
-    uploadBar.classList.remove('show');
-  } else if (isMyChat || isOwner) {
+
+  // After auto-assign, always show full action row
+  if (isMyChat || isOwner) {
     row.innerHTML = `
       <button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button>
       <button class="abtn abtn-booked" onclick="tandaiBooked()"><i class="ti ti-check"></i> Booked</button>
@@ -1100,7 +1359,7 @@ function renderActionRow(chat) {
   }
 }
 
-// ==================== LOAD MESSAGES ====================
+// ===================== MESSAGES =====================
 async function loadMessages(roomId, forceScroll) {
   try {
     const res = await apiGet({action: 'getChatMessages', roomId});
@@ -1110,11 +1369,13 @@ async function loadMessages(roomId, forceScroll) {
     const newCount = res.data.length;
     const hasNewMessages = newCount > lastMsgCount;
 
-    area.innerHTML = res.data.map(m => renderBubble(m)).join('');
-
-    if (forceScroll || isNearBottom || hasNewMessages) {
-      area.scrollTop = area.scrollHeight;
+    // Check for new messages to update unread counts
+    if (hasNewMessages && currentRoom && currentRoom.roomId !== roomId) {
+      unreadCounts[roomId] = (unreadCounts[roomId] || 0) + (newCount - lastMsgCount);
     }
+
+    area.innerHTML = res.data.map(m => renderBubble(m)).join('');
+    if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
     lastMsgCount = newCount;
   } catch(e) {}
 }
@@ -1123,7 +1384,6 @@ function renderBubble(m) {
   const isStaff = m.sender === 'STAFF';
   const isBot = m.sender === 'BOT';
   const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
-
   const fileMatch = m.message && m.message.match(/^📎 (.+)\n(https?:\/\/.+)$/);
   if (fileMatch) {
     const fileName = fileMatch[1];
@@ -1143,7 +1403,6 @@ function renderBubble(m) {
       </div>
     </div>`;
   }
-
   return `<div class="bw ${isStaff?'right':''}">
     <div class="bubble ${cls}">
       ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
@@ -1153,60 +1412,30 @@ function renderBubble(m) {
   </div>`;
 }
 
-async function ambilChat() {
-  if (!currentRoom) return;
-  const res = await apiPost({action: 'assignChat', roomId: currentRoom.roomId, staffName: currentStaff.nama});
-  if (res.ok) {
-    showToast('Chat berhasil diambil');
-    currentRoom.status = 'ASSIGNED';
-    currentRoom.assignedTo = currentStaff.nama;
-    document.getElementById('ct-status').textContent = 'ASSIGNED';
-    document.getElementById('ct-by').textContent = 'Di-handle: ' + currentStaff.nama;
-    document.getElementById('np-status').innerHTML = `<span class="pill p-assign">ASSIGNED</span>`;
-    renderActionRow(currentRoom);
-    loadChats(false);
-  } else showToast(res.msg);
-}
-
 async function lepasChat() {
   if (!currentRoom) return;
   const res = await apiPost({action: 'releaseChat', roomId: currentRoom.roomId});
   if (res.ok) {
     showToast('Chat dilepas');
-    currentRoom = null; lastMsgCount = 0;
-    document.getElementById('chat-active').classList.add('hidden');
-    document.getElementById('chat-empty').classList.remove('hidden');
-    document.getElementById('notes-panel').style.display = 'none';
-    loadChats(false);
+    closeCurrentChat();
   }
 }
 
 async function selesaiChat() {
   if (!currentRoom) return;
-  if (!confirm('Tandai chat ini selesai?')) return;
+  if (!confirm('Tandai chat ini selesai? Chat akan dipindah ke Arsip.')) return;
   const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId});
-  if (res.ok) {
-    showToast('Chat selesai');
-    currentRoom = null; lastMsgCount = 0;
-    document.getElementById('chat-active').classList.add('hidden');
-    document.getElementById('chat-empty').classList.remove('hidden');
-    document.getElementById('notes-panel').style.display = 'none';
-    loadChats(false);
-  }
+  if (res.ok) { showToast('Chat selesai → Arsip'); closeCurrentChat(); }
 }
-async function selesaiChatDariWaiting() {
-  if (!currentRoom) return;
-  if (!confirm('Tutup chat ini tanpa dibalas?')) return;
-  const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId});
-  if (res.ok) {
-    showToast('Chat ditutup');
-    currentRoom = null; lastMsgCount = 0;
-    document.getElementById('chat-active').classList.add('hidden');
-    document.getElementById('chat-empty').classList.remove('hidden');
-    document.getElementById('notes-panel').style.display = 'none';
-    loadChats(false);
-  }
+
+function closeCurrentChat() {
+  currentRoom = null; lastMsgCount = 0;
+  document.getElementById('chat-active').classList.add('hidden');
+  document.getElementById('chat-empty').classList.remove('hidden');
+  document.getElementById('notes-panel').style.display = 'none';
+  loadChats(false);
 }
+
 async function tandaiBooked() {
   if (!currentRoom) return;
   const res = await apiPost({action: 'markBooked', roomId: currentRoom.roomId});
@@ -1219,8 +1448,11 @@ async function kirimPesan() {
   const msg = input.value.trim();
   if (!msg) return;
   input.value = '';
-  input.style.height = 'auto'; // ← FIX: reset tinggi textarea setelah kirim
-  const res = await apiPost({action: 'sendMessage', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, message: msg});
+  input.style.height = 'auto';
+  const res = await apiPost({
+    action: 'sendMessage', roomId: currentRoom.roomId,
+    staffName: currentStaff.nama, noWa: currentRoom.noWa, message: msg
+  });
   if (res.ok) {
     lastMsgCount = 0;
     await loadMessages(currentRoom.roomId, true);
@@ -1232,12 +1464,8 @@ async function kirimPesan() {
   }
 }
 
-// ← FIX: handleReplyKey dengan auto-expand
 function handleReplyKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    kirimPesan();
-  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kirimPesan(); }
 }
 
 async function showNoteInput() {
@@ -1248,43 +1476,29 @@ async function showNoteInput() {
 }
 
 function backToList() {
-  document.getElementById('sidebar').classList.remove('hide-mobile');
-  document.getElementById('chat-panel').classList.remove('show-mobile');
+  document.getElementById('sidebar').classList.remove('slide-out');
   currentRoom = null; lastMsgCount = 0;
 }
 
 function refreshAll() { loadChats(); showToast('Diperbarui'); }
 
-// ==================== KIRIM FILE / PDF ====================
+// ===================== FILE UPLOAD =====================
 async function handleFileUpload(input) {
   if (!input.files || !input.files[0]) return;
   if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
-
   const file = input.files[0];
-  const maxSize = 10 * 1024 * 1024;
-  if (file.size > maxSize) {
-    showToast('File terlalu besar, maksimal 10MB');
-    input.value = '';
-    return;
-  }
-
+  if (file.size > 10 * 1024 * 1024) { showToast('File terlalu besar, maksimal 10MB'); input.value = ''; return; }
   const bar = document.getElementById('upload-bar');
   const status = document.getElementById('upload-status');
   bar.classList.add('show');
   status.textContent = 'Mengupload ' + file.name + '...';
-
   try {
     const base64 = await fileToBase64(file);
     const res = await apiPost({
-      action: 'sendFile',
-      roomId: currentRoom.roomId,
-      staffName: currentStaff.nama,
-      noWa: currentRoom.noWa,
-      fileName: file.name,
-      fileType: file.type || 'application/octet-stream',
-      fileData: base64
+      action: 'sendFile', roomId: currentRoom.roomId, staffName: currentStaff.nama,
+      noWa: currentRoom.noWa, fileName: file.name,
+      fileType: file.type || 'application/octet-stream', fileData: base64
     });
-
     if (res.ok) {
       status.textContent = '✅ ' + file.name + ' berhasil dikirim!';
       setTimeout(() => bar.classList.remove('show'), 3000);
@@ -1293,19 +1507,15 @@ async function handleFileUpload(input) {
       loadChats(false);
       showToast('File berhasil dikirim ke customer');
     } else {
-      status.textContent = '❌ Gagal: ' + (res.msg || 'Error tidak diketahui');
+      status.textContent = '❌ Gagal: ' + (res.msg || 'Error');
       setTimeout(() => bar.classList.remove('show'), 4000);
       showToast('Gagal kirim file: ' + (res.msg || ''));
     }
   } catch(e) {
     status.textContent = '❌ Error: ' + e.toString();
     setTimeout(() => bar.classList.remove('show'), 4000);
-    showToast('Error upload file');
-  } finally {
-    input.value = '';
-  }
+  } finally { input.value = ''; }
 }
-
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1315,9 +1525,8 @@ function fileToBase64(file) {
   });
 }
 
-// ==================== NEW CHAT FROM CONTACT ====================
+// ===================== NEW CHAT FROM CONTACT =====================
 let newChatTarget = { noWa: '', nama: '' };
-
 function openNewChatModal(noWa, nama) {
   newChatTarget = { noWa, nama };
   document.getElementById('nc-av').textContent = getInitials(nama || noWa);
@@ -1327,78 +1536,47 @@ function openNewChatModal(noWa, nama) {
   document.getElementById('modal-new-chat').style.display = 'flex';
   setTimeout(() => document.getElementById('nc-pesan').focus(), 150);
 }
-
-function openNewChatFromDetail() {
-  closeModal('modal-detail');
-  openNewChatModal(currentContactNoWa, currentContactNama);
-}
-
+function openNewChatFromDetail() { closeModal('modal-detail'); openNewChatModal(currentContactNoWa, currentContactNama); }
 async function submitNewChat() {
   const pesan = document.getElementById('nc-pesan').value.trim();
   if (!pesan) { showToast('Pesan tidak boleh kosong'); return; }
-
   const btn = document.getElementById('nc-send-btn');
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
-
   try {
     const res = await apiPost({
-      action: 'startNewChat',
-      noWa: newChatTarget.noWa,
-      nama: newChatTarget.nama,
-      message: pesan,
-      staffName: currentStaff.nama
+      action: 'startNewChat', noWa: newChatTarget.noWa, nama: newChatTarget.nama,
+      message: pesan, staffName: currentStaff.nama
     });
-
     if (res.ok) {
       closeModal('modal-new-chat');
       showToast('✅ Pesan terkirim ke ' + newChatTarget.nama);
       if (currentStaff.role === 'OWNER') switchMainTab('chat');
-      currentTab = 'mychats';
-      ['waiting','mychats','all'].forEach(t =>
-        document.getElementById('tab-'+t).classList.toggle('active', t === 'mychats'));
+      currentTab = 'aktif'; setActiveTab('aktif');
       await loadChats(false);
-      if (res.roomId) {
-        setTimeout(() => openChat(res.roomId), 600);
-      }
-    } else {
-      showToast('Gagal kirim: ' + (res.msg || 'Error'));
-    }
-  } catch(e) {
-    showToast('Error: ' + e.toString());
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-send"></i> Kirim';
-  }
+      if (res.roomId) setTimeout(() => openChat(res.roomId), 600);
+    } else { showToast('Gagal kirim: ' + (res.msg || 'Error')); }
+  } catch(e) { showToast('Error: ' + e.toString()); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
 }
 
-// ==================== CONTACT BOOK ====================
-// FIX: load semua dari server sekali, filter lokal (case-insensitive)
+// ===================== CONTACT BOOK =====================
 async function loadContacts(query) {
   const list = document.getElementById('contact-list');
-
-  // Muat dari server jika cache kosong atau refresh penuh (query undefined)
   if (allContactsCache.length === 0 || query === undefined) {
     list.innerHTML = '<div class="loading">Memuat...</div>';
     try {
       const res = await apiGet({action: 'getAllCustomers', query: ''});
       allContactsCache = res.customers || [];
-    } catch(e) {
-      list.innerHTML = '<div class="empty-state">Gagal memuat</div>';
-      return;
-    }
+    } catch(e) { list.innerHTML = '<div class="empty-state">Gagal memuat</div>'; return; }
   }
-
-  // Filter lokal — case-insensitive
   const q = (query !== undefined ? query : (document.getElementById('contact-search')?.value || '')).toLowerCase().trim();
   const filtered = q
     ? allContactsCache.filter(c =>
         String(c.nama || '').toLowerCase().includes(q) ||
         String(c.noWa || '').toLowerCase().includes(q) ||
-        String(c.kota || '').toLowerCase().includes(q)
-      )
+        String(c.kota || '').toLowerCase().includes(q))
     : allContactsCache;
-
   if (filtered.length > 0) {
     list.innerHTML = filtered.map(c => `
       <div class="contact-card" onclick="openContactDetail('${escH(c.noWa)}', '${escH(c.nama)}')">
@@ -1415,30 +1593,19 @@ async function loadContacts(query) {
           </button>
         </div>
       </div>`).join('');
-  } else {
-    list.innerHTML = '<div class="empty-state">Belum ada contact</div>';
-  }
+  } else { list.innerHTML = '<div class="empty-state">Belum ada contact</div>'; }
 }
-
-// FIX: search lokal real-time, tidak perlu debounce panjang
-function searchContacts() {
-  const q = document.getElementById('contact-search')?.value || '';
-  loadContacts(q);
-}
+function searchContacts() { loadContacts(document.getElementById('contact-search')?.value || ''); }
 
 function showAddContact() {
-  // Reset cache supaya setelah tambah contact, data fresh
   allContactsCache = [];
   document.getElementById('modal-contact-title').textContent = 'Tambah Contact';
-  document.getElementById('c-nama').value = '';
-  document.getElementById('c-nowa').value = '';
-  document.getElementById('c-email').value = '';
-  document.getElementById('c-kota').value = '';
-  document.getElementById('c-catatan').value = '';
-  document.getElementById('c-original-nowa').value = '';
+  ['c-nama','c-nowa','c-email','c-kota','c-catatan','c-original-nowa'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   document.getElementById('modal-contact').style.display = 'flex';
 }
-
 async function submitContact() {
   const nama = document.getElementById('c-nama').value.trim();
   const noWa = document.getElementById('c-nowa').value.trim();
@@ -1451,12 +1618,8 @@ async function submitContact() {
       catatan: document.getElementById('c-catatan').value.trim(),
       source: 'MANUAL'
     });
-    if (res.success) {
-      allContactsCache = []; // reset cache
-      closeModal('modal-contact');
-      loadContacts();
-      showToast('Contact disimpan!');
-    } else showToast('Gagal menyimpan');
+    if (res.success) { allContactsCache = []; closeModal('modal-contact'); loadContacts(); showToast('Contact disimpan!'); }
+    else showToast('Gagal menyimpan');
   } catch(e) { showToast('Error: ' + e); }
 }
 
@@ -1465,10 +1628,9 @@ async function openContactDetail(noWa, nama) {
   currentContactNama = nama || noWa;
   document.getElementById('detail-name').textContent = nama || noWa;
   document.getElementById('detail-nowa').textContent = noWa;
-  document.getElementById('detail-email').textContent = '-';
-  document.getElementById('detail-kota').textContent = '-';
-  document.getElementById('detail-booking').textContent = '-';
-  document.getElementById('detail-catatan').textContent = '-';
+  ['detail-email','detail-kota','detail-booking','detail-catatan'].forEach(id => {
+    document.getElementById(id).textContent = '-';
+  });
   document.getElementById('booking-history').innerHTML = '<button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">🔍 Muat Riwayat Booking</button>';
   document.getElementById('passenger-list').innerHTML = '<div class="loading">Klik tab untuk muat...</div>';
   document.getElementById('modal-detail').style.display = 'flex';
@@ -1487,7 +1649,7 @@ async function openContactDetail(noWa, nama) {
 
 async function loadBookingHistory() {
   const box = document.getElementById('booking-history');
-  box.innerHTML = '<div class="loading">Memuat riwayat... (harap tunggu)</div>';
+  box.innerHTML = '<div class="loading">Memuat riwayat...</div>';
   window._bookingRaw = null;
   try {
     const res = await apiGet({action: 'getBookingHistory', noWa: currentContactNoWa});
@@ -1495,12 +1657,8 @@ async function loadBookingHistory() {
       window._bookingRaw = res.history;
       document.getElementById('detail-booking').textContent = res.total;
       renderBookingHistory(res.history, 'all');
-    } else {
-      box.innerHTML = '<div class="empty-state">Belum ada riwayat booking</div>';
-    }
-  } catch(e) {
-    box.innerHTML = '<div class="empty-state">Gagal memuat riwayat</div>';
-  }
+    } else { box.innerHTML = '<div class="empty-state">Belum ada riwayat booking</div>'; }
+  } catch(e) { box.innerHTML = '<div class="empty-state">Gagal memuat riwayat</div>'; }
 }
 
 function renderBookingHistory(history, periode) {
@@ -1524,7 +1682,7 @@ function renderBookingHistory(history, periode) {
       </select>
       <span style="font-size:11px;color:var(--text-muted);">${filtered.length} dari ${history.length} booking</span>
     </div>`;
-  if (filtered.length === 0) { box.innerHTML = filterHTML + '<div class="empty-state">Tidak ada booking di periode ini</div>'; return; }
+  if (!filtered.length) { box.innerHTML = filterHTML + '<div class="empty-state">Tidak ada booking di periode ini</div>'; return; }
   box.innerHTML = filterHTML + filtered.map(h => `
     <div class="history-item">
       <div class="history-tipe">${icon[h.tipe]||'📋'} ${h.tipe}</div>
@@ -1533,11 +1691,9 @@ function renderBookingHistory(history, periode) {
       <div class="history-meta">Tamu: ${escH(h.namaTamu)}</div>
     </div>`).join('');
 }
-
 function applyBookingFilter() {
   if (!window._bookingRaw) return;
-  const periode = document.getElementById('filter-periode').value;
-  renderBookingHistory(window._bookingRaw, periode);
+  renderBookingHistory(window._bookingRaw, document.getElementById('filter-periode').value);
 }
 
 async function loadPassengers() {
@@ -1552,9 +1708,7 @@ async function loadPassengers() {
           <div class="history-meta">${p.jenisKelamin==='L'?'♂️':'♀️'} &nbsp;|&nbsp; Lahir: ${p.tglLahir||'-'}</div>
           <div class="history-meta">KTP: ${p.noKtp||'-'} &nbsp;|&nbsp; Paspor: ${p.noPaspor||'-'} (exp: ${p.expiryPaspor||'-'})</div>
         </div>`).join('');
-    } else {
-      list.innerHTML = '<div class="empty-state">Belum ada data penumpang</div>';
-    }
+    } else { list.innerHTML = '<div class="empty-state">Belum ada data penumpang</div>'; }
   } catch(e) {}
 }
 
@@ -1562,7 +1716,6 @@ function showInnerTab(tab, e) {
   if (e) { document.querySelectorAll('.inner-tab').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); }
   showInnerTabById(tab);
 }
-
 function showInnerTabById(tab) {
   document.getElementById('inner-riwayat').style.display = tab === 'riwayat' ? 'block' : 'none';
   document.getElementById('inner-passenger').style.display = tab === 'passenger' ? 'block' : 'none';
@@ -1570,18 +1723,15 @@ function showInnerTabById(tab) {
 }
 
 function waFromContact() { window.open('https://wa.me/' + currentContactNoWa, '_blank'); }
-
 function editContact() {
-  allContactsCache = []; // reset cache saat edit
+  allContactsCache = [];
   closeModal('modal-detail');
   document.getElementById('modal-contact-title').textContent = 'Edit Contact';
   document.getElementById('c-nowa').value = currentContactNoWa;
   document.getElementById('c-original-nowa').value = currentContactNoWa;
   document.getElementById('modal-contact').style.display = 'flex';
 }
-
 function showAddPassenger() { document.getElementById('modal-passenger').style.display = 'flex'; }
-
 async function submitPassenger() {
   const nama = document.getElementById('p-nama').value.trim();
   if (!nama) { alert('Nama lengkap wajib diisi'); return; }
@@ -1599,7 +1749,7 @@ async function submitPassenger() {
   } catch(e) { showToast('Error: ' + e); }
 }
 
-// ==================== OWNER DASHBOARD ====================
+// ===================== OWNER DASHBOARD =====================
 async function loadOwnerStats() {
   try {
     const res = await apiGet({action: 'getOwnerStats'});
@@ -1634,10 +1784,10 @@ async function loadOwnerStats() {
           </div>
         </div>`).join('');
     } else { grid.innerHTML = '<div class="empty-state">Belum ada data staff</div>'; }
-  } catch(e) { console.error(e); }
+  } catch(e) {}
 }
 
-// ==================== ALL CHATS (OWNER) ====================
+// ===================== ALL CHATS (OWNER) =====================
 async function loadAllChats() {
   const list = document.getElementById('all-chats-list');
   list.innerHTML = '<div class="loading">Memuat...</div>';
@@ -1650,7 +1800,6 @@ async function loadAllChats() {
     renderAllChats(allRoomsCache);
   } catch(e) { list.innerHTML = '<div class="empty-state">Gagal memuat</div>'; }
 }
-
 function filterAllChats() {
   const sf = document.getElementById('filter-status').value;
   const stf = document.getElementById('filter-staff').value;
@@ -1659,7 +1808,6 @@ function filterAllChats() {
   if (stf) filtered = filtered.filter(r => r.assignedTo === stf);
   renderAllChats(filtered);
 }
-
 function renderAllChats(rooms) {
   const list = document.getElementById('all-chats-list');
   const sc = {WAITING:'p-wait',ASSIGNED:'p-assign',FOLLOW_UP:'p-follow',BOOKED:'p-booked',CLOSED:'p-assign'};
@@ -1675,7 +1823,6 @@ function renderAllChats(rooms) {
       <button class="btn-secondary btn-sm" onclick="quickAssign('${r.roomId}')">Assign</button>
     </div>`).join('');
 }
-
 async function quickAssign(roomId) {
   const staffName = prompt('Assign ke staff (masukkan nama):');
   if (!staffName) return;
