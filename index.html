@@ -2144,84 +2144,33 @@ async function deleteDoc(docId, fileId) {
   }
 }
 
-// Picture in Picture — dokumen mengambang di atas layar
+// Picture in Picture — buka sebagai popup window browser terpisah
+// Staff bisa buka website maskapai di tab lain, popup paspor tetap terlihat
 function openPiP(fileId, namaFile) {
   if (!fileId) return;
   const url = 'https://drive.google.com/file/d/' + fileId + '/preview';
 
-  const old = document.getElementById('pip-window');
-  if (old) old.remove();
+  // Ukuran dan posisi popup — pojok kanan bawah layar
+  const pw = 440;
+  const ph = 340;
+  const px = window.screen.width  - pw - 20;
+  const py = window.screen.height - ph - 80;
 
-  const pip = document.createElement('div');
-  pip.id = 'pip-window';
-  pip.style.cssText = `
-    position: fixed;
-    bottom: 80px; right: 20px;
-    width: 300px;
-    background: white; border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-    z-index: 9997; overflow: hidden;
-    border: 2px solid #0F6E56;
-    display: flex; flex-direction: column;
-  `;
-  pip.innerHTML = `
-    <div id="pip-drag-handle" style="
-      display:flex; align-items:center; justify-content:space-between;
-      padding:6px 10px; background:#0F6E56; color:white;
-      flex-shrink:0; cursor:grab; user-select:none;
-    ">
-      <span style="font-size:11px;font-weight:600;white-space:nowrap;
-        overflow:hidden;text-overflow:ellipsis;max-width:220px;">${escH(namaFile)}</span>
-      <button id="pip-close-btn" style="background:none;border:none;color:white;
-        cursor:pointer;font-size:16px;line-height:1;flex-shrink:0;padding:0 0 0 8px;">✕</button>
-    </div>
-    <div style="height:220px;">
-      <iframe src="${url}" style="width:100%;height:100%;border:none;" allowfullscreen></iframe>
-    </div>`;
+  const pipWin = window.open(
+    url,
+    'goho_pip_' + fileId,
+    'width=' + pw + ',height=' + ph + ',left=' + px + ',top=' + py + ',' +
+    'resizable=yes,scrollbars=no,toolbar=no,menubar=no,' +
+    'location=no,status=no'
+  );
 
-  document.body.appendChild(pip);
+  if (!pipWin) {
+    showToast('⚠️ Popup diblokir! Klik ikon 🔒 di address bar browser → izinkan popup untuk site ini.');
+    return;
+  }
 
-  // Tombol close — pakai addEventListener supaya tidak bentrok dengan drag
-  document.getElementById('pip-close-btn').addEventListener('click', e => {
-    e.stopPropagation();
-    pip.remove();
-  });
-
-  makeDraggable(pip, document.getElementById('pip-drag-handle'));
-}
-
-function makeDraggable(el, handle) {
-  if (!handle) handle = el;
-  let isDragging = false;
-  let offsetX = 0, offsetY = 0;
-
-  handle.addEventListener('mousedown', e => {
-    if (e.target.id === 'pip-close-btn') return;
-    isDragging = true;
-    const rect = el.getBoundingClientRect();
-    // Konversi posisi bottom/right ke top/left supaya drag bisa jalan
-    el.style.bottom = 'auto';
-    el.style.right  = 'auto';
-    el.style.top    = rect.top + 'px';
-    el.style.left   = rect.left + 'px';
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
-    handle.style.cursor = 'grabbing';
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', e => {
-    if (!isDragging) return;
-    el.style.left = (e.clientX - offsetX) + 'px';
-    el.style.top  = (e.clientY - offsetY) + 'px';
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (isDragging) {
-      isDragging = false;
-      handle.style.cursor = 'grab';
-    }
-  });
+  pipWin.focus();
+  showToast('🖼️ ' + namaFile + ' dibuka di window terpisah');
 }
 </script>
 </body>
