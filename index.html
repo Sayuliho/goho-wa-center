@@ -1517,7 +1517,7 @@ function renderBubble(m) {
   const isStaff = m.sender === 'STAFF';
   const isBot = m.sender === 'BOT';
   const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
-  const fileMatch = m.message && m.message.match(/^📎 (.+)\n(https?:\/\/.+)$/);
+  const fileMatch = m.message && typeof m.message === 'string' && m.message.match(/^📎 (.+)\n(https?:\/\/.+)$/);
   if (fileMatch) {
     const fileName = fileMatch[1];
     const fileUrl = fileMatch[2];
