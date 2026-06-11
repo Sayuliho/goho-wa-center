@@ -1378,7 +1378,7 @@ async function openChat(roomId) {
   document.getElementById('np-wa').textContent = chat.noWa;
   document.getElementById('np-produk').textContent = chat.produk || '-';
   document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`;
-
+  document.getElementById('chat-area').innerHTML = '<div class="loading">Memuat pesan...</div>';
   loadCustomerInfoPanel(chat.noWa);
   renderActionRow(chat);
   await loadMessages(roomId, true);
