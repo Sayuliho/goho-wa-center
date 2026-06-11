@@ -1464,14 +1464,11 @@ async function loadMessages(roomId, forceScroll) {
   try {
     const res = await apiGet({action: 'getChatMessages', roomId});
     if (!res.ok) return;
+    if (!currentRoom || currentRoom.roomId !== roomId) return;
     const area = document.getElementById('chat-area');
     const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
     const newCount = res.data.length;
     const hasNewMessages = newCount > lastMsgCount;
-
-    if (hasNewMessages && currentRoom && currentRoom.roomId !== roomId) {
-      unreadCounts[roomId] = (unreadCounts[roomId] || 0) + (newCount - lastMsgCount);
-    }
 
     area.innerHTML = res.data.map(m => renderBubble(m)).join('');
     if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
