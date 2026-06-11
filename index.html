@@ -2237,6 +2237,128 @@ function openPiP(fileId, namaFile) {
   pipWin.focus();
   showToast('🖼️ ' + namaFile + ' dibuka di window terpisah');
 }
+  // ===================== SMART CONTEXT — Fase 3 =====================
+const MASKAPAI_EMOJI = {
+  'LION':'🦁','AIRASIA':'🔴','CITILINK':'🟢',
+  'GARUDA':'🦅','GDS':'🌐','HOTEL':'🏨','TOUR':'🌴','JASA LAYANAN':'🛎️'
+};
+function getMaskapaiEmoji(nama) {
+  const upper = (nama||'').toUpperCase();
+  for (const key of Object.keys(MASKAPAI_EMOJI)) {
+    if (upper.includes(key)) return MASKAPAI_EMOJI[key];
+  }
+  return '✈️';
+}
+function formatHarga(num) {
+  if (!num || num===0) return '';
+  return 'Rp ' + Number(num).toLocaleString('id-ID');
+}
+async function loadSmartContext(roomId, noWa) {
+  const block   = document.getElementById('np-context-block');
+  const list    = document.getElementById('np-context-list');
+  const loading = document.getElementById('np-context-loading');
+  if (!block||!list) return;
+  block.style.display = 'block';
+  loading.textContent = 'scanning...';
+  list.innerHTML = '<div class="context-scanning"><span class="poll-dot"></span> Mendeteksi kode booking...</div>';
+  try {
+    const res = await apiGet({action:'getBookingContext', roomId, noWa});
+    if (!res.ok||!res.bookings||res.bookings.length===0) {
+      loading.textContent = '';
+      list.innerHTML = '<div class="context-none">Belum ada kode booking terdeteksi</div>';
+      return;
+    }
+    loading.textContent = res.bookings.length + ' booking';
+    list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
+  } catch(e) {
+    loading.textContent = '';
+    list.innerHTML = '<div class="context-none">Error loading konteks</div>';
+  }
+}
+function renderContextCard(b) {
+  const emoji = getMaskapaiEmoji(b.maskapai);
+  const allKodes = (b.allKodes||[b.kode]).join(' · ');
+  return `<div class="context-booking-card">
+    <div class="context-maskapai">
+      <span>${emoji} ${escH(b.maskapai)}</span>
+      <span style="font-size:9px;color:var(--text-hint);">${escH(b.tglTerbang)}</span>
+    </div>
+    <div class="context-kode">${escH(allKodes)}</div>
+    <div class="context-rute">✈️ ${escH(b.jurusan)}</div>
+    <div class="context-detail">
+      👤 ${escH(b.nama)}<br>
+      🛒 Beli: ${escH(b.tglBeli)}
+      ${b.harga ? ' · ' + formatHarga(b.harga) : ''}
+      ${b.noInv&&b.noInv!=='-' ? '<br>📋 '+escH(b.noInv) : ''}
+    </div>
+    <div class="context-action-row">
+      <button class="ctx-btn ctx-btn-checkin" onclick="quickCheckin('${escH(b.kode)}','${escH(b.maskapai)}','${escH(b.jurusan)}')">🛫 Check-in</button>
+      <button class="ctx-btn ctx-btn-arrival" onclick="quickArrival('${escH(b.jurusan)}')">📋 Arrival Card</button>
+      <button class="ctx-btn ctx-btn-beacukai" onclick="quickBeaCukai()">🛃 Bea Cukai</button>
+    </div>
+  </div>`;
+}
+function quickCheckin(kode, maskapai, jurusan) {
+  const urls = {
+    'LION':'https://checkin.lionair.co.id',
+    'AIRASIA':'https://www.airasia.com/check-in/v2/en/gb',
+    'CITILINK':'https://www.citilink.co.id/check-in',
+    'GARUDA':'https://www.garuda-indonesia.com/id/id/garuda-online/check-in',
+    'BATIK':'https://www.batikair.com/id/id/check-in'
+  };
+  const upper = (maskapai||'').toUpperCase();
+  let url = null;
+  for (const key of Object.keys(urls)) {
+    if (upper.includes(key)) { url = urls[key]; break; }
+  }
+  if (url) { window.open(url,'_blank'); showToast('🛫 Buka halaman check-in '+maskapai); }
+  else showToast('URL check-in belum tersedia untuk '+maskapai);
+}
+function quickArrival(jurusan) {
+  const arrivalInfo = {
+    'KUL':{nama:'MDAC',url:'https://imigresen-online.imi.gov.my/mdac'},
+    'PEN':{nama:'MDAC',url:'https://imigresen-online.imi.gov.my/mdac'},
+    'BKK':{nama:'TDAC',url:'https://tdac.immigration.go.th'},
+    'DMK':{nama:'TDAC',url:'https://tdac.immigration.go.th'},
+    'SIN':{nama:'SGAC',url:'https://eservices.ica.gov.sg/sgarrivalcard'},
+    'TPE':{nama:'TWAC',url:'https://niaspeedy.immigration.gov.tw'},
+    'PEK':{nama:'CDAC',url:'https://s.nia.gov.cn'},
+    'PVG':{nama:'CDAC',url:'https://s.nia.gov.cn'},
+    'ICN':{nama:'e-Arrival Card Korea',url:'https://www.hikorea.go.kr'},
+    'NRT':{nama:'Visit Japan Web',url:'https://vjw-lp.digital.go.jp'},
+    'HND':{nama:'Visit Japan Web',url:'https://vjw-lp.digital.go.jp'},
+    'HKG':{nama:'Arrival Card HK',url:'https://www.immd.gov.hk'}
+  };
+  const iataMatch = (jurusan||'').toUpperCase().match(/[A-Z]{3}/g);
+  if (!iataMatch) { showToast('Rute tidak terdeteksi'); return; }
+  const dest = iataMatch[iataMatch.length-1];
+  const info = arrivalInfo[dest];
+  if (info) { window.open(info.url,'_blank'); showToast('📋 Buka '+info.nama+' untuk '+dest); }
+  else showToast('Info arrival card untuk '+dest+' belum tersedia');
+}
+function quickBeaCukai() {
+  window.open('https://ecd.beacukai.go.id','_blank');
+  showToast('🛃 Buka e-CD Bea Cukai Indonesia');
+}
+async function manualLookupKode() {
+  const kode = prompt('Masukkan kode booking maskapai (6 huruf):');
+  if (!kode||!kode.trim()) return;
+  const clean = kode.trim().toUpperCase();
+  if (!/^[A-Z]{6}$/.test(clean)) { showToast('Kode harus tepat 6 huruf'); return; }
+  showToast('Mencari kode '+clean+'...');
+  try {
+    const res = await apiGet({action:'lookupKode', kode:clean});
+    if (res.found) {
+      const block = document.getElementById('np-context-block');
+      const list  = document.getElementById('np-context-list');
+      const loading = document.getElementById('np-context-loading');
+      block.style.display = 'block';
+      loading.textContent = 'manual lookup';
+      list.innerHTML = renderContextCard(res) + list.innerHTML;
+      showToast('✅ Kode '+clean+' ditemukan!');
+    } else { showToast('❌ Kode '+clean+' tidak ditemukan'); }
+  } catch(e) { showToast('Error: '+e.toString()); }
+}
 </script>
 </body>
 </html>
