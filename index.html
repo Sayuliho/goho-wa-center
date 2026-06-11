@@ -1460,19 +1460,56 @@ function renderActionRow(chat) {
 }
 
 // ===================== MESSAGES =====================
+let msgOffset = 0;
+
 async function loadMessages(roomId, forceScroll) {
+  msgOffset = 0;
+  await fetchMessages(roomId, 0, forceScroll);
+}
+
+async function loadMoreMessages(roomId) {
+  const area = document.getElementById('chat-area');
+  const prevHeight = area.scrollHeight;
+  msgOffset += 50;
+  await fetchMessages(roomId, msgOffset, false, true);
+  area.scrollTop = area.scrollHeight - prevHeight;
+}
+
+async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
   try {
-    const res = await apiGet({action: 'getChatMessages', roomId});
+    const res = await apiGet({action: 'getChatMessages', roomId, offset});
     if (!res.ok) return;
     if (!currentRoom || currentRoom.roomId !== roomId) return;
+
     const area = document.getElementById('chat-area');
     const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
-    const newCount = res.data.length;
-    const hasNewMessages = newCount > lastMsgCount;
+    const hasNewMessages = res.total > lastMsgCount;
+    const hasMore = res.total > offset + 50;
 
-    area.innerHTML = res.data.map(m => renderBubble(m)).join('');
+    const bubblesHTML = res.data.map(m => renderBubble(m)).join('');
+
+    if (prepend) {
+      const btn = document.getElementById('load-more-btn');
+      if (btn) btn.remove();
+      area.insertAdjacentHTML('afterbegin', bubblesHTML);
+    } else {
+      area.innerHTML = bubblesHTML;
+    }
+
+    if (hasMore && !document.getElementById('load-more-btn')) {
+      area.insertAdjacentHTML('afterbegin', `
+        <div id="load-more-btn" style="text-align:center;padding:8px;">
+          <button onclick="loadMoreMessages('${roomId}')"
+            style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;
+            background:white;font-size:11px;color:var(--text-muted);cursor:pointer;
+            font-family:var(--font);">
+            ↑ Muat pesan lebih lama
+          </button>
+        </div>`);
+    }
+
     if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
-    lastMsgCount = newCount;
+    lastMsgCount = res.total;
   } catch(e) {}
 }
 
