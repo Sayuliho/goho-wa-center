@@ -1510,7 +1510,7 @@ async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
 
     if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
     lastMsgCount = res.total;
-  } catch(e) {}
+  } catch(e) { console.error('fetchMessages error:', e); }
 }
 
 function renderBubble(m) {
