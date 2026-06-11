@@ -1176,7 +1176,7 @@ function startPolling() {
   pollInterval = setInterval(() => {
     loadStats();
     if (currentRoom) loadMessages(currentRoom.roomId, false);
-    else if (currentMainTab === 'chat') loadChats(false);
+    if (currentMainTab === 'chat') loadChats(false);
     if (currentMainTab === 'dashboard') loadOwnerStats();
   }, 4000);
   setInterval(async () => {
