@@ -575,7 +575,30 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .ld-bot { background: var(--bot-border); }
 .ld-human { background: var(--needhuman-border); }
 .ld-assigned { background: var(--green-light); }
-
+/* ===================== SMART CONTEXT — Fase 3 ===================== */
+.context-block {
+  padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.context-booking-card {
+  background: var(--blue-bg); border: 1px solid var(--bot-border);
+  border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;
+}
+.context-booking-card:last-child { margin-bottom: 0; }
+.context-maskapai {
+  font-size: 10px; font-weight: 700; color: var(--blue);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.context-kode { font-size: 13px; font-weight: 700; color: var(--text); font-family: monospace; letter-spacing: 1px; }
+.context-detail { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+.context-rute { font-size: 12px; font-weight: 600; color: var(--text); }
+.context-action-row { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.ctx-btn { padding: 3px 8px; border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer; border: 1px solid; font-family: var(--font); display: flex; align-items: center; gap: 3px; }
+.ctx-btn-checkin { background: var(--green-bg); color: #085041; border-color: #5DCAA5; }
+.ctx-btn-arrival { background: var(--orange-bg); color: #633806; border-color: #EF9F27; }
+.ctx-btn-beacukai { background: var(--purple-bg); color: #3C3489; border-color: #9B94E8; }
+.context-scanning { font-size: 11px; color: var(--text-hint); padding: 6px 0; display: flex; align-items: center; gap: 5px; }
+.context-none { font-size: 11px; color: var(--text-hint); padding: 4px 0; }
 /* ===================== ARSIP LABEL ===================== */
 .arsip-badge {
   background: var(--bg); border: 1px solid var(--border);
