@@ -1480,7 +1480,7 @@ async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
     const res = await apiGet({action: 'getChatMessages', roomId, offset});
     if (!res.ok) return;
     if (!currentRoom || currentRoom.roomId !== roomId) return;
-    console.log('fetchMessages rendering', roomId, 'data count:', res.data.length);
+    
     const area = document.getElementById('chat-area');
     const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
     const hasNewMessages = res.total > lastMsgCount;
