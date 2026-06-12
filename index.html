@@ -1256,6 +1256,21 @@ async function loadChats(showLoading = true) {
     }
     if (res.ok) {
       allChats = res.data || [];
+
+      // === ENRICHMENT NAMA DARI CONTACT BOOK ===
+      if (allContactsCache.length === 0) {
+        try {
+          const cRes = await apiGet({action: 'getAllCustomers', query: ''});
+          allContactsCache = cRes.customers || [];
+        } catch(e) {}
+      }
+      allChats = allChats.map(c => {
+        const contact = allContactsCache.find(ct => ct.noWa === c.noWa);
+        if (contact && contact.nama) c.nama = contact.nama;
+        return c;
+      });
+      // === END ENRICHMENT ===
+
       allChats.sort((a, b) => {
         const ta = a.lastMsgAt ? new Date(a.lastMsgAt).getTime() : 0;
         const tb = b.lastMsgAt ? new Date(b.lastMsgAt).getTime() : 0;
