@@ -19,23 +19,12 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'fileId missing' });
       }
 
-      // Ambil gambar via thumbnail Drive (lebih cepat, resolusi cukup untuk OCR)
-      const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
-      const driveResp = await fetch(thumbUrl, { redirect: 'follow' });
+      // Forward ke Apps Script yang punya akses Drive
+      const appsScriptUrl = baseUrl + '?action=getImageBase64&fileId=' + encodeURIComponent(fileId);
+      const appsResp = await fetch(appsScriptUrl, { redirect: 'follow' });
+      const data = await appsResp.text();
 
-      if (!driveResp.ok) {
-        return res.status(502).json({ error: 'Gagal ambil gambar dari Drive' });
-      }
-
-      const buffer = await driveResp.arrayBuffer();
-      const base64 = Buffer.from(buffer).toString('base64');
-
-      // Claude API hanya terima: image/jpeg, image/png, image/gif, image/webp
-      const rawMime = driveResp.headers.get('content-type') || '';
-      const validMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      const mimeType = validMimes.find(m => rawMime.includes(m)) || 'image/jpeg';
-
-      return res.status(200).json({ base64, mimeType });
+      return res.status(200).send(data);
     }
 
     // ===== ROUTE NORMAL: forward ke Apps Script =====
