@@ -39,8 +39,6 @@
   --white: #fff;
   --radius: 10px;
   --font: 'Plus Jakarta Sans', sans-serif;
-
-  /* STATUS COLORS - Fase 1 */
   --bot-bg: #EAF3FF;
   --bot-border: #B5D4F4;
   --needhuman-bg: #FFF3CD;
@@ -50,172 +48,73 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; overflow: hidden; }
 .hidden { display: none !important; }
-
-/* ===================== LOGIN ===================== */
-#login-page {
-  min-height: 100vh; display: flex;
-  align-items: center; justify-content: center;
-  background: var(--green-dark);
-}
-.login-box {
-  background: var(--white); border-radius: 16px;
-  padding: 2rem; width: 100%; max-width: 360px; margin: 1rem;
-}
-.login-logo {
-  width: 48px; height: 48px; background: var(--green-light);
-  border-radius: 12px; display: flex; align-items: center;
-  justify-content: center; font-size: 24px; color: var(--green-dark);
-  margin: 0 auto 1rem;
-}
+#login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--green-dark); }
+.login-box { background: var(--white); border-radius: 16px; padding: 2rem; width: 100%; max-width: 360px; margin: 1rem; }
+.login-logo { width: 48px; height: 48px; background: var(--green-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--green-dark); margin: 0 auto 1rem; }
 .login-title { text-align: center; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
 .login-sub { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 1.5rem; }
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
-.form-group input, .form-group textarea, .form-group select {
-  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
-  border-radius: 8px; font-size: 14px; font-family: var(--font);
-  outline: none; transition: border 0.2s;
-}
+.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: var(--font); outline: none; transition: border 0.2s; }
 .form-group input:focus, .form-group textarea:focus { border-color: var(--green-mid); }
-.btn-login {
-  width: 100%; padding: 11px; background: var(--green-mid); color: white;
-  border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
-  font-family: var(--font); cursor: pointer;
-}
+.btn-login { width: 100%; padding: 11px; background: var(--green-mid); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: var(--font); cursor: pointer; }
 .login-error { color: var(--red); font-size: 12px; text-align: center; margin-top: 8px; }
-
-/* ===================== APP SHELL ===================== */
 #app { display: none; height: 100dvh; flex-direction: column; }
 #app.visible { display: flex; }
-
-.topnav {
-  background: var(--green-dark); padding: 0 16px; height: 48px;
-  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-  position: relative; z-index: 10;
-}
-.topnav-logo {
-  width: 28px; height: 28px; border-radius: 7px; background: var(--green-light);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--green-dark); font-size: 14px;
-}
+.topnav { background: var(--green-dark); padding: 0 16px; height: 48px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; position: relative; z-index: 10; }
+.topnav-logo { width: 28px; height: 28px; border-radius: 7px; background: var(--green-light); display: flex; align-items: center; justify-content: center; color: var(--green-dark); font-size: 14px; }
 .topnav-title { color: white; font-size: 14px; font-weight: 600; flex: 1; }
 .topnav-staff { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.75); font-size: 12px; }
-.topnav-av {
-  width: 26px; height: 26px; border-radius: 50%; background: var(--green-light);
-  color: var(--green-dark); display: flex; align-items: center;
-  justify-content: center; font-size: 10px; font-weight: 600;
-}
+.topnav-av { width: 26px; height: 26px; border-radius: 50%; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; }
 .topnav-av.owner { background: #EF9F27; color: #412402; }
 .owner-badge { background: rgba(239,159,39,0.25); color: #FAC775; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
-
-/* ===================== MAIN TABS ===================== */
-.main-tabs {
-  display: none; background: #0d3d37;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  flex-shrink: 0;
-}
+.main-tabs { display: none; background: #0d3d37; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
 .main-tabs.visible { display: flex; }
-.main-tab {
-  padding: 8px 16px; color: rgba(255,255,255,0.6); font-size: 12px;
-  cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500;
-  display: flex; align-items: center; gap: 5px; position: relative;
-}
+.main-tab { padding: 8px 16px; color: rgba(255,255,255,0.6); font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; display: flex; align-items: center; gap: 5px; position: relative; }
 .main-tab.active { color: white; border-bottom-color: var(--green-light); }
-.tab-badge {
-  background: #ef4444; color: white; border-radius: 10px;
-  padding: 1px 5px; font-size: 9px; font-weight: 700; min-width: 16px; text-align: center;
-}
-
-/* ===================== LAYOUT ===================== */
+.tab-badge { background: #ef4444; color: white; border-radius: 10px; padding: 1px 5px; font-size: 9px; font-weight: 700; min-width: 16px; text-align: center; }
 .main-area { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 .main-area > .notes-panel { overflow-y: scroll; overflow-x: hidden; }
-
-/* ===================== SIDEBAR ===================== */
-.sidebar {
-  width: 300px; border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  background: var(--white); flex-shrink: 0;
-  transition: transform 0.25s ease;
-}
+.sidebar { width: 300px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--white); flex-shrink: 0; transition: transform 0.25s ease; }
 .sb-search { padding: 8px 10px; border-bottom: 1px solid var(--border); }
-.sb-search input {
-  width: 100%; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 20px; padding: 7px 12px; font-size: 12px;
-  font-family: var(--font); outline: none;
-}
-
-/* ===================== SIDEBAR TABS ===================== */
+.sb-search input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 7px 12px; font-size: 12px; font-family: var(--font); outline: none; }
 .sb-tabs { display: grid; grid-template-columns: repeat(2,1fr); border-bottom: 1px solid var(--border); }
-.sb-tab {
-  padding: 9px 4px; text-align: center; font-size: 11px;
-  color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
-  font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px;
-  transition: color 0.15s;
-}
+.sb-tab { padding: 9px 4px; text-align: center; font-size: 11px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px; transition: color 0.15s; }
 .sb-tab i { font-size: 15px; }
 .sb-tab.active { color: var(--green-mid); border-bottom-color: var(--green-mid); font-weight: 600; }
-.sb-tab-badge {
-  background: #ef4444; color: white; border-radius: 10px;
-  padding: 1px 5px; font-size: 9px; font-weight: 700;
-  min-width: 16px; text-align: center; line-height: 14px;
-}
-
-/* Stats row */
-.sb-stats-row {
-  display: flex; gap: 0; border-bottom: 1px solid var(--border);
-  background: var(--bg);
-}
-.sb-stat-pill {
-  flex: 1; padding: 5px 4px; text-align: center;
-  border-right: 1px solid var(--border);
-}
+.sb-tab-badge { background: #ef4444; color: white; border-radius: 10px; padding: 1px 5px; font-size: 9px; font-weight: 700; min-width: 16px; text-align: center; line-height: 14px; }
+.sb-stats-row { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg); }
+.sb-stat-pill { flex: 1; padding: 5px 4px; text-align: center; border-right: 1px solid var(--border); }
 .sb-stat-pill:last-child { border-right: none; }
 .sb-stat-n { font-size: 16px; font-weight: 700; }
 .sb-stat-l { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
 .n-orange { color: var(--orange); }
 .n-green { color: var(--green-mid); }
 .n-purple { color: var(--purple); }
-
 .sect-lbl { padding: 7px 10px 3px; font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .chat-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-
-/* ===================== CHAT ITEM ===================== */
-.ci {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 10px 12px; border-bottom: 1px solid var(--border);
-  cursor: pointer; transition: background 0.15s; position: relative;
-}
+.ci { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; position: relative; }
 .ci:active { background: var(--bg); }
 .ci:hover { background: var(--bg); }
 .ci.selected { background: var(--green-bg); }
-
 .ci.status-bot { border-left: 3px solid var(--bot-border); background: var(--bot-bg); }
 .ci.status-bot:hover { background: #d8eafc; }
 .ci.status-needhuman { border-left: 3px solid var(--needhuman-border); background: var(--needhuman-bg); }
 .ci.status-needhuman:hover { background: #fde8b0; }
 .ci.status-assigned { border-left: 3px solid transparent; background: white; }
 .ci.selected { background: var(--green-bg) !important; border-left-color: var(--green-mid) !important; }
-
 .av { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
 .av-a { background: var(--orange-bg); color: #633806; }
 .av-b { background: var(--green-bg); color: #085041; }
 .av-c { background: var(--purple-bg); color: #3C3489; }
 .av-d { background: var(--blue-bg); color: #0C447C; }
-
 .ci-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .ci-row1 { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 .ci-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
 .ci-time { font-size: 10px; color: var(--text-hint); flex-shrink: 0; }
 .ci-row2 { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 .ci-prev { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-
-.unread-badge {
-  background: var(--unread-badge); color: white;
-  border-radius: 50%; min-width: 20px; height: 20px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 700; flex-shrink: 0;
-  padding: 0 4px;
-}
+.unread-badge { background: var(--unread-badge); color: white; border-radius: 50%; min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; padding: 0 4px; }
 .ci-row3 { display: flex; align-items: center; gap: 4px; margin-top: 1px; flex-wrap: wrap; }
 .pill { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
 .p-bot { background: var(--bot-bg); color: var(--blue); border: 1px solid var(--bot-border); }
@@ -229,29 +128,14 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .p-tour { background: var(--green-bg); color: var(--green-mid); }
 .p-atraksi { background: var(--orange-bg); color: var(--orange); }
 .ci-handler { font-size: 10px; color: var(--text-muted); }
-
 .empty-state { padding: 2rem; text-align: center; color: var(--text-muted); font-size: 12px; }
-
-/* ===================== CHAT PANEL ===================== */
 .chat-panel { flex: 1; display: flex; flex-direction: column; background: var(--white); overflow: hidden; min-width: 0; }
-.chat-empty {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; color: var(--text-muted); gap: 10px;
-  background: var(--chat-bg);
-}
+.chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); gap: 10px; background: var(--chat-bg); }
 .chat-empty i { font-size: 56px; color: rgba(0,0,0,0.1); }
 .chat-empty p { font-size: 14px; color: rgba(0,0,0,0.35); }
-
-.chat-top {
-  background: var(--green-mid); padding: 10px 14px;
-  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-}
+.chat-top { background: var(--green-mid); padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .chat-back { color: rgba(255,255,255,0.85); font-size: 22px; cursor: pointer; display: none; }
-.chat-top-av {
-  width: 38px; height: 38px; border-radius: 50%; background: #5DCAA5;
-  color: #04342C; display: flex; align-items: center;
-  justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0;
-}
+.chat-top-av { width: 38px; height: 38px; border-radius: 50%; background: #5DCAA5; color: #04342C; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
 .chat-top-info { flex: 1; min-width: 0; }
 .chat-top-name { color: white; font-size: 14px; font-weight: 600; }
 .chat-top-sub { color: rgba(255,255,255,0.75); font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
@@ -260,12 +144,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .chat-top-acts i { cursor: pointer; transition: color 0.15s; }
 .chat-top-acts i:hover { color: white; }
 .chat-top-acts i.active-panel { color: var(--green-light); }
-
-.chat-area {
-  background: var(--chat-bg); flex: 1; overflow-y: auto;
-  padding: 12px; display: flex; flex-direction: column; gap: 8px;
-  -webkit-overflow-scrolling: touch;
-}
+.chat-area { background: var(--chat-bg); flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
 .bw { display: flex; flex-direction: column; }
 .bw.right { align-items: flex-end; }
 .bubble { padding: 7px 10px 4px; border-radius: 10px; max-width: 75%; display: inline-block; }
@@ -281,83 +160,27 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .b-file-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .b-file-link { font-size: 11px; color: var(--blue); text-decoration: none; }
 .b-file-link:hover { text-decoration: underline; }
-
-/* ===================== ACTION ROW ===================== */
-.action-row {
-  display: flex; gap: 6px; padding: 8px 12px;
-  background: var(--bg); border-top: 1px solid var(--border);
-  flex-shrink: 0; flex-wrap: wrap;
-}
-.abtn {
-  padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 600;
-  cursor: pointer; border: 1px solid; display: flex; align-items: center;
-  gap: 5px; font-family: var(--font);
-}
+.action-row { display: flex; gap: 6px; padding: 8px 12px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+.abtn { padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid; display: flex; align-items: center; gap: 5px; font-family: var(--font); }
 .abtn-note { background: white; color: var(--text-muted); border-color: var(--border); }
 .abtn-booked { background: var(--green-bg); color: #085041; border-color: #5DCAA5; }
 .abtn-lepas { background: var(--orange-bg); color: #633806; border-color: #EF9F27; }
 .abtn-selesai { background: var(--green-mid); color: white; border-color: var(--green-mid); }
-
-/* ===================== REPLY ROW ===================== */
-.reply-row {
-  display: flex; align-items: flex-end; gap: 8px;
-  padding: 8px 12px; background: white;
-  border-top: 1px solid var(--border); flex-shrink: 0;
-}
+.reply-row { display: flex; align-items: flex-end; gap: 8px; padding: 8px 12px; background: white; border-top: 1px solid var(--border); flex-shrink: 0; }
 .reply-row i { font-size: 20px; color: var(--text-muted); cursor: pointer; margin-bottom: 6px; }
-#reply-input {
-  flex: 1; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 20px; padding: 9px 14px; font-size: 13px;
-  font-family: var(--font); outline: none; resize: none;
-  min-height: 40px; max-height: 160px; overflow-y: auto;
-  line-height: 1.45;
-}
-.reply-send {
-  width: 38px; height: 38px; border-radius: 50%; background: var(--green-mid);
-  color: white; border: none; display: flex; align-items: center;
-  justify-content: center; font-size: 17px; cursor: pointer; flex-shrink: 0;
-}
-
-/* ===================== FILE UPLOAD ===================== */
-.file-upload-label {
-  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
-  background: var(--bg); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0; position: relative; transition: background 0.15s;
-  margin-bottom: 0;
-}
+#reply-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 9px 14px; font-size: 13px; font-family: var(--font); outline: none; resize: none; min-height: 40px; max-height: 160px; overflow-y: auto; line-height: 1.45; }
+.reply-send { width: 38px; height: 38px; border-radius: 50%; background: var(--green-mid); color: white; border: none; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; flex-shrink: 0; }
+.file-upload-label { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; position: relative; transition: background 0.15s; margin-bottom: 0; }
 .file-upload-label:hover { background: var(--green-bg); border-color: var(--green-mid); }
 .file-upload-label i { font-size: 18px; color: var(--text-muted); pointer-events: none; }
-.file-upload-label input[type=file] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer;
-  width: 100%; height: 100%; font-size: 0;
-}
-.upload-bar {
-  display: none; align-items: center; gap: 8px;
-  padding: 6px 14px; background: var(--blue-bg);
-  border-top: 1px solid #B5D4F4; font-size: 11px; color: var(--blue);
-  flex-shrink: 0;
-}
+.file-upload-label input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; font-size: 0; }
+.upload-bar { display: none; align-items: center; gap: 8px; padding: 6px 14px; background: var(--blue-bg); border-top: 1px solid #B5D4F4; font-size: 11px; color: var(--blue); flex-shrink: 0; }
 .upload-bar.show { display: flex; }
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 .spin { animation: spin 1s linear infinite; display: inline-block; }
-
-/* ===================== NOTES PANEL ===================== */
-.notes-panel {
-  width: 210px; border-left: 1px solid var(--border);
-  display: flex; flex-direction: column; background: white;
-  flex-shrink: 0; overflow: hidden;
-  position: relative;
-}
-.np-scroll {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  display: flex; flex-direction: column;
-}
-.np-title {
-  padding: 10px 12px; border-bottom: 1px solid var(--border);
-  font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;
-  flex-shrink: 0;
-}
+.notes-panel { width: 210px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: white; flex-shrink: 0; overflow: hidden; position: relative; }
+.np-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
+.np-title { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .info-block { padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .info-lbl { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .info-val { font-size: 12px; color: var(--text); }
@@ -365,128 +188,67 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .note-txt { font-size: 11px; color: var(--text); line-height: 1.4; }
 .note-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
 .note-add { padding: 8px 12px; font-size: 11px; color: var(--blue); cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-
-/* ===================== DOCUMENT HUB — Fase 2 ===================== */
-.doc-panel {
-  display: none; flex-direction: column;
-  position: absolute; inset: 0;
-  background: white; z-index: 10;
-}
+.doc-panel { display: none; flex-direction: column; position: absolute; inset: 0; background: white; z-index: 10; }
 .doc-panel.active { display: flex; }
-.doc-panel-header {
-  padding: 10px 12px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-}
+.doc-panel-header { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
 .doc-panel-header span { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-.doc-tabs {
-  display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0;
-  overflow-x: auto;
-}
-.doc-tab {
-  flex: 1; padding: 7px 4px; text-align: center; font-size: 10px;
-  color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
-  font-weight: 500; transition: color 0.15s; white-space: nowrap; min-width: 44px;
-}
+.doc-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
+.doc-tab { flex: 1; padding: 7px 4px; text-align: center; font-size: 10px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; transition: color 0.15s; white-space: nowrap; min-width: 44px; }
 .doc-tab.active { color: var(--green-mid); border-bottom-color: var(--green-mid); font-weight: 600; }
-.doc-list-area {
-  flex: 1; overflow-y: auto; padding: 8px 10px;
-  -webkit-overflow-scrolling: touch;
-}
-.doc-category-title {
-  font-size: 10px; font-weight: 700; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: 0.05em;
-  margin: 8px 0 5px; display: flex; align-items: center;
-  justify-content: space-between;
-}
-.doc-item {
-  display: flex; align-items: center; gap: 7px;
-  padding: 7px 8px; border-radius: 8px; margin-bottom: 4px;
-  background: var(--bg); border: 1px solid var(--border);
-  transition: background 0.15s;
-}
+.doc-list-area { flex: 1; overflow-y: auto; padding: 8px 10px; -webkit-overflow-scrolling: touch; }
+.doc-category-title { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 8px 0 5px; display: flex; align-items: center; justify-content: space-between; }
+.doc-item { display: flex; align-items: center; gap: 7px; padding: 7px 8px; border-radius: 8px; margin-bottom: 4px; background: var(--bg); border: 1px solid var(--border); transition: background 0.15s; }
 .doc-item:hover { background: var(--green-bg); border-color: #a0d9c0; }
 .doc-item-icon { font-size: 18px; flex-shrink: 0; }
 .doc-item-info { flex: 1; min-width: 0; }
-.doc-item-name {
-  font-size: 11px; font-weight: 600; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+.doc-item-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .doc-item-meta { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
 .doc-item-acts { display: flex; gap: 3px; flex-shrink: 0; }
-.doc-act-btn {
-  width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border);
-  background: white; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 12px; transition: background 0.15s;
-}
+.doc-act-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; transition: background 0.15s; }
 .doc-act-btn:hover { background: var(--green-bg); border-color: var(--green-mid); }
 .doc-act-btn.danger:hover { background: var(--red-bg); border-color: var(--red); }
-.doc-upload-area {
-  padding: 8px 10px; border-top: 1px solid var(--border); flex-shrink: 0;
-}
-.doc-upload-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 10px; border-radius: 8px;
-  border: 1px dashed var(--green-mid);
-  color: var(--green-mid); font-size: 11px; font-weight: 600;
-  cursor: pointer; background: var(--green-bg);
-  justify-content: center; transition: background 0.15s; width: 100%;
-}
+.doc-upload-area { padding: 8px 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.doc-upload-btn { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 8px; border: 1px dashed var(--green-mid); color: var(--green-mid); font-size: 11px; font-weight: 600; cursor: pointer; background: var(--green-bg); justify-content: center; transition: background 0.15s; width: 100%; }
 .doc-upload-btn:hover { background: #c8eed9; }
-.doc-empty {
-  font-size: 11px; color: var(--text-hint);
-  text-align: center; padding: 20px 0;
-}
+.doc-empty { font-size: 11px; color: var(--text-hint); text-align: center; padding: 20px 0; }
 
-/* PiP window */
-#pip-window {
-  position: fixed; bottom: 80px; right: 20px;
-  width: 300px; background: white; border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.25); z-index: 9997;
-  overflow: hidden; border: 2px solid var(--green-mid);
-  display: flex; flex-direction: column;
+/* ===================== PiP FLOATING VIEWER — Fase 5A ===================== */
+#pip-viewer {
+  position: fixed; bottom: 80px; right: 20px; width: 360px;
+  background: #1a1a1a; border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45); z-index: 9997;
+  display: none; flex-direction: column; overflow: hidden;
+  border: 2px solid var(--green-mid); user-select: none;
+  min-width: 240px; min-height: 200px;
 }
-.pip-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 10px; background: var(--green-mid); color: white;
-  flex-shrink: 0; cursor: grab;
-}
+#pip-viewer.show { display: flex; }
+.pip-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: var(--green-dark); color: white; flex-shrink: 0; cursor: grab; gap: 6px; }
 .pip-header:active { cursor: grabbing; }
-.pip-title {
-  font-size: 11px; font-weight: 600; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; max-width: 220px;
-}
-.pip-close {
-  background: none; border: none; color: white;
-  cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0;
-}
-.pip-body { height: 200px; }
-.pip-body iframe { width: 100%; height: 100%; border: none; }
+.pip-title { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.pip-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.pip-btn { width: 24px; height: 24px; border-radius: 5px; border: none; background: rgba(255,255,255,0.15); color: white; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
+.pip-btn:hover { background: rgba(255,255,255,0.3); }
+.pip-close { width: 24px; height: 24px; border-radius: 5px; border: none; background: rgba(220,50,50,0.6); color: white; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; line-height: 1; }
+.pip-close:hover { background: rgba(220,50,50,1); }
+.pip-image-wrap { flex: 1; overflow: hidden; position: relative; background: #111; min-height: 220px; display: flex; align-items: center; justify-content: center; }
+#pip-img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.2s ease; cursor: zoom-in; }
+.pip-footer { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: #111; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.08); }
+.pip-footer label { font-size: 10px; color: rgba(255,255,255,0.5); white-space: nowrap; }
+.pip-slider { flex: 1; height: 3px; accent-color: var(--green-light); cursor: pointer; }
+.pip-zoom-label { font-size: 10px; color: rgba(255,255,255,0.6); min-width: 30px; text-align: right; }
 
-/* ===================== TOAST ===================== */
-.toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: #222; color: white; padding: 9px 18px; border-radius: 20px;
-  font-size: 12px; z-index: 9999; opacity: 0; transition: opacity 0.3s;
-  pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #222; color: white; padding: 9px 18px; border-radius: 20px; font-size: 12px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 .toast.show { opacity: 1; }
 .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 12px; }
-
-/* ===================== CONTACT BOOK ===================== */
 .page-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--white); }
 .page-panel.active { display: flex; }
 .page-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
 .page-header h3 { font-size: 14px; font-weight: 600; flex: 1; min-width: 120px; }
-.search-inp {
-  flex: 1; min-width: 120px; padding: 7px 12px; border: 1px solid var(--border);
-  border-radius: 8px; font-size: 12px; font-family: var(--font); outline: none;
-}
+.search-inp { flex: 1; min-width: 120px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-family: var(--font); outline: none; }
 .btn-primary { background: var(--green-mid); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: var(--font); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
 .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: var(--font); }
 .btn-wa { background: #25D366; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
 .btn-sm { padding: 5px 10px; font-size: 11px; }
-
 .contact-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
 .contact-card { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
 .contact-card:hover { background: var(--bg); }
@@ -499,8 +261,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .contact-actions { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0; }
 .btn-chat { background: var(--green-mid); color: white; border: none; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: var(--font); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .btn-chat:hover { background: #0a5a44; }
-
-/* ===================== MODAL ===================== */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
 .modal-box { background: white; border-radius: 14px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .modal-wide { max-width: 640px; }
@@ -510,8 +270,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .modal-header button { background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; line-height: 1; }
 .modal-body { padding: 16px 20px; }
 .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
-
-/* ===================== CONTACT DETAIL ===================== */
 .detail-grid { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 12px; }
 .detail-info p { margin: 4px 0; font-size: 12px; color: var(--text-muted); }
 .detail-info p strong { color: var(--text); }
@@ -523,8 +281,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .history-tipe { font-size: 10px; color: var(--green-mid); font-weight: 700; text-transform: uppercase; margin-bottom: 3px; }
 .history-detail { font-size: 13px; font-weight: 600; color: var(--text); }
 .history-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-/* ===================== OWNER DASHBOARD ===================== */
 .owner-dash { overflow-y: auto; flex: 1; padding: 16px; }
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .kpi-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid var(--border); text-align: center; }
@@ -548,47 +304,22 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .staff-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 .stat-row { font-size: 11px; color: var(--text-muted); }
 .stat-row span { color: var(--text); font-weight: 600; }
-
-/* ===================== ALL CHATS ===================== */
 .filter-bar { display: flex; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
 .filter-bar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--font); outline: none; }
-
-/* ===================== NEW CHAT MODAL ===================== */
-.nc-customer-box {
-  background: var(--green-bg); border-radius: 8px; padding: 10px 12px;
-  margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
-}
+.nc-customer-box { background: var(--green-bg); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
 .nc-customer-box .av { width: 36px; height: 36px; font-size: 12px; flex-shrink: 0; }
-
-/* ===================== POLL DOT ===================== */
 .poll-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-light); display: inline-block; animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-/* ===================== LEGEND STRIP ===================== */
-.legend-strip {
-  display: flex; gap: 10px; padding: 5px 10px;
-  background: var(--bg); border-bottom: 1px solid var(--border);
-  font-size: 10px; color: var(--text-muted); flex-wrap: wrap;
-}
+.legend-strip { display: flex; gap: 10px; padding: 5px 10px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 10px; color: var(--text-muted); flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 4px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 .ld-bot { background: var(--bot-border); }
 .ld-human { background: var(--needhuman-border); }
 .ld-assigned { background: var(--green-light); }
-/* ===================== SMART CONTEXT — Fase 3 ===================== */
-.context-block {
-  padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-}
-.context-booking-card {
-  background: var(--blue-bg); border: 1px solid var(--bot-border);
-  border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;
-}
+.context-block { padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.context-booking-card { background: var(--blue-bg); border: 1px solid var(--bot-border); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
 .context-booking-card:last-child { margin-bottom: 0; }
-.context-maskapai {
-  font-size: 10px; font-weight: 700; color: var(--blue);
-  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px;
-  display: flex; align-items: center; justify-content: space-between;
-}
+.context-maskapai { font-size: 10px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; display: flex; align-items: center; justify-content: space-between; }
 .context-kode { font-size: 13px; font-weight: 700; color: var(--text); font-family: monospace; letter-spacing: 1px; }
 .context-detail { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
 .context-rute { font-size: 12px; font-weight: 600; color: var(--text); }
@@ -599,57 +330,34 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .ctx-btn-beacukai { background: var(--purple-bg); color: #3C3489; border-color: #9B94E8; }
 .context-scanning { font-size: 11px; color: var(--text-hint); padding: 6px 0; display: flex; align-items: center; gap: 5px; }
 .context-none { font-size: 11px; color: var(--text-hint); padding: 4px 0; }
-/* ===================== ARSIP LABEL ===================== */
-.arsip-badge {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 6px; padding: 2px 7px; font-size: 10px;
-  color: var(--text-muted); font-weight: 600;
-}
-
-/* ===================== RESPONSIVE ===================== */
+.arsip-badge { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; font-size: 10px; color: var(--text-muted); font-weight: 600; }
 @media (max-width: 768px) {
-  .sidebar {
-    position: absolute; top: 0; left: 0; bottom: 0;
-    z-index: 100; width: 100%;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.1);
-  }
+  .sidebar { position: absolute; top: 0; left: 0; bottom: 0; z-index: 100; width: 100%; box-shadow: 2px 0 12px rgba(0,0,0,0.1); }
   .sidebar.slide-out { transform: translateX(-100%); }
   .chat-panel { width: 100%; }
   .notes-panel { display: none !important; }
   .chat-back { display: block !important; }
   .main-area { position: relative; }
+  #pip-viewer { width: 280px; right: 10px; bottom: 60px; }
 }
-@media (min-width: 769px) and (max-width: 1100px) {
-  .sidebar { width: 260px; }
-  .notes-panel { display: none; }
-}
-@media (min-width: 1100px) {
-  .notes-panel { display: flex; }
-}
+@media (min-width: 769px) and (max-width: 1100px) { .sidebar { width: 260px; } .notes-panel { display: none; } }
+@media (min-width: 1100px) { .notes-panel { display: flex; } }
 </style>
 </head>
 <body>
 
-<!-- ==================== LOGIN ==================== -->
 <div id="login-page">
   <div class="login-box">
     <div class="login-logo"><i class="ti ti-messages"></i></div>
     <div class="login-title">GOHO WA Center</div>
     <div class="login-sub">GohoTravel Customer Service</div>
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="username" placeholder="Masukkan username" autocomplete="off">
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="Masukkan password">
-    </div>
+    <div class="form-group"><label>Username</label><input type="text" id="username" placeholder="Masukkan username" autocomplete="off"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="password" placeholder="Masukkan password"></div>
     <button class="btn-login" onclick="doLogin()">Masuk</button>
     <div class="login-error hidden" id="login-error">Username atau password salah</div>
   </div>
 </div>
 
-<!-- ==================== APP ==================== -->
 <div id="app">
   <div class="topnav">
     <div class="topnav-logo"><i class="ti ti-messages"></i></div>
@@ -660,35 +368,21 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       <span id="nav-name">SY</span>
       <i class="ti ti-refresh" style="font-size:16px;cursor:pointer;" onclick="refreshAll()" title="Refresh"></i>
       <span class="poll-dot"></span>
+      <i class="ti ti-logout" style="font-size:16px;cursor:pointer;color:rgba(255,255,255,0.5);" onclick="doLogout()" title="Logout"></i>
     </div>
   </div>
-
-  <!-- OWNER TABS -->
   <div class="main-tabs" id="main-tabs">
-    <div class="main-tab active" onclick="switchMainTab('chat')" id="mtab-chat">
-      <i class="ti ti-message-circle"></i> Chat
-      <span class="tab-badge hidden" id="mtab-chat-badge">0</span>
-    </div>
+    <div class="main-tab active" onclick="switchMainTab('chat')" id="mtab-chat"><i class="ti ti-message-circle"></i> Chat<span class="tab-badge hidden" id="mtab-chat-badge">0</span></div>
     <div class="main-tab" onclick="switchMainTab('contacts')" id="mtab-contacts"><i class="ti ti-users"></i> Contacts</div>
     <div class="main-tab" onclick="switchMainTab('dashboard')" id="mtab-dashboard"><i class="ti ti-chart-bar"></i> Dashboard</div>
     <div class="main-tab" onclick="switchMainTab('allchats')" id="mtab-allchats"><i class="ti ti-layout-list"></i> Semua Chat</div>
   </div>
-
-  <!-- ==================== CHAT PAGE ==================== -->
   <div class="main-area" id="page-chat" style="display:flex;">
-    <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
-      <div class="sb-search">
-        <input placeholder="🔍 Cari customer..." id="search-input" oninput="filterChats()">
-      </div>
+      <div class="sb-search"><input placeholder="🔍 Cari customer..." id="search-input" oninput="filterChats()"></div>
       <div class="sb-tabs">
-        <div class="sb-tab active" onclick="switchTab('aktif')" id="tab-aktif">
-          <i class="ti ti-message-circle"></i> Aktif
-          <span class="sb-tab-badge hidden" id="badge-aktif">0</span>
-        </div>
-        <div class="sb-tab" onclick="switchTab('arsip')" id="tab-arsip">
-          <i class="ti ti-archive"></i> Arsip
-        </div>
+        <div class="sb-tab active" onclick="switchTab('aktif')" id="tab-aktif"><i class="ti ti-message-circle"></i> Aktif<span class="sb-tab-badge hidden" id="badge-aktif">0</span></div>
+        <div class="sb-tab" onclick="switchTab('arsip')" id="tab-arsip"><i class="ti ti-archive"></i> Arsip</div>
       </div>
       <div class="sb-stats-row">
         <div class="sb-stat-pill"><div class="sb-stat-n n-orange" id="stat-bot">0</div><div class="sb-stat-l">Bot</div></div>
@@ -703,24 +397,15 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       </div>
       <div class="chat-list" id="chat-list"><div class="loading">Memuat...</div></div>
     </div>
-
-    <!-- CHAT PANEL -->
     <div class="chat-panel" id="chat-panel">
-      <div class="chat-empty" id="chat-empty">
-        <i class="ti ti-messages"></i>
-        <p>Pilih chat untuk mulai</p>
-      </div>
+      <div class="chat-empty" id="chat-empty"><i class="ti ti-messages"></i><p>Pilih chat untuk mulai</p></div>
       <div id="chat-active" class="hidden" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
         <div class="chat-top">
           <i class="ti ti-arrow-left chat-back" onclick="backToList()"></i>
           <div class="chat-top-av" id="ct-av">--</div>
           <div class="chat-top-info">
             <div class="chat-top-name" id="ct-name">-</div>
-            <div class="chat-top-sub">
-              <span id="ct-wa">-</span>
-              <span class="chat-top-status" id="ct-status">-</span>
-              <span id="ct-by" style="font-size:10px;"></span>
-            </div>
+            <div class="chat-top-sub"><span id="ct-wa">-</span><span class="chat-top-status" id="ct-status">-</span><span id="ct-by" style="font-size:10px;"></span></div>
           </div>
           <div class="chat-top-acts">
             <i class="ti ti-user-circle" title="Lihat Contact" onclick="openContactFromChat()"></i>
@@ -736,22 +421,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
             <i class="ti ti-paperclip"></i>
             <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFileUpload(this)">
           </label>
-          <textarea id="reply-input" rows="1" placeholder="Ketik pesan..."
-                    oninput="autoExpandTextarea(this)"
-                    onkeydown="handleReplyKey(event)"></textarea>
+          <textarea id="reply-input" rows="1" placeholder="Ketik pesan..." oninput="autoExpandTextarea(this)" onkeydown="handleReplyKey(event)"></textarea>
           <button class="reply-send" onclick="kirimPesan()"><i class="ti ti-send"></i></button>
         </div>
-        <div class="upload-bar" id="upload-bar">
-          <i class="ti ti-loader spin"></i>
-          <span id="upload-status">Mengupload file...</span>
-        </div>
+        <div class="upload-bar" id="upload-bar"><i class="ti ti-loader spin"></i><span id="upload-status">Mengupload file...</span></div>
       </div>
     </div>
-
-    <!-- NOTES PANEL -->
     <div class="notes-panel" id="notes-panel" style="display:none;">
-
-      <!-- ===== DOCUMENT HUB PANEL (overlay) ===== -->
       <div class="doc-panel" id="doc-panel">
         <div class="doc-panel-header">
           <span><i class="ti ti-id-badge" style="font-size:14px;"></i> Dokumen Customer</span>
@@ -763,20 +439,14 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
           <div class="doc-tab" onclick="switchDocTab('Tiket & Voucher',this)">✈️ Tiket</div>
           <div class="doc-tab" onclick="switchDocTab('Lainnya',this)">📄 Lain</div>
         </div>
-        <div class="doc-list-area" id="doc-list">
-          <div class="doc-empty">Pilih chat untuk lihat dokumen</div>
-        </div>
+        <div class="doc-list-area" id="doc-list"><div class="doc-empty">Pilih chat untuk lihat dokumen</div></div>
         <div class="doc-upload-area">
           <label class="doc-upload-btn" id="doc-upload-label">
             <i class="ti ti-upload" style="font-size:14px;"></i> Upload Dokumen
-            <input type="file" id="doc-file-input" style="display:none;"
-                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                   onchange="handleDocUpload(this)">
+            <input type="file" id="doc-file-input" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleDocUpload(this)">
           </label>
         </div>
       </div>
-
-      <!-- ===== INFO PANEL (default) ===== -->
       <div id="info-panel-content" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
         <div class="np-scroll" id="np-scroll">
           <div class="np-title"><i class="ti ti-user" style="font-size:14px;"></i> Info customer</div>
@@ -788,14 +458,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
             <div class="info-val" id="np-customer-name" style="font-weight:600;"></div>
             <div class="info-val" id="np-customer-booking" style="font-size:11px;color:var(--text-muted);"></div>
           </div>
-          <!-- SMART CONTEXT — Fase 3 -->
-<div class="context-block" id="np-context-block" style="display:none;">
-  <div class="info-lbl" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-    <span>🎯 Konteks Booking</span>
-    <span id="np-context-loading" style="font-size:9px;color:var(--text-hint);">scanning...</span>
-  </div>
-  <div id="np-context-list"></div>
-</div>
+          <div class="context-block" id="np-context-block" style="display:none;">
+            <div class="info-lbl" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span>🎯 Konteks Booking</span>
+              <span id="np-context-loading" style="font-size:9px;color:var(--text-hint);">scanning...</span>
+            </div>
+            <div id="np-context-list"></div>
+          </div>
           <div class="info-block" id="np-history-block" style="display:none;">
             <div class="info-lbl" style="display:flex;justify-content:space-between;align-items:center;">
               Riwayat Booking
@@ -803,17 +472,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
             </div>
             <div id="np-history-list" style="max-height:none;"></div>
           </div>
-          
           <div class="np-title" style="margin-top:4px;"><i class="ti ti-notes" style="font-size:14px;"></i> Catatan internal</div>
           <div id="np-notes"></div>
           <div class="note-add" onclick="showNoteInput()"><i class="ti ti-plus" style="font-size:12px;"></i> Tambah catatan</div>
         </div>
       </div>
-
     </div>
   </div>
-
-  <!-- ==================== CONTACTS PAGE ==================== -->
   <div class="page-panel" id="page-contacts">
     <div class="page-header">
       <h3><i class="ti ti-users" style="font-size:16px;"></i> Contact Book</h3>
@@ -822,8 +487,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
     </div>
     <div class="contact-list" id="contact-list"><div class="loading">Memuat contacts...</div></div>
   </div>
-
-  <!-- ==================== OWNER DASHBOARD ==================== -->
   <div class="page-panel" id="page-dashboard">
     <div class="owner-dash" id="owner-dash-content">
       <div class="kpi-grid">
@@ -833,48 +496,48 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
         <div class="kpi-card kpi-closed"><div class="kpi-number" id="kpi-closed">-</div><div class="kpi-label">🔒 Arsip</div></div>
         <div class="kpi-card kpi-customers"><div class="kpi-number" id="kpi-customers">-</div><div class="kpi-label">👥 Customers</div></div>
       </div>
-      <div id="alert-box" style="display:none;" class="alert-box">
-        <h4>⚠️ Chat menunggu terlalu lama</h4>
-        <div id="alert-list"></div>
-      </div>
+      <div id="alert-box" style="display:none;" class="alert-box"><h4>⚠️ Chat menunggu terlalu lama</h4><div id="alert-list"></div></div>
       <div class="section-title">Performa Staff</div>
       <div class="staff-grid" id="staff-grid"><div class="loading">Memuat...</div></div>
     </div>
   </div>
-
-  <!-- ==================== ALL CHATS (OWNER) ==================== -->
   <div class="page-panel" id="page-allchats">
-    <div class="page-header">
-      <h3><i class="ti ti-layout-list" style="font-size:16px;"></i> Semua Chat</h3>
-    </div>
+    <div class="page-header"><h3><i class="ti ti-layout-list" style="font-size:16px;"></i> Semua Chat</h3></div>
     <div class="filter-bar">
-      <select id="filter-status" onchange="filterAllChats()">
-        <option value="">Semua Status</option>
-        <option value="WAITING">Menunggu</option>
-        <option value="ASSIGNED">Ditangani</option>
-        <option value="FOLLOW_UP">Follow Up</option>
-        <option value="BOOKED">Booked</option>
-        <option value="CLOSED">Arsip</option>
-      </select>
-      <select id="filter-staff" onchange="filterAllChats()">
-        <option value="">Semua Staff</option>
-      </select>
+      <select id="filter-status" onchange="filterAllChats()"><option value="">Semua Status</option><option value="WAITING">Menunggu</option><option value="ASSIGNED">Ditangani</option><option value="FOLLOW_UP">Follow Up</option><option value="BOOKED">Booked</option><option value="CLOSED">Arsip</option></select>
+      <select id="filter-staff" onchange="filterAllChats()"><option value="">Semua Staff</option></select>
     </div>
     <div class="contact-list" id="all-chats-list"><div class="loading">Memuat...</div></div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- ==================== MODALS ==================== -->
-<!-- ADD/EDIT CONTACT -->
+<!-- PiP Floating Viewer -->
+<div id="pip-viewer">
+  <div class="pip-header" id="pip-drag-handle">
+    <span class="pip-title" id="pip-title">Paspor / KTP</span>
+    <div class="pip-controls">
+      <button class="pip-btn" onclick="pipZoom(-0.2)" title="Zoom Out">−</button>
+      <button class="pip-btn" onclick="pipZoom(0.2)" title="Zoom In">+</button>
+      <button class="pip-btn" onclick="pipRotate(-90)" title="Putar Kiri">↺</button>
+      <button class="pip-btn" onclick="pipRotate(90)" title="Putar Kanan">↻</button>
+      <button class="pip-btn" onclick="pipReset()" title="Reset">⊙</button>
+      <button class="pip-close" onclick="closePiP()">✕</button>
+    </div>
+  </div>
+  <div class="pip-image-wrap"><img id="pip-img" src="" alt="Dokumen"></div>
+  <div class="pip-footer">
+    <label>Opacity</label>
+    <input type="range" class="pip-slider" id="pip-opacity" min="20" max="100" value="100" oninput="pipOpacity(this.value)">
+    <span class="pip-zoom-label" id="pip-zoom-label">100%</span>
+  </div>
+</div>
+
+<!-- MODALS -->
 <div class="modal" id="modal-contact" style="display:none;">
   <div class="modal-box">
-    <div class="modal-header">
-      <h3 id="modal-contact-title">Tambah Contact</h3>
-      <button onclick="closeModal('modal-contact')">✕</button>
-    </div>
+    <div class="modal-header"><h3 id="modal-contact-title">Tambah Contact</h3><button onclick="closeModal('modal-contact')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="c-original-nowa">
       <div class="form-group"><label>Nama Customer *</label><input type="text" id="c-nama" placeholder="Nama pemilik nomor WA"></div>
@@ -883,20 +546,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       <div class="form-group"><label>Kota</label><input type="text" id="c-kota" placeholder="Medan, Jakarta, dll"></div>
       <div class="form-group"><label>Catatan</label><textarea id="c-catatan" rows="3" placeholder="Catatan internal..."></textarea></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('modal-contact')">Batal</button>
-      <button class="btn-primary" onclick="submitContact()">Simpan</button>
-    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-contact')">Batal</button><button class="btn-primary" onclick="submitContact()">Simpan</button></div>
   </div>
 </div>
-
-<!-- CONTACT DETAIL -->
 <div class="modal" id="modal-detail" style="display:none;">
   <div class="modal-box modal-wide">
-    <div class="modal-header">
-      <h3 id="detail-name">Detail Contact</h3>
-      <button onclick="closeModal('modal-detail')">✕</button>
-    </div>
+    <div class="modal-header"><h3 id="detail-name">Detail Contact</h3><button onclick="closeModal('modal-detail')">✕</button></div>
     <div class="modal-body">
       <div class="detail-grid">
         <div class="detail-info">
@@ -916,9 +571,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
         <button class="inner-tab active" onclick="showInnerTab('riwayat', event)">📋 Riwayat Booking</button>
         <button class="inner-tab" onclick="showInnerTab('passenger', event)">👤 Penumpang</button>
       </div>
-      <div id="inner-riwayat">
-        <div id="booking-history"><button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">🔍 Muat Riwayat Booking</button></div>
-      </div>
+      <div id="inner-riwayat"><div id="booking-history"><button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">🔍 Muat Riwayat Booking</button></div></div>
       <div id="inner-passenger" style="display:none;">
         <button class="btn-primary btn-sm" style="margin-bottom:10px;" onclick="showAddPassenger()"><i class="ti ti-plus"></i> Tambah Penumpang</button>
         <div id="passenger-list"><div class="loading">Klik tab untuk muat...</div></div>
@@ -926,14 +579,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
     </div>
   </div>
 </div>
-
-<!-- ADD PASSENGER -->
 <div class="modal" id="modal-passenger" style="display:none;">
   <div class="modal-box">
-    <div class="modal-header">
-      <h3>Tambah Data Penumpang</h3>
-      <button onclick="closeModal('modal-passenger')">✕</button>
-    </div>
+    <div class="modal-header"><h3>Tambah Data Penumpang</h3><button onclick="closeModal('modal-passenger')">✕</button></div>
     <div class="modal-body">
       <div class="form-group"><label>Nama Lengkap *</label><input type="text" id="p-nama" placeholder="Sesuai KTP/Paspor"></div>
       <div class="form-group"><label>Jenis Kelamin</label><select id="p-jk"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
@@ -943,103 +591,81 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
       <div class="form-group"><label>Expiry Paspor</label><input type="date" id="p-expiry"></div>
       <div class="form-group"><label>Kewarganegaraan</label><input type="text" id="p-warga" value="WNI"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('modal-passenger')">Batal</button>
-      <button class="btn-primary" onclick="submitPassenger()">Simpan</button>
-    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-passenger')">Batal</button><button class="btn-primary" onclick="submitPassenger()">Simpan</button></div>
   </div>
 </div>
-
-<!-- NEW CHAT -->
 <div class="modal" id="modal-new-chat" style="display:none;">
   <div class="modal-box modal-sm">
-    <div class="modal-header">
-      <h3>💬 Kirim Pesan ke Customer</h3>
-      <button onclick="closeModal('modal-new-chat')">✕</button>
-    </div>
+    <div class="modal-header"><h3>💬 Kirim Pesan ke Customer</h3><button onclick="closeModal('modal-new-chat')">✕</button></div>
     <div class="modal-body">
-      <div class="nc-customer-box">
-        <div class="av av-b" id="nc-av">?</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;" id="nc-nama">-</div>
-          <div style="font-size:11px;color:var(--text-muted);" id="nc-nowa">-</div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Pesan *</label>
-        <textarea id="nc-pesan" rows="4" placeholder="Ketik pesan yang akan dikirim ke customer..."></textarea>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:-6px;">
-        💡 Pesan akan dikirim via Fonnte. Room chat baru akan dibuat di tab Aktif.
-      </div>
+      <div class="nc-customer-box"><div class="av av-b" id="nc-av">?</div><div><div style="font-size:13px;font-weight:600;" id="nc-nama">-</div><div style="font-size:11px;color:var(--text-muted);" id="nc-nowa">-</div></div></div>
+      <div class="form-group"><label>Pesan *</label><textarea id="nc-pesan" rows="4" placeholder="Ketik pesan yang akan dikirim ke customer..."></textarea></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:-6px;">💡 Pesan akan dikirim via Fonnte. Room chat baru akan dibuat di tab Aktif.</div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('modal-new-chat')">Batal</button>
-      <button class="btn-primary" id="nc-send-btn" onclick="submitNewChat()">
-        <i class="ti ti-send"></i> Kirim
-      </button>
-    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('modal-new-chat')">Batal</button><button class="btn-primary" id="nc-send-btn" onclick="submitNewChat()"><i class="ti ti-send"></i> Kirim</button></div>
   </div>
 </div>
 
-<!-- ==================== JAVASCRIPT ==================== -->
 <script>
 const API = '/api/proxy';
-let currentStaff = null;
-let currentRoom = null;
-let currentTab = 'aktif';
-let currentMainTab = 'chat';
-let allChats = [];
-let allRoomsCache = [];
-let allContactsCache = [];
-let currentContactNoWa = '';
-let currentContactNama = '';
-let pollInterval = null;
-let lastMsgCount = 0;
-let unreadCounts = {};
-let lastSeenAt = {};
+let currentStaff = null, currentRoom = null, currentTab = 'aktif', currentMainTab = 'chat';
+let allChats = [], allRoomsCache = [], allContactsCache = [];
+let currentContactNoWa = '', currentContactNama = '';
+let pollInterval = null, lastMsgCount = 0, unreadCounts = {}, lastSeenAt = {};
+
+// ===================== SESSION MANAGEMENT =====================
+function saveSession(staff) {
+  const session = { staff: staff, expiry: Date.now() + (30 * 24 * 60 * 60 * 1000) };
+  try { localStorage.setItem('goho_session', JSON.stringify(session)); } catch(e) {}
+}
+function loadSession() {
+  try {
+    const raw = localStorage.getItem('goho_session');
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (Date.now() > s.expiry) { localStorage.removeItem('goho_session'); return null; }
+    return s.staff;
+  } catch(e) { try { localStorage.removeItem('goho_session'); } catch(e2) {} return null; }
+}
+function clearSession() { try { localStorage.removeItem('goho_session'); } catch(e) {} }
+function initApp(staff) {
+  currentStaff = staff;
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('nav-name').textContent = currentStaff.nama;
+  document.getElementById('nav-av').textContent = currentStaff.nama.substring(0,2).toUpperCase();
+  if (currentStaff.role === 'OWNER') {
+    document.getElementById('nav-badge').classList.remove('hidden');
+    document.getElementById('nav-av').classList.add('owner');
+    document.getElementById('main-tabs').classList.add('visible');
+  }
+  startPolling(); loadChats(); showSoundActivation();
+}
+function doLogout() {
+  if (!confirm('Logout dari GOHO WA Center?')) return;
+  clearSession(); location.reload();
+}
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = loadSession();
+  if (saved) initApp(saved);
+});
 
 // ===================== UTILS =====================
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function escH(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function escH(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 async function apiGet(params) {
   params._t = Date.now();
   const query = new URLSearchParams(params).toString();
-  try {
-    const r = await fetch('/api/proxy?' + query, { method: 'GET', cache: 'no-store' });
-    return JSON.parse(await r.text());
-  } catch(e) { return {ok: false, msg: e.toString()}; }
+  try { const r = await fetch('/api/proxy?' + query, { method: 'GET', cache: 'no-store' }); return JSON.parse(await r.text()); }
+  catch(e) { return {ok: false, msg: e.toString()}; }
 }
-async function apiPost(body) {
-  const r = await fetch(API, { method: 'POST', body: JSON.stringify(body) });
-  return r.json();
-}
-function autoExpandTextarea(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
-}
+async function apiPost(body) { const r = await fetch(API, { method: 'POST', body: JSON.stringify(body) }); return r.json(); }
+function autoExpandTextarea(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
 
 // ===================== PWA =====================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
-}
-function updateAppBadge(count) {
-  if ('setAppBadge' in navigator) {
-    if (count > 0) navigator.setAppBadge(count).catch(() => {});
-    else navigator.clearAppBadge().catch(() => {});
-  }
-}
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); }); }
+function updateAppBadge(count) { if ('setAppBadge' in navigator) { if (count > 0) navigator.setAppBadge(count).catch(() => {}); else navigator.clearAppBadge().catch(() => {}); } }
 
 // ===================== LOGIN =====================
 async function doLogin() {
@@ -1048,26 +674,9 @@ async function doLogin() {
   if (!u || !p) return;
   try {
     const res = await apiGet({action: 'login', username: u, password: p});
-    if (res.ok) {
-      currentStaff = res.staff;
-      document.getElementById('login-page').style.display = 'none';
-      document.getElementById('app').classList.add('visible');
-      document.getElementById('nav-name').textContent = currentStaff.nama;
-      document.getElementById('nav-av').textContent = currentStaff.nama.substring(0,2).toUpperCase();
-      if (currentStaff.role === 'OWNER') {
-        document.getElementById('nav-badge').classList.remove('hidden');
-        document.getElementById('nav-av').classList.add('owner');
-        document.getElementById('main-tabs').classList.add('visible');
-      }
-      startPolling();
-      loadChats();
-      showSoundActivation();
-    } else {
-      document.getElementById('login-error').classList.remove('hidden');
-    }
-  } catch(e) {
-    document.getElementById('login-error').classList.remove('hidden');
-  }
+    if (res.ok) { saveSession(res.staff); initApp(res.staff); }
+    else { document.getElementById('login-error').classList.remove('hidden'); }
+  } catch(e) { document.getElementById('login-error').classList.remove('hidden'); }
 }
 document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
@@ -1077,158 +686,78 @@ function switchMainTab(tab) {
   ['chat','contacts','dashboard','allchats'].forEach(t => {
     document.getElementById('mtab-' + t)?.classList.toggle('active', t === tab);
     const page = document.getElementById('page-' + t);
-    if (page) {
-      page.style.display = t === tab ? 'flex' : 'none';
-      page.classList.toggle('active', t === tab);
-    }
+    if (page) { page.style.display = t === tab ? 'flex' : 'none'; page.classList.toggle('active', t === tab); }
   });
   const chatPage = document.getElementById('page-chat');
   if (chatPage) chatPage.style.display = tab === 'chat' ? 'flex' : 'none';
-  if (tab === 'contacts')  loadContacts();
+  if (tab === 'contacts') loadContacts();
   if (tab === 'dashboard') loadOwnerStats();
-  if (tab === 'allchats')  loadAllChats();
+  if (tab === 'allchats') loadAllChats();
 }
 
 // ===================== SOUND & NOTIFICATION =====================
 let lastWaitingRooms = new Set();
-
 function playNotifSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === 'suspended') ctx.resume();
     function beep(freq, start, duration) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine';
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination); osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
       gain.gain.setValueAtTime(0.8, ctx.currentTime + start);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + duration);
+      osc.start(ctx.currentTime + start); osc.stop(ctx.currentTime + start + duration);
     }
     beep(880, 0.0, 0.18); beep(880, 0.25, 0.18); beep(1050, 0.5, 0.25);
   } catch(e) {}
 }
-
 function unlockAudio() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const buf = ctx.createBuffer(1, 1, 22050);
-    const src = ctx.createBufferSource();
-    src.buffer = buf; src.connect(ctx.destination); src.start(0); ctx.resume();
-  } catch(e) {}
-  document.removeEventListener('click', unlockAudio);
-  document.removeEventListener('keydown', unlockAudio);
+  try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const buf = ctx.createBuffer(1,1,22050); const src = ctx.createBufferSource(); src.buffer=buf; src.connect(ctx.destination); src.start(0); ctx.resume(); } catch(e) {}
+  document.removeEventListener('click', unlockAudio); document.removeEventListener('keydown', unlockAudio);
 }
-document.addEventListener('click', unlockAudio);
-document.addEventListener('keydown', unlockAudio);
-
+document.addEventListener('click', unlockAudio); document.addEventListener('keydown', unlockAudio);
 function showSoundActivation() {
-  const btn = document.createElement('div');
-  btn.id = 'sound-btn';
-  btn.innerHTML = '🔔 Aktifkan Suara Notif';
+  const btn = document.createElement('div'); btn.id = 'sound-btn'; btn.innerHTML = '🔔 Aktifkan Suara Notif';
   btn.style.cssText = 'position:fixed;top:56px;right:12px;background:#0F6E56;color:white;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;z-index:9998;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
-  btn.onclick = function() {
-    unlockAudio(); playNotifSound();
-    btn.innerHTML = '✅ Suara Aktif';
-    btn.style.background = '#666';
-    setTimeout(() => btn.remove(), 2000);
-  };
+  btn.onclick = function() { unlockAudio(); playNotifSound(); btn.innerHTML = '✅ Suara Aktif'; btn.style.background = '#666'; setTimeout(() => btn.remove(), 2000); };
   document.body.appendChild(btn);
 }
-
 function showNotifPopup(nama, noWa, roomId) {
-  const old = document.getElementById('notif-popup');
-  if (old) old.remove();
-  const popup = document.createElement('div');
-  popup.id = 'notif-popup';
-  popup.innerHTML = `
-    <div style="display:flex;align-items:flex-start;gap:10px;">
-      <div style="width:36px;height:36px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💬</div>
-      <div style="flex:1;">
-        <div style="font-weight:600;font-size:13px;margin-bottom:2px;">Chat Baru Masuk!</div>
-        <div style="font-size:12px;color:#555;">${escH(nama)}</div>
-        <div style="font-size:11px;color:#888;">${noWa}</div>
-      </div>
-      <button onclick="dismissNotif()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;line-height:1;">✕</button>
-    </div>
-    <button onclick="goToChat('${roomId}')" style="margin-top:8px;width:100%;padding:6px;background:#0F6E56;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);">Buka Chat →</button>`;
+  const old = document.getElementById('notif-popup'); if (old) old.remove();
+  const popup = document.createElement('div'); popup.id = 'notif-popup';
+  popup.innerHTML = `<div style="display:flex;align-items:flex-start;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💬</div><div style="flex:1;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;">Chat Baru Masuk!</div><div style="font-size:12px;color:#555;">${escH(nama)}</div><div style="font-size:11px;color:#888;">${noWa}</div></div><button onclick="dismissNotif()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;line-height:1;">✕</button></div><button onclick="goToChat('${roomId}')" style="margin-top:8px;width:100%;padding:6px;background:#0F6E56;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);">Buka Chat →</button>`;
   popup.style.cssText = 'position:fixed;bottom:24px;right:24px;background:white;border-radius:12px;padding:14px;width:280px;box-shadow:0 8px 30px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(0,0,0,0.08);';
-  document.body.appendChild(popup);
-  setTimeout(() => dismissNotif(), 8000);
+  document.body.appendChild(popup); setTimeout(() => dismissNotif(), 8000);
 }
 function dismissNotif() { const p = document.getElementById('notif-popup'); if (p) p.remove(); }
-
 async function goToChat(roomId) {
-  dismissNotif();
-  if (currentStaff.role === 'OWNER') switchMainTab('chat');
-  currentTab = 'aktif';
-  setActiveTab('aktif');
-  await loadChats(false);
-  setTimeout(() => {
-    const chat = allChats.find(c => c.roomId === roomId);
-    if (chat) openChat(roomId);
-  }, 400);
+  dismissNotif(); if (currentStaff.role === 'OWNER') switchMainTab('chat');
+  currentTab = 'aktif'; setActiveTab('aktif'); await loadChats(false);
+  setTimeout(() => { const chat = allChats.find(c => c.roomId === roomId); if (chat) openChat(roomId); }, 400);
 }
-
-// ===================== BADGE / TITLE UPDATE =====================
 function updateGlobalBadge(totalUnread) {
-  const badge = document.getElementById('mtab-chat-badge');
-  const tabBadge = document.getElementById('badge-aktif');
-  if (totalUnread > 0) {
-    if (badge) { badge.textContent = totalUnread; badge.classList.remove('hidden'); }
-    if (tabBadge) { tabBadge.textContent = totalUnread; tabBadge.classList.remove('hidden'); }
-    document.title = '(' + totalUnread + ') GOHO WA Center';
-  } else {
-    if (badge) badge.classList.add('hidden');
-    if (tabBadge) tabBadge.classList.add('hidden');
-    document.title = 'GOHO WA Center';
-  }
+  const badge = document.getElementById('mtab-chat-badge'); const tabBadge = document.getElementById('badge-aktif');
+  if (totalUnread > 0) { if (badge) { badge.textContent = totalUnread; badge.classList.remove('hidden'); } if (tabBadge) { tabBadge.textContent = totalUnread; tabBadge.classList.remove('hidden'); } document.title = '(' + totalUnread + ') GOHO WA Center'; }
+  else { if (badge) badge.classList.add('hidden'); if (tabBadge) tabBadge.classList.add('hidden'); document.title = 'GOHO WA Center'; }
   updateAppBadge(totalUnread);
 }
-
 function checkNewChats(waitingChats) {
   const newWaitingIds = new Set(waitingChats.map(c => c.roomId));
   const brandNew = waitingChats.filter(c => !lastWaitingRooms.has(c.roomId));
-  if (brandNew.length > 0 && lastWaitingRooms.size > 0) {
-    playNotifSound();
-    const first = brandNew[0];
-    showNotifPopup(first.nama, first.noWa, first.roomId);
-  }
+  if (brandNew.length > 0 && lastWaitingRooms.size > 0) { playNotifSound(); const first = brandNew[0]; showNotifPopup(first.nama, first.noWa, first.roomId); }
   lastWaitingRooms = newWaitingIds;
 }
 
 // ===================== POLLING =====================
 function startPolling() {
   if (pollInterval) clearInterval(pollInterval);
-  apiGet({action: 'getWaitingQueue'}).then(res => {
-    if (res.ok) lastWaitingRooms = new Set(res.data.map(c => c.roomId));
-  });
-  pollInterval = setInterval(() => {
-    loadStats();
-    if (currentRoom) loadMessages(currentRoom.roomId, false);
-    if (currentMainTab === 'chat') loadChats(false);
-    if (currentMainTab === 'dashboard') loadOwnerStats();
-  }, 4000);
-  setInterval(async () => {
-    try {
-      const res = await apiGet({action: 'getWaitingQueue'});
-      if (res.ok) checkNewChats(res.data);
-    } catch(e) {}
-  }, 5000);
+  apiGet({action: 'getWaitingQueue'}).then(res => { if (res.ok) lastWaitingRooms = new Set(res.data.map(c => c.roomId)); });
+  pollInterval = setInterval(() => { loadStats(); if (currentRoom) loadMessages(currentRoom.roomId, false); if (currentMainTab === 'chat') loadChats(false); if (currentMainTab === 'dashboard') loadOwnerStats(); }, 4000);
+  setInterval(async () => { try { const res = await apiGet({action: 'getWaitingQueue'}); if (res.ok) checkNewChats(res.data); } catch(e) {} }, 5000);
 }
-
 async function loadStats() {
-  try {
-    const res = await apiGet({action: 'getDashboardStats'});
-    if (res.ok) {
-      document.getElementById('stat-bot').textContent = res.data.bot || 0;
-      document.getElementById('stat-waiting').textContent = res.data.waiting || 0;
-      document.getElementById('stat-active').textContent = res.data.active || 0;
-      document.getElementById('stat-selesai').textContent = res.data.selesai || 0;
-    }
-  } catch(e) {}
+  try { const res = await apiGet({action: 'getDashboardStats'}); if (res.ok) { document.getElementById('stat-bot').textContent = res.data.bot || 0; document.getElementById('stat-waiting').textContent = res.data.waiting || 0; document.getElementById('stat-active').textContent = res.data.active || 0; document.getElementById('stat-selesai').textContent = res.data.selesai || 0; } } catch(e) {}
 }
 
 // ===================== CHAT LIST =====================
@@ -1237,149 +766,61 @@ async function loadChats(showLoading = true) {
   try {
     let res;
     if (currentTab === 'aktif') {
-      if (currentStaff.role === 'OWNER') {
-        res = await apiGet({action: 'getAllChats'});
-      } else {
-        const [waitRes, myRes] = await Promise.all([
-          apiGet({action: 'getWaitingQueue'}),
-          apiGet({action: 'getMyChats', staffName: currentStaff.nama})
-        ]);
-        const combined = [];
-        const seen = new Set();
-        [...(waitRes.data || []), ...(myRes.data || [])].forEach(c => {
-          if (!seen.has(c.roomId)) { seen.add(c.roomId); combined.push(c); }
-        });
+      if (currentStaff.role === 'OWNER') { res = await apiGet({action: 'getAllChats'}); }
+      else {
+        const [waitRes, myRes] = await Promise.all([apiGet({action: 'getWaitingQueue'}), apiGet({action: 'getMyChats', staffName: currentStaff.nama})]);
+        const combined = []; const seen = new Set();
+        [...(waitRes.data || []), ...(myRes.data || [])].forEach(c => { if (!seen.has(c.roomId)) { seen.add(c.roomId); combined.push(c); } });
         res = { ok: true, data: combined };
       }
-    } else {
-      res = await apiGet({action: 'getClosedChats'});
-    }
+    } else { res = await apiGet({action: 'getClosedChats'}); }
     if (res.ok) {
       allChats = res.data || [];
-
-      // === ENRICHMENT NAMA DARI CONTACT BOOK ===
-      if (allContactsCache.length === 0) {
-        try {
-          const cRes = await apiGet({action: 'getAllCustomers', query: ''});
-          allContactsCache = cRes.customers || [];
-        } catch(e) {}
-      }
-      allChats = allChats.map(c => {
-        const contact = allContactsCache.find(ct => ct.noWa === c.noWa);
-        if (contact && contact.nama) c.nama = contact.nama;
-        return c;
-      });
-      // === END ENRICHMENT ===
-
-      allChats.sort((a, b) => {
-        const ta = a.lastMsgAt ? new Date(a.lastMsgAt).getTime() : 0;
-        const tb = b.lastMsgAt ? new Date(b.lastMsgAt).getTime() : 0;
-        return tb - ta;
-      });
-      allChats.forEach(c => {
-        if (c.unreadCount !== undefined) unreadCounts[c.roomId] = c.unreadCount;
-      });
+      if (allContactsCache.length === 0) { try { const cRes = await apiGet({action: 'getAllCustomers', query: ''}); allContactsCache = cRes.customers || []; } catch(e) {} }
+      allChats = allChats.map(c => { const contact = allContactsCache.find(ct => ct.noWa === c.noWa); if (contact && contact.nama) c.nama = contact.nama; return c; });
+      allChats.sort((a, b) => { const ta = a.lastMsgAt ? new Date(a.lastMsgAt).getTime() : 0; const tb = b.lastMsgAt ? new Date(b.lastMsgAt).getTime() : 0; return tb - ta; });
+      allChats.forEach(c => { if (c.unreadCount !== undefined) unreadCounts[c.roomId] = c.unreadCount; });
       renderChatList(allChats);
       const totalUnread = Object.values(unreadCounts).reduce((s, v) => s + v, 0);
       updateGlobalBadge(totalUnread);
     }
     loadStats();
-  } catch(e) {
-    document.getElementById('chat-list').innerHTML = '<div class="empty-state">Gagal memuat data</div>';
-  }
+  } catch(e) { document.getElementById('chat-list').innerHTML = '<div class="empty-state">Gagal memuat data</div>'; }
 }
-
-function switchTab(tab) {
-  currentTab = tab;
-  setActiveTab(tab);
-  loadChats();
-}
-function setActiveTab(tab) {
-  ['aktif','arsip'].forEach(t => document.getElementById('tab-' + t)?.classList.toggle('active', t === tab));
-}
-function filterChats() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const filtered = allChats.filter(c =>
-    String(c.nama).toLowerCase().includes(q) ||
-    String(c.noWa).toLowerCase().includes(q)
-  );
-  renderChatList(filtered);
-}
-
-function getChatStatusClass(c) {
-  if (c.status === 'WAITING' && c.handledBy === 'BOT') return 'status-bot';
-  if (c.status === 'WAITING') return 'status-needhuman';
-  if (c.status === 'NEED_HUMAN') return 'status-needhuman';
-  return 'status-assigned';
-}
-function getProdukClass(p) {
-  p = (p||'').toLowerCase();
-  if (p.includes('tiket')) return 'p-tiket';
-  if (p.includes('hotel')) return 'p-hotel';
-  if (p.includes('tour')) return 'p-tour';
-  if (p.includes('atraksi')) return 'p-atraksi';
-  return 'p-tiket';
-}
-function getStatusClass(s) {
-  if (s === 'WAITING') return 'p-wait';
-  if (s === 'ASSIGNED') return 'p-assign';
-  if (s === 'FOLLOW_UP') return 'p-follow';
-  if (s === 'BOOKED') return 'p-booked';
-  if (s === 'NEED_HUMAN') return 'p-alert';
-  return 'p-assign';
-}
-function getAvatarClass(n) {
-  const cls = ['av-a','av-b','av-c','av-d'];
-  let h = 0; for (let c of String(n)) h += c.charCodeAt(0);
-  return cls[h % cls.length];
-}
+function switchTab(tab) { currentTab = tab; setActiveTab(tab); loadChats(); }
+function setActiveTab(tab) { ['aktif','arsip'].forEach(t => document.getElementById('tab-' + t)?.classList.toggle('active', t === tab)); }
+function filterChats() { const q = document.getElementById('search-input').value.toLowerCase(); renderChatList(allChats.filter(c => String(c.nama).toLowerCase().includes(q) || String(c.noWa).toLowerCase().includes(q))); }
+function getChatStatusClass(c) { if (c.status === 'WAITING' && c.handledBy === 'BOT') return 'status-bot'; if (c.status === 'WAITING') return 'status-needhuman'; if (c.status === 'NEED_HUMAN') return 'status-needhuman'; return 'status-assigned'; }
+function getProdukClass(p) { p = (p||'').toLowerCase(); if (p.includes('tiket')) return 'p-tiket'; if (p.includes('hotel')) return 'p-hotel'; if (p.includes('tour')) return 'p-tour'; if (p.includes('atraksi')) return 'p-atraksi'; return 'p-tiket'; }
+function getStatusClass(s) { if (s === 'WAITING') return 'p-wait'; if (s === 'ASSIGNED') return 'p-assign'; if (s === 'FOLLOW_UP') return 'p-follow'; if (s === 'BOOKED') return 'p-booked'; if (s === 'NEED_HUMAN') return 'p-alert'; return 'p-assign'; }
+function getAvatarClass(n) { const cls = ['av-a','av-b','av-c','av-d']; let h = 0; for (let c of String(n)) h += c.charCodeAt(0); return cls[h % cls.length]; }
 function getInitials(n) { return String(n).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); }
 function formatTime(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  const now = new Date();
-  const diffDays = Math.floor((now - d) / 86400000);
+  if (!ts) return ''; const d = new Date(ts); const now = new Date(); const diffDays = Math.floor((now - d) / 86400000);
   if (diffDays === 0) return d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-  if (diffDays === 1) return 'Kemarin';
-  if (diffDays < 7) return d.toLocaleDateString('id-ID', {weekday:'short'});
+  if (diffDays === 1) return 'Kemarin'; if (diffDays < 7) return d.toLocaleDateString('id-ID', {weekday:'short'});
   return d.toLocaleDateString('id-ID', {day:'2-digit', month:'short'});
 }
-
 function renderChatList(chats) {
   const el = document.getElementById('chat-list');
-  if (!chats || !chats.length) {
-    el.innerHTML = currentTab === 'arsip'
-      ? '<div class="empty-state">Tidak ada chat di arsip</div>'
-      : '<div class="empty-state">Tidak ada chat aktif</div>';
-    return;
-  }
+  if (!chats || !chats.length) { el.innerHTML = currentTab === 'arsip' ? '<div class="empty-state">Tidak ada chat di arsip</div>' : '<div class="empty-state">Tidak ada chat aktif</div>'; return; }
   el.innerHTML = chats.map(c => renderChatItem(c)).join('');
 }
-
 function renderChatItem(c) {
   const isSelected = currentRoom && currentRoom.roomId === c.roomId;
-  const statusClass = getChatStatusClass(c);
-  const unread = unreadCounts[c.roomId] || 0;
+  const statusClass = getChatStatusClass(c); const unread = unreadCounts[c.roomId] || 0;
   const isBot = c.handledBy === 'BOT' || (c.status === 'WAITING' && !c.assignedTo);
-
   let statusLabel = c.status;
   if (c.status === 'WAITING' && isBot) statusLabel = 'BOT';
   else if (c.status === 'WAITING') statusLabel = 'MENUNGGU';
   else if (c.status === 'ASSIGNED') statusLabel = 'DITANGANI';
   else if (c.status === 'NEED_HUMAN') statusLabel = 'PERLU STAFF';
   else if (c.status === 'CLOSED') statusLabel = 'ARSIP';
-
   return `<div class="ci ${statusClass} ${isSelected ? 'selected' : ''}" onclick="openChat('${c.roomId}')">
     <div class="av ${getAvatarClass(c.nama)}">${getInitials(c.nama)}</div>
     <div class="ci-right">
-      <div class="ci-row1">
-        <span class="ci-name">${escH(c.nama)}</span>
-        <span class="ci-time">${formatTime(c.lastMsgAt)}</span>
-      </div>
-      <div class="ci-row2">
-        <span class="ci-prev">${escH(c.lastMsg || '...')}</span>
-        ${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}
-      </div>
+      <div class="ci-row1"><span class="ci-name">${escH(c.nama)}</span><span class="ci-time">${formatTime(c.lastMsgAt)}</span></div>
+      <div class="ci-row2"><span class="ci-prev">${escH(c.lastMsg || '...')}</span>${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}</div>
       <div class="ci-row3">
         <span class="pill ${getStatusClass(c.status)}">${statusLabel}</span>
         ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
@@ -1392,356 +833,132 @@ function renderChatItem(c) {
 
 // ===================== OPEN CHAT =====================
 async function openChat(roomId) {
-  const chat = allChats.find(c => c.roomId === roomId);
-  if (!chat) return;
-
+  const chat = allChats.find(c => c.roomId === roomId); if (!chat) return;
   if ((chat.status === 'WAITING' || chat.status === 'NEED_HUMAN') && !chat.assignedTo) {
     const res = await apiPost({action: 'assignChat', roomId: chat.roomId, staffName: currentStaff.nama});
     if (res.ok) { chat.status = 'ASSIGNED'; chat.assignedTo = currentStaff.nama; }
   }
-
-  currentRoom = chat;
-  lastMsgCount = 0;
-  unreadCounts[roomId] = 0;
-  const totalUnread = Object.values(unreadCounts).reduce((s, v) => s + v, 0);
-  updateGlobalBadge(totalUnread);
-
-  // Reset doc panel jika sedang terbuka
-  if (docPanelOpen) {
-    docPanelOpen = false;
-    document.getElementById('doc-panel').classList.remove('active');
-    document.getElementById('doc-panel-btn').classList.remove('active-panel');
-    document.getElementById('info-panel-content').style.display = 'flex';
-  }
-
-  document.getElementById('chat-empty').classList.add('hidden');
-  document.getElementById('chat-active').classList.remove('hidden');
+  currentRoom = chat; lastMsgCount = 0; unreadCounts[roomId] = 0;
+  updateGlobalBadge(Object.values(unreadCounts).reduce((s, v) => s + v, 0));
+  if (docPanelOpen) { docPanelOpen = false; document.getElementById('doc-panel').classList.remove('active'); document.getElementById('doc-panel-btn').classList.remove('active-panel'); document.getElementById('info-panel-content').style.display = 'flex'; }
+  document.getElementById('chat-empty').classList.add('hidden'); document.getElementById('chat-active').classList.remove('hidden');
   document.getElementById('notes-panel').style.display = 'flex';
-  document.getElementById('ct-av').textContent = getInitials(chat.nama);
-  document.getElementById('ct-name').textContent = chat.nama;
-  document.getElementById('ct-wa').textContent = chat.noWa;
-  document.getElementById('ct-status').textContent = chat.status;
+  document.getElementById('ct-av').textContent = getInitials(chat.nama); document.getElementById('ct-name').textContent = chat.nama;
+  document.getElementById('ct-wa').textContent = chat.noWa; document.getElementById('ct-status').textContent = chat.status;
   document.getElementById('ct-by').textContent = chat.assignedTo ? '· ' + chat.assignedTo : '';
-  document.getElementById('np-wa').textContent = chat.noWa;
-  document.getElementById('np-produk').textContent = chat.produk || '-';
+  document.getElementById('np-wa').textContent = chat.noWa; document.getElementById('np-produk').textContent = chat.produk || '-';
   document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`;
   document.getElementById('chat-area').innerHTML = '<div class="loading">Memuat pesan...</div>';
-  loadCustomerInfoPanel(chat.noWa);
-  loadSmartContext(chat.roomId, chat.noWa);
-  renderActionRow(chat);
+  loadCustomerInfoPanel(chat.noWa); loadSmartContext(chat.roomId, chat.noWa); renderActionRow(chat);
   await loadMessages(roomId, true);
-
-  if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.add('slide-out');
-  }
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('slide-out');
   renderChatList(allChats);
 }
-
 async function loadCustomerInfoPanel(noWa) {
   try {
     const res = await apiGet({action: 'getCustomer', noWa});
-    const panel = document.getElementById('np-customer-info');
-    const histBlock = document.getElementById('np-history-block');
+    const panel = document.getElementById('np-customer-info'); const histBlock = document.getElementById('np-history-block');
     if (res.customer) {
       const c = res.customer;
-      if (c.nama) {
-        panel.style.display = 'block';
-        document.getElementById('np-customer-name').textContent = c.nama;
-        document.getElementById('np-customer-booking').textContent = c.totalBooking ? c.totalBooking + 'x booking' : 'Belum ada booking';
-      } else { panel.style.display = 'none'; }
-      histBlock.style.display = 'block';
-      document.getElementById('np-history-loading').textContent = 'memuat...';
-      document.getElementById('np-history-list').innerHTML = '';
-      loadPanelBookingHistory(noWa);
+      if (c.nama) { panel.style.display = 'block'; document.getElementById('np-customer-name').textContent = c.nama; document.getElementById('np-customer-booking').textContent = c.totalBooking ? c.totalBooking + 'x booking' : 'Belum ada booking'; }
+      else { panel.style.display = 'none'; }
+      histBlock.style.display = 'block'; document.getElementById('np-history-loading').textContent = 'memuat...'; document.getElementById('np-history-list').innerHTML = ''; loadPanelBookingHistory(noWa);
     } else { panel.style.display = 'none'; histBlock.style.display = 'none'; }
   } catch(e) {}
 }
-
 async function loadPanelBookingHistory(noWa) {
   try {
     const res = await apiGet({action: 'getBookingHistory', noWa});
-    const loading = document.getElementById('np-history-loading');
-    const list = document.getElementById('np-history-list');
-    if (!loading || !list) return;
+    const loading = document.getElementById('np-history-loading'); const list = document.getElementById('np-history-list'); if (!loading || !list) return;
     if (res.history && res.history.length > 0) {
       loading.textContent = res.total + ' booking';
       const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
-      list.innerHTML = res.history.map(h => `
-        <div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;">
-          <div style="font-weight:600;color:var(--text);">${icon[h.tipe]||'📋'} ${escH(h.detail)}</div>
-          <div style="color:var(--text-muted);">📅 ${h.tglEvent} · ${escH(h.extra)}</div>
-        </div>`).join('');
-    } else {
-      loading.textContent = '';
-      list.innerHTML = '<div style="font-size:11px;color:var(--text-hint);">Belum ada booking</div>';
-    }
+      list.innerHTML = res.history.map(h => `<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;"><div style="font-weight:600;color:var(--text);">${icon[h.tipe]||'📋'} ${escH(h.detail)}</div><div style="color:var(--text-muted);">📅 ${h.tglEvent} · ${escH(h.extra)}</div></div>`).join('');
+    } else { loading.textContent = ''; list.innerHTML = '<div style="font-size:11px;color:var(--text-hint);">Belum ada booking</div>'; }
   } catch(e) { const l = document.getElementById('np-history-loading'); if (l) l.textContent = ''; }
 }
-
 function openContactFromChat() {
-  if (!currentRoom) return;
-  if (currentStaff.role === 'OWNER') switchMainTab('contacts');
-  currentContactNoWa = currentRoom.noWa;
-  currentContactNama = currentRoom.nama;
-  openContactDetail(currentRoom.noWa, currentRoom.nama);
+  if (!currentRoom) return; if (currentStaff.role === 'OWNER') switchMainTab('contacts');
+  currentContactNoWa = currentRoom.noWa; currentContactNama = currentRoom.nama; openContactDetail(currentRoom.noWa, currentRoom.nama);
 }
-
 function renderActionRow(chat) {
-  const row = document.getElementById('action-row');
-  const reply = document.getElementById('reply-row');
-  const uploadBar = document.getElementById('upload-bar');
-  const isMyChat = chat.assignedTo === currentStaff.nama;
-  const isOwner = currentStaff.role === 'OWNER';
-
+  const row = document.getElementById('action-row'); const reply = document.getElementById('reply-row'); const uploadBar = document.getElementById('upload-bar');
+  const isMyChat = chat.assignedTo === currentStaff.nama; const isOwner = currentStaff.role === 'OWNER';
   if (isMyChat || isOwner) {
-    row.innerHTML = `
-      <button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button>
-      <button class="abtn abtn-booked" onclick="tandaiBooked()"><i class="ti ti-check"></i> Booked</button>
-      <button class="abtn abtn-lepas" onclick="lepasChat()"><i class="ti ti-logout"></i> Lepas</button>
-      <button class="abtn abtn-selesai" onclick="selesaiChat()"><i class="ti ti-circle-check"></i> Selesai</button>`;
+    row.innerHTML = `<button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button><button class="abtn abtn-booked" onclick="tandaiBooked()"><i class="ti ti-check"></i> Booked</button><button class="abtn abtn-lepas" onclick="lepasChat()"><i class="ti ti-logout"></i> Lepas</button><button class="abtn abtn-selesai" onclick="selesaiChat()"><i class="ti ti-circle-check"></i> Selesai</button>`;
     reply.style.display = 'flex';
-  } else {
-    row.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px;">Di-handle oleh ${escH(chat.assignedTo)}</div>`;
-    reply.style.display = 'none';
-    uploadBar.classList.remove('show');
-  }
+  } else { row.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px;">Di-handle oleh ${escH(chat.assignedTo)}</div>`; reply.style.display = 'none'; uploadBar.classList.remove('show'); }
 }
 
 // ===================== MESSAGES =====================
 let msgOffset = 0;
-
-async function loadMessages(roomId, forceScroll) {
-  msgOffset = 0;
-  await fetchMessages(roomId, 0, forceScroll);
-}
-
-async function loadMoreMessages(roomId) {
-  const area = document.getElementById('chat-area');
-  const prevHeight = area.scrollHeight;
-  msgOffset += 50;
-  await fetchMessages(roomId, msgOffset, false, true);
-  area.scrollTop = area.scrollHeight - prevHeight;
-}
-
+async function loadMessages(roomId, forceScroll) { msgOffset = 0; await fetchMessages(roomId, 0, forceScroll); }
+async function loadMoreMessages(roomId) { const area = document.getElementById('chat-area'); const prevHeight = area.scrollHeight; msgOffset += 50; await fetchMessages(roomId, msgOffset, false, true); area.scrollTop = area.scrollHeight - prevHeight; }
 async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
   try {
-    const res = await apiGet({action: 'getChatMessages', roomId, offset});
-    if (!res.ok) return;
-    if (!currentRoom || currentRoom.roomId !== roomId) return;
-    
+    const res = await apiGet({action: 'getChatMessages', roomId, offset}); if (!res.ok) return; if (!currentRoom || currentRoom.roomId !== roomId) return;
     const area = document.getElementById('chat-area');
-    const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
-    const hasNewMessages = res.total > lastMsgCount;
-    const hasMore = res.total > offset + 50;
-
+    const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100; const hasNewMessages = res.total > lastMsgCount; const hasMore = res.total > offset + 50;
     const bubblesHTML = res.data.map(m => renderBubble(m)).join('');
-
-    if (prepend) {
-      const btn = document.getElementById('load-more-btn');
-      if (btn) btn.remove();
-      area.insertAdjacentHTML('afterbegin', bubblesHTML);
-    } else {
-      area.innerHTML = bubblesHTML;
-    }
-
-    if (hasMore && !document.getElementById('load-more-btn')) {
-      area.insertAdjacentHTML('afterbegin', `
-        <div id="load-more-btn" style="text-align:center;padding:8px;">
-          <button onclick="loadMoreMessages('${roomId}')"
-            style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;
-            background:white;font-size:11px;color:var(--text-muted);cursor:pointer;
-            font-family:var(--font);">
-            ↑ Muat pesan lebih lama
-          </button>
-        </div>`);
-    }
-
+    if (prepend) { const btn = document.getElementById('load-more-btn'); if (btn) btn.remove(); area.insertAdjacentHTML('afterbegin', bubblesHTML); } else { area.innerHTML = bubblesHTML; }
+    if (hasMore && !document.getElementById('load-more-btn')) { area.insertAdjacentHTML('afterbegin', `<div id="load-more-btn" style="text-align:center;padding:8px;"><button onclick="loadMoreMessages('${roomId}')" style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;background:white;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:var(--font);">↑ Muat pesan lebih lama</button></div>`); }
     if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
     lastMsgCount = res.total;
   } catch(e) { console.error('fetchMessages error:', e); }
 }
-
 function renderBubble(m) {
-  const isStaff = m.sender === 'STAFF';
-  const isBot = m.sender === 'BOT';
-  const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
+  const isStaff = m.sender === 'STAFF'; const isBot = m.sender === 'BOT'; const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
   const fileMatch = m.message && typeof m.message === 'string' && m.message.match(/^📎 (.+)\n(https?:\/\/.+)$/);
-  if (fileMatch) {
-    const fileName = fileMatch[1];
-    const fileUrl = fileMatch[2];
-    const ispdf = fileName.toLowerCase().endsWith('.pdf');
-    return `<div class="bw ${isStaff?'right':''}">
-      <div class="bubble ${cls}">
-        ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
-        <div class="b-file">
-          <i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i>
-          <div class="b-file-info">
-            <div class="b-file-name">${escH(fileName)}</div>
-            <a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a>
-          </div>
-        </div>
-        <div class="b-meta">${formatTime(m.timestamp)}</div>
-      </div>
-    </div>`;
-  }
-  return `<div class="bw ${isStaff?'right':''}">
-    <div class="bubble ${cls}">
-      ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
-      <div class="b-txt">${escH(m.message)}</div>
-      <div class="b-meta">${formatTime(m.timestamp)}</div>
-    </div>
-  </div>`;
+  if (fileMatch) { const fileName = fileMatch[1]; const fileUrl = fileMatch[2]; const ispdf = fileName.toLowerCase().endsWith('.pdf'); return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}</div></div></div>`; }
+  return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-txt">${escH(m.message)}</div><div class="b-meta">${formatTime(m.timestamp)}</div></div></div>`;
 }
-
-async function lepasChat() {
-  if (!currentRoom) return;
-  const res = await apiPost({action: 'releaseChat', roomId: currentRoom.roomId});
-  if (res.ok) { showToast('Chat dilepas'); closeCurrentChat(); }
-}
-
-async function selesaiChat() {
-  if (!currentRoom) return;
-  if (!confirm('Tandai chat ini selesai? Chat akan dipindah ke Arsip.')) return;
-  const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId});
-  if (res.ok) { showToast('Chat selesai → Arsip'); closeCurrentChat(); }
-}
-
+async function lepasChat() { if (!currentRoom) return; const res = await apiPost({action: 'releaseChat', roomId: currentRoom.roomId}); if (res.ok) { showToast('Chat dilepas'); closeCurrentChat(); } }
+async function selesaiChat() { if (!currentRoom) return; if (!confirm('Tandai chat ini selesai? Chat akan dipindah ke Arsip.')) return; const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId}); if (res.ok) { showToast('Chat selesai → Arsip'); closeCurrentChat(); } }
 function closeCurrentChat() {
   currentRoom = null; lastMsgCount = 0;
-  document.getElementById('chat-active').classList.add('hidden');
-  document.getElementById('chat-empty').classList.remove('hidden');
-  document.getElementById('notes-panel').style.display = 'none';
-  // Reset doc panel
-  if (docPanelOpen) {
-    docPanelOpen = false;
-    document.getElementById('doc-panel').classList.remove('active');
-    document.getElementById('doc-panel-btn').classList.remove('active-panel');
-    document.getElementById('info-panel-content').style.display = 'flex';
-  }
+  document.getElementById('chat-active').classList.add('hidden'); document.getElementById('chat-empty').classList.remove('hidden'); document.getElementById('notes-panel').style.display = 'none';
+  if (docPanelOpen) { docPanelOpen = false; document.getElementById('doc-panel').classList.remove('active'); document.getElementById('doc-panel-btn').classList.remove('active-panel'); document.getElementById('info-panel-content').style.display = 'flex'; }
   loadChats(false);
 }
-
-async function tandaiBooked() {
-  if (!currentRoom) return;
-  const res = await apiPost({action: 'markBooked', roomId: currentRoom.roomId});
-  if (res.ok) { showToast('Ditandai Booked'); currentRoom.status = 'BOOKED'; renderActionRow(currentRoom); loadChats(false); }
-}
-
+async function tandaiBooked() { if (!currentRoom) return; const res = await apiPost({action: 'markBooked', roomId: currentRoom.roomId}); if (res.ok) { showToast('Ditandai Booked'); currentRoom.status = 'BOOKED'; renderActionRow(currentRoom); loadChats(false); } }
 async function kirimPesan() {
-  if (!currentRoom) return;
-  const input = document.getElementById('reply-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-  input.style.height = 'auto';
-  const res = await apiPost({
-    action: 'sendMessage', roomId: currentRoom.roomId,
-    staffName: currentStaff.nama, noWa: currentRoom.noWa, message: msg
-  });
-  if (res.ok) {
-    lastMsgCount = 0;
-    await loadMessages(currentRoom.roomId, true);
-    loadChats(false);
-  } else {
-    showToast('Gagal kirim pesan');
-    input.value = msg;
-    autoExpandTextarea(input);
-  }
+  if (!currentRoom) return; const input = document.getElementById('reply-input'); const msg = input.value.trim(); if (!msg) return;
+  input.value = ''; input.style.height = 'auto';
+  const res = await apiPost({action: 'sendMessage', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, message: msg});
+  if (res.ok) { lastMsgCount = 0; await loadMessages(currentRoom.roomId, true); loadChats(false); }
+  else { showToast('Gagal kirim pesan'); input.value = msg; autoExpandTextarea(input); }
 }
-
-function handleReplyKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kirimPesan(); }
-}
-
-async function showNoteInput() {
-  const note = prompt('Catatan internal:');
-  if (!note || !note.trim()) return;
-  const res = await apiPost({action: 'addNote', roomId: currentRoom.roomId, staffName: currentStaff.nama, note: note.trim()});
-  if (res.ok) showToast('Catatan disimpan');
-}
-
-function backToList() {
-  document.getElementById('sidebar').classList.remove('slide-out');
-  currentRoom = null; lastMsgCount = 0;
-}
-
+function handleReplyKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kirimPesan(); } }
+async function showNoteInput() { const note = prompt('Catatan internal:'); if (!note || !note.trim()) return; const res = await apiPost({action: 'addNote', roomId: currentRoom.roomId, staffName: currentStaff.nama, note: note.trim()}); if (res.ok) showToast('Catatan disimpan'); }
+function backToList() { document.getElementById('sidebar').classList.remove('slide-out'); currentRoom = null; lastMsgCount = 0; }
 function refreshAll() { loadChats(); showToast('Diperbarui'); }
 
-// ===================== FILE UPLOAD (CHAT) =====================
+// ===================== FILE UPLOAD =====================
 async function handleFileUpload(input) {
-  if (!input.files || !input.files[0]) return;
-  if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
-  const file = input.files[0];
-  if (file.size > 10 * 1024 * 1024) { showToast('File terlalu besar, maksimal 10MB'); input.value = ''; return; }
-  const bar = document.getElementById('upload-bar');
-  const status = document.getElementById('upload-status');
-  bar.classList.add('show');
-  status.textContent = 'Mengupload ' + file.name + '...';
+  if (!input.files || !input.files[0]) return; if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
+  const file = input.files[0]; if (file.size > 10 * 1024 * 1024) { showToast('File terlalu besar, maksimal 10MB'); input.value = ''; return; }
+  const bar = document.getElementById('upload-bar'); const status = document.getElementById('upload-status'); bar.classList.add('show'); status.textContent = 'Mengupload ' + file.name + '...';
   try {
     const base64 = await fileToBase64(file);
-    const res = await apiPost({
-      action: 'sendFile', roomId: currentRoom.roomId, staffName: currentStaff.nama,
-      noWa: currentRoom.noWa, fileName: file.name,
-      fileType: file.type || 'application/octet-stream', fileData: base64
-    });
-    if (res.ok) {
-      status.textContent = '✅ ' + file.name + ' berhasil dikirim!';
-      setTimeout(() => bar.classList.remove('show'), 3000);
-      lastMsgCount = 0;
-      await loadMessages(currentRoom.roomId, true);
-      loadChats(false);
-      showToast('File berhasil dikirim ke customer');
-    } else {
-      status.textContent = '❌ Gagal: ' + (res.msg || 'Error');
-      setTimeout(() => bar.classList.remove('show'), 4000);
-      showToast('Gagal kirim file: ' + (res.msg || ''));
-    }
-  } catch(e) {
-    status.textContent = '❌ Error: ' + e.toString();
-    setTimeout(() => bar.classList.remove('show'), 4000);
-  } finally { input.value = ''; }
+    const res = await apiPost({action: 'sendFile', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, fileName: file.name, fileType: file.type || 'application/octet-stream', fileData: base64});
+    if (res.ok) { status.textContent = '✅ ' + file.name + ' berhasil dikirim!'; setTimeout(() => bar.classList.remove('show'), 3000); lastMsgCount = 0; await loadMessages(currentRoom.roomId, true); loadChats(false); showToast('File berhasil dikirim ke customer'); }
+    else { status.textContent = '❌ Gagal: ' + (res.msg || 'Error'); setTimeout(() => bar.classList.remove('show'), 4000); showToast('Gagal kirim file: ' + (res.msg || '')); }
+  } catch(e) { status.textContent = '❌ Error: ' + e.toString(); setTimeout(() => bar.classList.remove('show'), 4000); }
+  finally { input.value = ''; }
 }
+function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = () => reject(new Error('Gagal membaca file')); reader.readAsDataURL(file); }); }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = () => reject(new Error('Gagal membaca file'));
-    reader.readAsDataURL(file);
-  });
-}
-
-// ===================== NEW CHAT FROM CONTACT =====================
+// ===================== NEW CHAT =====================
 let newChatTarget = { noWa: '', nama: '' };
-function openNewChatModal(noWa, nama) {
-  newChatTarget = { noWa, nama };
-  document.getElementById('nc-av').textContent = getInitials(nama || noWa);
-  document.getElementById('nc-nama').textContent = nama || noWa;
-  document.getElementById('nc-nowa').textContent = noWa;
-  document.getElementById('nc-pesan').value = '';
-  document.getElementById('modal-new-chat').style.display = 'flex';
-  setTimeout(() => document.getElementById('nc-pesan').focus(), 150);
-}
+function openNewChatModal(noWa, nama) { newChatTarget = { noWa, nama }; document.getElementById('nc-av').textContent = getInitials(nama || noWa); document.getElementById('nc-nama').textContent = nama || noWa; document.getElementById('nc-nowa').textContent = noWa; document.getElementById('nc-pesan').value = ''; document.getElementById('modal-new-chat').style.display = 'flex'; setTimeout(() => document.getElementById('nc-pesan').focus(), 150); }
 function openNewChatFromDetail() { closeModal('modal-detail'); openNewChatModal(currentContactNoWa, currentContactNama); }
 async function submitNewChat() {
-  const pesan = document.getElementById('nc-pesan').value.trim();
-  if (!pesan) { showToast('Pesan tidak boleh kosong'); return; }
-  const btn = document.getElementById('nc-send-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
+  const pesan = document.getElementById('nc-pesan').value.trim(); if (!pesan) { showToast('Pesan tidak boleh kosong'); return; }
+  const btn = document.getElementById('nc-send-btn'); btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
   try {
-    const res = await apiPost({
-      action: 'startNewChat', noWa: newChatTarget.noWa, nama: newChatTarget.nama,
-      message: pesan, staffName: currentStaff.nama
-    });
-    if (res.ok) {
-      closeModal('modal-new-chat');
-      showToast('✅ Pesan terkirim ke ' + newChatTarget.nama);
-      if (currentStaff.role === 'OWNER') switchMainTab('chat');
-      currentTab = 'aktif'; setActiveTab('aktif');
-      await loadChats(false);
-      if (res.roomId) setTimeout(() => openChat(res.roomId), 600);
-    } else { showToast('Gagal kirim: ' + (res.msg || 'Error')); }
+    const res = await apiPost({action: 'startNewChat', noWa: newChatTarget.noWa, nama: newChatTarget.nama, message: pesan, staffName: currentStaff.nama});
+    if (res.ok) { closeModal('modal-new-chat'); showToast('✅ Pesan terkirim ke ' + newChatTarget.nama); if (currentStaff.role === 'OWNER') switchMainTab('chat'); currentTab = 'aktif'; setActiveTab('aktif'); await loadChats(false); if (res.roomId) setTimeout(() => openChat(res.roomId), 600); }
+    else { showToast('Gagal kirim: ' + (res.msg || 'Error')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
 }
@@ -1749,632 +966,216 @@ async function submitNewChat() {
 // ===================== CONTACT BOOK =====================
 async function loadContacts(query) {
   const list = document.getElementById('contact-list');
-  if (allContactsCache.length === 0 || query === undefined) {
-    list.innerHTML = '<div class="loading">Memuat...</div>';
-    try {
-      const res = await apiGet({action: 'getAllCustomers', query: ''});
-      allContactsCache = res.customers || [];
-    } catch(e) { list.innerHTML = '<div class="empty-state">Gagal memuat</div>'; return; }
-  }
+  if (allContactsCache.length === 0 || query === undefined) { list.innerHTML = '<div class="loading">Memuat...</div>'; try { const res = await apiGet({action: 'getAllCustomers', query: ''}); allContactsCache = res.customers || []; } catch(e) { list.innerHTML = '<div class="empty-state">Gagal memuat</div>'; return; } }
   const q = (query !== undefined ? query : (document.getElementById('contact-search')?.value || '')).toLowerCase().trim();
-  const filtered = q
-    ? allContactsCache.filter(c =>
-        String(c.nama || '').toLowerCase().includes(q) ||
-        String(c.noWa || '').toLowerCase().includes(q) ||
-        String(c.kota || '').toLowerCase().includes(q))
-    : allContactsCache;
-  if (filtered.length > 0) {
-    list.innerHTML = filtered.map(c => `
-      <div class="contact-card" onclick="openContactDetail('${escH(c.noWa)}', '${escH(c.nama)}')">
-        <div class="contact-avatar">${(c.nama || '?').charAt(0).toUpperCase()}</div>
-        <div class="contact-info">
-          <div class="contact-name">${c.nama ? escH(c.nama) : '<span style="color:var(--text-hint);font-style:italic;">Belum ada nama</span>'}</div>
-          <div class="contact-wa">📱 ${c.noWa}</div>
-          <div class="contact-meta">${c.kota ? '📍 '+escH(c.kota)+' · ' : ''}${c.source || 'WA'}</div>
-        </div>
-        <div class="contact-actions">
-          ${c.totalBooking > 0 ? `<div class="contact-badge">${c.totalBooking}x booking</div>` : ''}
-          <button class="btn-chat" onclick="event.stopPropagation();openNewChatModal('${escH(c.noWa)}','${escH(c.nama)}')">
-            <i class="ti ti-message-circle"></i> Chat
-          </button>
-        </div>
-      </div>`).join('');
-  } else { list.innerHTML = '<div class="empty-state">Belum ada contact</div>'; }
+  const filtered = q ? allContactsCache.filter(c => String(c.nama||'').toLowerCase().includes(q) || String(c.noWa||'').toLowerCase().includes(q) || String(c.kota||'').toLowerCase().includes(q)) : allContactsCache;
+  if (filtered.length > 0) { list.innerHTML = filtered.map(c => `<div class="contact-card" onclick="openContactDetail('${escH(c.noWa)}', '${escH(c.nama)}')"><div class="contact-avatar">${(c.nama || '?').charAt(0).toUpperCase()}</div><div class="contact-info"><div class="contact-name">${c.nama ? escH(c.nama) : '<span style="color:var(--text-hint);font-style:italic;">Belum ada nama</span>'}</div><div class="contact-wa">📱 ${c.noWa}</div><div class="contact-meta">${c.kota ? '📍 '+escH(c.kota)+' · ' : ''}${c.source || 'WA'}</div></div><div class="contact-actions">${c.totalBooking > 0 ? `<div class="contact-badge">${c.totalBooking}x booking</div>` : ''}<button class="btn-chat" onclick="event.stopPropagation();openNewChatModal('${escH(c.noWa)}','${escH(c.nama)}')"><i class="ti ti-message-circle"></i> Chat</button></div></div>`).join(''); }
+  else { list.innerHTML = '<div class="empty-state">Belum ada contact</div>'; }
 }
 function searchContacts() { loadContacts(document.getElementById('contact-search')?.value || ''); }
-
-function showAddContact() {
-  allContactsCache = [];
-  document.getElementById('modal-contact-title').textContent = 'Tambah Contact';
-  ['c-nama','c-nowa','c-email','c-kota','c-catatan','c-original-nowa'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('modal-contact').style.display = 'flex';
-}
+function showAddContact() { allContactsCache = []; document.getElementById('modal-contact-title').textContent = 'Tambah Contact'; ['c-nama','c-nowa','c-email','c-kota','c-catatan','c-original-nowa'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); document.getElementById('modal-contact').style.display = 'flex'; }
 async function submitContact() {
-  const nama = document.getElementById('c-nama').value.trim();
-  const noWa = document.getElementById('c-nowa').value.trim();
-  if (!nama || !noWa) { alert('Nama dan No WA wajib diisi'); return; }
-  try {
-    const res = await apiPost({
-      action: 'saveCustomer', nama, noWa,
-      email: document.getElementById('c-email').value.trim(),
-      kota: document.getElementById('c-kota').value.trim(),
-      catatan: document.getElementById('c-catatan').value.trim(),
-      source: 'MANUAL'
-    });
-    if (res.success) { allContactsCache = []; closeModal('modal-contact'); loadContacts(); showToast('Contact disimpan!'); }
-    else showToast('Gagal menyimpan');
-  } catch(e) { showToast('Error: ' + e); }
+  const nama = document.getElementById('c-nama').value.trim(); const noWa = document.getElementById('c-nowa').value.trim(); if (!nama || !noWa) { alert('Nama dan No WA wajib diisi'); return; }
+  try { const res = await apiPost({action: 'saveCustomer', nama, noWa, email: document.getElementById('c-email').value.trim(), kota: document.getElementById('c-kota').value.trim(), catatan: document.getElementById('c-catatan').value.trim(), source: 'MANUAL'}); if (res.success) { allContactsCache = []; closeModal('modal-contact'); loadContacts(); showToast('Contact disimpan!'); } else showToast('Gagal menyimpan'); } catch(e) { showToast('Error: ' + e); }
 }
-
 async function openContactDetail(noWa, nama) {
-  currentContactNoWa = noWa;
-  currentContactNama = nama || noWa;
-  document.getElementById('detail-name').textContent = nama || noWa;
-  document.getElementById('detail-nowa').textContent = noWa;
-  ['detail-email','detail-kota','detail-booking','detail-catatan'].forEach(id => {
-    document.getElementById(id).textContent = '-';
-  });
+  currentContactNoWa = noWa; currentContactNama = nama || noWa;
+  document.getElementById('detail-name').textContent = nama || noWa; document.getElementById('detail-nowa').textContent = noWa;
+  ['detail-email','detail-kota','detail-booking','detail-catatan'].forEach(id => { document.getElementById(id).textContent = '-'; });
   document.getElementById('booking-history').innerHTML = '<button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">🔍 Muat Riwayat Booking</button>';
   document.getElementById('passenger-list').innerHTML = '<div class="loading">Klik tab untuk muat...</div>';
-  document.getElementById('modal-detail').style.display = 'flex';
-  showInnerTabById('riwayat');
-  try {
-    const res = await apiGet({action: 'getCustomer', noWa});
-    if (res.customer) {
-      const c = res.customer;
-      document.getElementById('detail-email').textContent = c.email || '-';
-      document.getElementById('detail-kota').textContent = c.kota || '-';
-      document.getElementById('detail-booking').textContent = c.totalBooking || 0;
-      document.getElementById('detail-catatan').textContent = c.catatan || '-';
-    }
-  } catch(e) {}
+  document.getElementById('modal-detail').style.display = 'flex'; showInnerTabById('riwayat');
+  try { const res = await apiGet({action: 'getCustomer', noWa}); if (res.customer) { const c = res.customer; document.getElementById('detail-email').textContent = c.email || '-'; document.getElementById('detail-kota').textContent = c.kota || '-'; document.getElementById('detail-booking').textContent = c.totalBooking || 0; document.getElementById('detail-catatan').textContent = c.catatan || '-'; } } catch(e) {}
 }
-
 async function loadBookingHistory() {
-  const box = document.getElementById('booking-history');
-  box.innerHTML = '<div class="loading">Memuat riwayat...</div>';
-  window._bookingRaw = null;
-  try {
-    const res = await apiGet({action: 'getBookingHistory', noWa: currentContactNoWa});
-    if (res.history && res.history.length > 0) {
-      window._bookingRaw = res.history;
-      document.getElementById('detail-booking').textContent = res.total;
-      renderBookingHistory(res.history, 'all');
-    } else { box.innerHTML = '<div class="empty-state">Belum ada riwayat booking</div>'; }
-  } catch(e) { box.innerHTML = '<div class="empty-state">Gagal memuat riwayat</div>'; }
+  const box = document.getElementById('booking-history'); box.innerHTML = '<div class="loading">Memuat riwayat...</div>'; window._bookingRaw = null;
+  try { const res = await apiGet({action: 'getBookingHistory', noWa: currentContactNoWa}); if (res.history && res.history.length > 0) { window._bookingRaw = res.history; document.getElementById('detail-booking').textContent = res.total; renderBookingHistory(res.history, 'all'); } else { box.innerHTML = '<div class="empty-state">Belum ada riwayat booking</div>'; } } catch(e) { box.innerHTML = '<div class="empty-state">Gagal memuat riwayat</div>'; }
 }
-
 function renderBookingHistory(history, periode) {
-  const box = document.getElementById('booking-history');
-  const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
+  const box = document.getElementById('booking-history'); const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
   const monthNames = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   const years = [...new Set(history.map(h => { if (!h.tglBeli) return ''; const p = h.tglBeli.split('/'); return p[2] || ''; }).filter(Boolean))].sort().reverse();
   const months = [...new Set(history.map(h => { if (!h.tglBeli) return ''; const p = h.tglBeli.split('/'); return (p[2] && p[1]) ? p[2] + '-' + p[1] : ''; }).filter(Boolean))].sort().reverse();
   let filtered = history;
-  if (periode && periode !== 'all') {
-    if (periode.length === 4) { filtered = history.filter(h => h.tglBeli && h.tglBeli.split('/')[2] === periode); }
-    else { const [yr, mo] = periode.split('-'); filtered = history.filter(h => { if (!h.tglBeli) return false; const p = h.tglBeli.split('/'); return p[2] === yr && p[1] === mo; }); }
-  }
-  const filterHTML = `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-      <span style="font-size:11px;color:var(--text-muted);">Periode:</span>
-      <select id="filter-periode" onchange="applyBookingFilter()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--font);outline:none;">
-        <option value="all" ${periode==='all'?'selected':''}>Semua</option>
-        <optgroup label="Per Tahun">${years.map(y => `<option value="${y}" ${periode===y?'selected':''}>${y}</option>`).join('')}</optgroup>
-        <optgroup label="Per Bulan">${months.map(m => { const [yr, mo] = m.split('-'); const label = monthNames[parseInt(mo)] + ' ' + yr; return `<option value="${m}" ${periode===m?'selected':''}>${label}</option>`; }).join('')}</optgroup>
-      </select>
-      <span style="font-size:11px;color:var(--text-muted);">${filtered.length} dari ${history.length} booking</span>
-    </div>`;
+  if (periode && periode !== 'all') { if (periode.length === 4) { filtered = history.filter(h => h.tglBeli && h.tglBeli.split('/')[2] === periode); } else { const [yr, mo] = periode.split('-'); filtered = history.filter(h => { if (!h.tglBeli) return false; const p = h.tglBeli.split('/'); return p[2] === yr && p[1] === mo; }); } }
+  const filterHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><span style="font-size:11px;color:var(--text-muted);">Periode:</span><select id="filter-periode" onchange="applyBookingFilter()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--font);outline:none;"><option value="all" ${periode==='all'?'selected':''}>Semua</option><optgroup label="Per Tahun">${years.map(y => `<option value="${y}" ${periode===y?'selected':''}>${y}</option>`).join('')}</optgroup><optgroup label="Per Bulan">${months.map(m => { const [yr, mo] = m.split('-'); const label = monthNames[parseInt(mo)] + ' ' + yr; return `<option value="${m}" ${periode===m?'selected':''}>${label}</option>`; }).join('')}</optgroup></select><span style="font-size:11px;color:var(--text-muted);">${filtered.length} dari ${history.length} booking</span></div>`;
   if (!filtered.length) { box.innerHTML = filterHTML + '<div class="empty-state">Tidak ada booking di periode ini</div>'; return; }
-  box.innerHTML = filterHTML + filtered.map(h => `
-    <div class="history-item">
-      <div class="history-tipe">${icon[h.tipe]||'📋'} ${h.tipe}</div>
-      <div class="history-detail">${escH(h.detail)}</div>
-      <div class="history-meta">📅 ${h.tglEvent} &nbsp;|&nbsp; 🛒 ${h.tglBeli} &nbsp;|&nbsp; ${escH(h.extra)}</div>
-      <div class="history-meta">Tamu: ${escH(h.namaTamu)}</div>
-    </div>`).join('');
+  box.innerHTML = filterHTML + filtered.map(h => `<div class="history-item"><div class="history-tipe">${icon[h.tipe]||'📋'} ${h.tipe}</div><div class="history-detail">${escH(h.detail)}</div><div class="history-meta">📅 ${h.tglEvent} &nbsp;|&nbsp; 🛒 ${h.tglBeli} &nbsp;|&nbsp; ${escH(h.extra)}</div><div class="history-meta">Tamu: ${escH(h.namaTamu)}</div></div>`).join('');
 }
-function applyBookingFilter() {
-  if (!window._bookingRaw) return;
-  renderBookingHistory(window._bookingRaw, document.getElementById('filter-periode').value);
-}
-
+function applyBookingFilter() { if (!window._bookingRaw) return; renderBookingHistory(window._bookingRaw, document.getElementById('filter-periode').value); }
 async function loadPassengers() {
-  const list = document.getElementById('passenger-list');
-  list.innerHTML = '<div class="loading">Memuat...</div>';
-  try {
-    const res = await apiGet({action: 'getPassengers', noWa: currentContactNoWa});
-    if (res.passengers && res.passengers.length > 0) {
-      list.innerHTML = res.passengers.map(p => `
-        <div class="history-item">
-          <div class="history-tipe">👤 ${escH(p.namaLengkap)}</div>
-          <div class="history-meta">${p.jenisKelamin==='L'?'♂️':'♀️'} &nbsp;|&nbsp; Lahir: ${p.tglLahir||'-'}</div>
-          <div class="history-meta">KTP: ${p.noKtp||'-'} &nbsp;|&nbsp; Paspor: ${p.noPaspor||'-'} (exp: ${p.expiryPaspor||'-'})</div>
-        </div>`).join('');
-    } else { list.innerHTML = '<div class="empty-state">Belum ada data penumpang</div>'; }
-  } catch(e) {}
+  const list = document.getElementById('passenger-list'); list.innerHTML = '<div class="loading">Memuat...</div>';
+  try { const res = await apiGet({action: 'getPassengers', noWa: currentContactNoWa}); if (res.passengers && res.passengers.length > 0) { list.innerHTML = res.passengers.map(p => `<div class="history-item"><div class="history-tipe">👤 ${escH(p.namaLengkap)}</div><div class="history-meta">${p.jenisKelamin==='L'?'♂️':'♀️'} &nbsp;|&nbsp; Lahir: ${p.tglLahir||'-'}</div><div class="history-meta">KTP: ${p.noKtp||'-'} &nbsp;|&nbsp; Paspor: ${p.noPaspor||'-'} (exp: ${p.expiryPaspor||'-'})</div></div>`).join(''); } else { list.innerHTML = '<div class="empty-state">Belum ada data penumpang</div>'; } } catch(e) {}
 }
-
-function showInnerTab(tab, e) {
-  if (e) { document.querySelectorAll('.inner-tab').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); }
-  showInnerTabById(tab);
-}
-function showInnerTabById(tab) {
-  document.getElementById('inner-riwayat').style.display = tab === 'riwayat' ? 'block' : 'none';
-  document.getElementById('inner-passenger').style.display = tab === 'passenger' ? 'block' : 'none';
-  if (tab === 'passenger') loadPassengers();
-}
-
+function showInnerTab(tab, e) { if (e) { document.querySelectorAll('.inner-tab').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); } showInnerTabById(tab); }
+function showInnerTabById(tab) { document.getElementById('inner-riwayat').style.display = tab === 'riwayat' ? 'block' : 'none'; document.getElementById('inner-passenger').style.display = tab === 'passenger' ? 'block' : 'none'; if (tab === 'passenger') loadPassengers(); }
 function waFromContact() { window.open('https://wa.me/' + currentContactNoWa, '_blank'); }
-function editContact() {
-  allContactsCache = [];
-  closeModal('modal-detail');
-  document.getElementById('modal-contact-title').textContent = 'Edit Contact';
-  document.getElementById('c-nowa').value = currentContactNoWa;
-  document.getElementById('c-original-nowa').value = currentContactNoWa;
-  document.getElementById('modal-contact').style.display = 'flex';
-}
+function editContact() { allContactsCache = []; closeModal('modal-detail'); document.getElementById('modal-contact-title').textContent = 'Edit Contact'; document.getElementById('c-nowa').value = currentContactNoWa; document.getElementById('c-original-nowa').value = currentContactNoWa; document.getElementById('modal-contact').style.display = 'flex'; }
 function showAddPassenger() { document.getElementById('modal-passenger').style.display = 'flex'; }
 async function submitPassenger() {
-  const nama = document.getElementById('p-nama').value.trim();
-  if (!nama) { alert('Nama lengkap wajib diisi'); return; }
-  try {
-    const res = await apiPost({
-      action: 'savePassenger', noWaCustomer: currentContactNoWa,
-      namaLengkap: nama, jenisKelamin: document.getElementById('p-jk').value,
-      tglLahir: document.getElementById('p-tgl').value,
-      noKtp: document.getElementById('p-ktp').value.trim(),
-      noPaspor: document.getElementById('p-paspor').value.trim(),
-      expiryPaspor: document.getElementById('p-expiry').value,
-      kewarganegaraan: document.getElementById('p-warga').value.trim()
-    });
-    if (res.success) { closeModal('modal-passenger'); loadPassengers(); showToast('Penumpang disimpan!'); }
-  } catch(e) { showToast('Error: ' + e); }
+  const nama = document.getElementById('p-nama').value.trim(); if (!nama) { alert('Nama lengkap wajib diisi'); return; }
+  try { const res = await apiPost({action: 'savePassenger', noWaCustomer: currentContactNoWa, namaLengkap: nama, jenisKelamin: document.getElementById('p-jk').value, tglLahir: document.getElementById('p-tgl').value, noKtp: document.getElementById('p-ktp').value.trim(), noPaspor: document.getElementById('p-paspor').value.trim(), expiryPaspor: document.getElementById('p-expiry').value, kewarganegaraan: document.getElementById('p-warga').value.trim()}); if (res.success) { closeModal('modal-passenger'); loadPassengers(); showToast('Penumpang disimpan!'); } } catch(e) { showToast('Error: ' + e); }
 }
 
 // ===================== OWNER DASHBOARD =====================
 async function loadOwnerStats() {
   try {
-    const res = await apiGet({action: 'getOwnerStats'});
-    if (!res.success) return;
-    const s = res.stats;
-    document.getElementById('kpi-waiting').textContent = s.waiting;
-    document.getElementById('kpi-active').textContent = s.assigned + s.followUp;
-    document.getElementById('kpi-booked').textContent = s.booked;
-    document.getElementById('kpi-closed').textContent = s.closed;
-    document.getElementById('kpi-customers').textContent = s.totalCustomers;
+    const res = await apiGet({action: 'getOwnerStats'}); if (!res.success) return; const s = res.stats;
+    document.getElementById('kpi-waiting').textContent = s.waiting; document.getElementById('kpi-active').textContent = s.assigned + s.followUp; document.getElementById('kpi-booked').textContent = s.booked; document.getElementById('kpi-closed').textContent = s.closed; document.getElementById('kpi-customers').textContent = s.totalCustomers;
     const alertBox = document.getElementById('alert-box');
-    if (res.alertChats && res.alertChats.length > 0) {
-      alertBox.style.display = 'block';
-      document.getElementById('alert-list').innerHTML = res.alertChats.map(a => `
-        <div class="alert-item">
-          <span>${a.roomId} — ${escH(a.namaCustomer)} (${a.menitWaiting} mnt)</span>
-          <button class="alert-assign" onclick="quickAssign('${a.roomId}')">Assign</button>
-        </div>`).join('');
-    } else { alertBox.style.display = 'none'; }
+    if (res.alertChats && res.alertChats.length > 0) { alertBox.style.display = 'block'; document.getElementById('alert-list').innerHTML = res.alertChats.map(a => `<div class="alert-item"><span>${a.roomId} — ${escH(a.namaCustomer)} (${a.menitWaiting} mnt)</span><button class="alert-assign" onclick="quickAssign('${a.roomId}')">Assign</button></div>`).join(''); } else { alertBox.style.display = 'none'; }
     const grid = document.getElementById('staff-grid');
-    if (res.staffStats && res.staffStats.length > 0) {
-      grid.innerHTML = res.staffStats.map(s => `
-        <div class="staff-card">
-          <div class="staff-card-name">
-            <div class="av av-b" style="width:28px;height:28px;font-size:10px;">${getInitials(s.nama)}</div>
-            ${escH(s.nama)} <span class="staff-role">${s.role}</span>
-          </div>
-          <div class="staff-stats">
-            <div class="stat-row">Active: <span>${s.assigned}</span></div>
-            <div class="stat-row">Booked: <span>${s.booked}</span></div>
-            <div class="stat-row">Closed: <span>${s.closed}</span></div>
-          </div>
-        </div>`).join('');
-    } else { grid.innerHTML = '<div class="empty-state">Belum ada data staff</div>'; }
+    if (res.staffStats && res.staffStats.length > 0) { grid.innerHTML = res.staffStats.map(s => `<div class="staff-card"><div class="staff-card-name"><div class="av av-b" style="width:28px;height:28px;font-size:10px;">${getInitials(s.nama)}</div>${escH(s.nama)} <span class="staff-role">${s.role}</span></div><div class="staff-stats"><div class="stat-row">Active: <span>${s.assigned}</span></div><div class="stat-row">Booked: <span>${s.booked}</span></div><div class="stat-row">Closed: <span>${s.closed}</span></div></div></div>`).join(''); } else { grid.innerHTML = '<div class="empty-state">Belum ada data staff</div>'; }
   } catch(e) {}
 }
 
-// ===================== ALL CHATS (OWNER) =====================
+// ===================== ALL CHATS =====================
 async function loadAllChats() {
-  const list = document.getElementById('all-chats-list');
-  list.innerHTML = '<div class="loading">Memuat...</div>';
-  try {
-    const res = await apiGet({action: 'getAllChatsOwner'});
-    allRoomsCache = res.rooms || [];
-    const staffSet = new Set(allRoomsCache.map(r => r.assignedTo).filter(Boolean));
-    const sel = document.getElementById('filter-staff');
-    sel.innerHTML = '<option value="">Semua Staff</option>' + [...staffSet].map(s => `<option value="${s}">${s}</option>`).join('');
-    renderAllChats(allRoomsCache);
-  } catch(e) { list.innerHTML = '<div class="empty-state">Gagal memuat</div>'; }
+  const list = document.getElementById('all-chats-list'); list.innerHTML = '<div class="loading">Memuat...</div>';
+  try { const res = await apiGet({action: 'getAllChatsOwner'}); allRoomsCache = res.rooms || []; const staffSet = new Set(allRoomsCache.map(r => r.assignedTo).filter(Boolean)); const sel = document.getElementById('filter-staff'); sel.innerHTML = '<option value="">Semua Staff</option>' + [...staffSet].map(s => `<option value="${s}">${s}</option>`).join(''); renderAllChats(allRoomsCache); } catch(e) { list.innerHTML = '<div class="empty-state">Gagal memuat</div>'; }
 }
-function filterAllChats() {
-  const sf = document.getElementById('filter-status').value;
-  const stf = document.getElementById('filter-staff').value;
-  let filtered = allRoomsCache;
-  if (sf) filtered = filtered.filter(r => r.status === sf);
-  if (stf) filtered = filtered.filter(r => r.assignedTo === stf);
-  renderAllChats(filtered);
-}
+function filterAllChats() { const sf = document.getElementById('filter-status').value; const stf = document.getElementById('filter-staff').value; let filtered = allRoomsCache; if (sf) filtered = filtered.filter(r => r.status === sf); if (stf) filtered = filtered.filter(r => r.assignedTo === stf); renderAllChats(filtered); }
 function renderAllChats(rooms) {
-  const list = document.getElementById('all-chats-list');
-  const sc = {WAITING:'p-wait',ASSIGNED:'p-assign',FOLLOW_UP:'p-follow',BOOKED:'p-booked',CLOSED:'p-assign'};
+  const list = document.getElementById('all-chats-list'); const sc = {WAITING:'p-wait',ASSIGNED:'p-assign',FOLLOW_UP:'p-follow',BOOKED:'p-booked',CLOSED:'p-assign'};
   if (!rooms.length) { list.innerHTML = '<div class="empty-state">Tidak ada chat</div>'; return; }
-  list.innerHTML = rooms.map(r => `
-    <div class="contact-card">
-      <div class="av ${getAvatarClass(r.namaCustomer)}">${getInitials(r.namaCustomer)}</div>
-      <div class="contact-info">
-        <div class="contact-name">${escH(r.namaCustomer)} <span class="pill ${sc[r.status]||'p-assign'}" style="margin-left:4px;">${r.status}</span></div>
-        <div class="contact-wa">📱 ${r.noWa} ${r.assignedTo ? '· '+escH(r.assignedTo) : ''}</div>
-        <div class="contact-meta">${escH(r.lastMessage||'-')}</div>
-      </div>
-      <button class="btn-secondary btn-sm" onclick="quickAssign('${r.roomId}')">Assign</button>
-    </div>`).join('');
+  list.innerHTML = rooms.map(r => `<div class="contact-card"><div class="av ${getAvatarClass(r.namaCustomer)}">${getInitials(r.namaCustomer)}</div><div class="contact-info"><div class="contact-name">${escH(r.namaCustomer)} <span class="pill ${sc[r.status]||'p-assign'}" style="margin-left:4px;">${r.status}</span></div><div class="contact-wa">📱 ${r.noWa} ${r.assignedTo ? '· '+escH(r.assignedTo) : ''}</div><div class="contact-meta">${escH(r.lastMessage||'-')}</div></div><button class="btn-secondary btn-sm" onclick="quickAssign('${r.roomId}')">Assign</button></div>`).join('');
 }
-async function quickAssign(roomId) {
-  const staffName = prompt('Assign ke staff (masukkan nama):');
-  if (!staffName) return;
-  try {
-    const res = await apiPost({action: 'assignChatOwner', roomId, staffName});
-    if (res.success) { showToast(res.message); loadAllChats(); loadOwnerStats(); }
-  } catch(e) { showToast('Gagal assign'); }
-}
+async function quickAssign(roomId) { const staffName = prompt('Assign ke staff (masukkan nama):'); if (!staffName) return; try { const res = await apiPost({action: 'assignChatOwner', roomId, staffName}); if (res.success) { showToast(res.message); loadAllChats(); loadOwnerStats(); } } catch(e) { showToast('Gagal assign'); } }
 
-// ===================== DOCUMENT HUB — Fase 2 =====================
-let docPanelOpen = false;
-let currentDocNoWa = '';
-let allDocsCache = [];
-let currentDocTab = 'semua';
-
+// ===================== DOCUMENT HUB =====================
+let docPanelOpen = false, currentDocNoWa = '', allDocsCache = [], currentDocTab = 'semua';
 function toggleDocPanel() {
-  docPanelOpen = !docPanelOpen;
-  const panel   = document.getElementById('doc-panel');
-  const btn     = document.getElementById('doc-panel-btn');
-  const infoCont = document.getElementById('info-panel-content');
-
-  if (docPanelOpen) {
-    panel.classList.add('active');
-    btn.classList.add('active-panel');
-    infoCont.style.display = 'none';
-    if (currentRoom) loadDocPanel(currentRoom.noWa);
-  } else {
-    panel.classList.remove('active');
-    btn.classList.remove('active-panel');
-    infoCont.style.display = 'flex';
-  }
+  docPanelOpen = !docPanelOpen; const panel = document.getElementById('doc-panel'); const btn = document.getElementById('doc-panel-btn'); const infoCont = document.getElementById('info-panel-content');
+  if (docPanelOpen) { panel.classList.add('active'); btn.classList.add('active-panel'); infoCont.style.display = 'none'; if (currentRoom) loadDocPanel(currentRoom.noWa); }
+  else { panel.classList.remove('active'); btn.classList.remove('active-panel'); infoCont.style.display = 'flex'; }
 }
-
 async function loadDocPanel(noWa) {
-  currentDocNoWa = noWa;
-  currentDocTab  = 'semua';
-  // Reset tab aktif
+  currentDocNoWa = noWa; currentDocTab = 'semua';
   document.querySelectorAll('.doc-tab').forEach((t,i) => t.classList.toggle('active', i===0));
   document.getElementById('doc-list').innerHTML = '<div class="doc-empty">Memuat dokumen...</div>';
-
-  try {
-    const res = await apiGet({ action: 'getCustomerDocs', noWa });
-    if (res.ok) {
-      allDocsCache = res.docs || [];
-      document.getElementById('doc-total').textContent = allDocsCache.length + ' file';
-      renderDocList(allDocsCache);
-    } else {
-      document.getElementById('doc-list').innerHTML = '<div class="doc-empty">Gagal memuat dokumen</div>';
-    }
-  } catch(e) {
-    document.getElementById('doc-list').innerHTML = '<div class="doc-empty">Error memuat</div>';
-  }
+  try { const res = await apiGet({ action: 'getCustomerDocs', noWa }); if (res.ok) { allDocsCache = res.docs || []; document.getElementById('doc-total').textContent = allDocsCache.length + ' file'; renderDocList(allDocsCache); } else { document.getElementById('doc-list').innerHTML = '<div class="doc-empty">Gagal memuat dokumen</div>'; } } catch(e) { document.getElementById('doc-list').innerHTML = '<div class="doc-empty">Error memuat</div>'; }
 }
-
-function switchDocTab(tab, el) {
-  currentDocTab = tab;
-  document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
-  const filtered = tab === 'semua'
-    ? allDocsCache
-    : allDocsCache.filter(d => d.kategori === tab);
-  renderDocList(filtered);
-}
-
-function getDocIcon(namaFile, kategori) {
-  const ext = (namaFile || '').split('.').pop().toLowerCase();
-  if (ext === 'pdf') return '📄';
-  if (['jpg','jpeg','png'].includes(ext)) return '🖼️';
-  if (kategori === 'Identitas') return '🪪';
-  if (kategori === 'Tiket & Voucher') return '✈️';
-  return '📁';
-}
-
-function formatDocDate(isoStr) {
-  if (!isoStr) return '';
-  try {
-    const d = new Date(isoStr);
-    return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
-  } catch(e) { return ''; }
-}
-
+function switchDocTab(tab, el) { currentDocTab = tab; document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active')); if (el) el.classList.add('active'); renderDocList(tab === 'semua' ? allDocsCache : allDocsCache.filter(d => d.kategori === tab)); }
+function getDocIcon(namaFile, kategori) { const ext = (namaFile || '').split('.').pop().toLowerCase(); if (ext === 'pdf') return '📄'; if (['jpg','jpeg','png'].includes(ext)) return '🖼️'; if (kategori === 'Identitas') return '🪪'; if (kategori === 'Tiket & Voucher') return '✈️'; return '📁'; }
+function formatDocDate(isoStr) { if (!isoStr) return ''; try { const d = new Date(isoStr); return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }); } catch(e) { return ''; } }
+function isImageFile(namaFile) { const ext = (namaFile || '').split('.').pop().toLowerCase(); return ['jpg','jpeg','png','gif','webp','bmp'].includes(ext); }
 function renderDocList(docs) {
   const el = document.getElementById('doc-list');
-  if (!docs || docs.length === 0) {
-    el.innerHTML = '<div class="doc-empty">Belum ada dokumen<br><span style="font-size:10px;">Klik Upload untuk tambah</span></div>';
-    return;
-  }
-
-  // Kelompokkan per kategori
-  const groups = {};
-  docs.forEach(d => {
-    if (!groups[d.kategori]) groups[d.kategori] = [];
-    groups[d.kategori].push(d);
-  });
-
+  if (!docs || docs.length === 0) { el.innerHTML = '<div class="doc-empty">Belum ada dokumen<br><span style="font-size:10px;">Klik Upload untuk tambah</span></div>'; return; }
+  const groups = {}; docs.forEach(d => { if (!groups[d.kategori]) groups[d.kategori] = []; groups[d.kategori].push(d); });
   let html = '';
   Object.keys(groups).forEach(kat => {
-    html += `<div class="doc-category-title">
-      <span>${kat}</span>
-      <span style="font-size:9px;">${groups[kat].length} file</span>
-    </div>`;
+    html += `<div class="doc-category-title"><span>${kat}</span><span style="font-size:9px;">${groups[kat].length} file</span></div>`;
     groups[kat].forEach(d => {
-      const safeId   = escH(d.docId);
-      const safeFile = escH(d.fileId);
-      const safeName = escH(d.namaFile);
-      html += `<div class="doc-item">
-        <div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div>
-        <div class="doc-item-info">
-          <div class="doc-item-name" title="${safeName}">${safeName}</div>
-          <div class="doc-item-meta">${formatDocDate(d.uploadedAt)}</div>
-        </div>
-        <div class="doc-item-acts">
-          <div class="doc-act-btn" onclick="viewDoc('${safeFile}')" title="Lihat">👁️</div>
-          <div class="doc-act-btn" onclick="sendDocToCustomer('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div>
-          <div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Picture in Picture">🖼️</div>
-          <div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div>
-        </div>
-      </div>`;
+      const safeId = escH(d.docId); const safeFile = escH(d.fileId); const safeName = escH(d.namaFile);
+      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${safeName}</div><div class="doc-item-meta">${formatDocDate(d.uploadedAt)}</div></div><div class="doc-item-acts"><div class="doc-act-btn" onclick="viewDoc('${safeFile}')" title="Lihat">👁️</div><div class="doc-act-btn" onclick="sendDocToCustomer('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div>${isImageFile(d.namaFile) ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Floating Viewer">🪟</div>` : ''}<div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
     });
   });
-
   el.innerHTML = html;
 }
-
-// Upload dokumen ke Document Hub
 async function handleDocUpload(input) {
-  if (!input.files || !input.files[0]) return;
-  if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
-
-  const file = input.files[0];
-  if (file.size > 15 * 1024 * 1024) { showToast('File terlalu besar, maksimal 15MB'); input.value = ''; return; }
-
+  if (!input.files || !input.files[0]) return; if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
+  const file = input.files[0]; if (file.size > 15 * 1024 * 1024) { showToast('File terlalu besar, maksimal 15MB'); input.value = ''; return; }
   const kat = prompt('Pilih kategori:\n1 = Identitas (KTP/Paspor/Visa)\n2 = Tiket & Voucher\n3 = Lainnya\n\nKetik 1, 2, atau 3:');
-  const katMap = { '1': 'Identitas', '2': 'Tiket & Voucher', '3': 'Lainnya' };
-  const kategori = katMap[kat] || 'Lainnya';
-
-  const label = document.getElementById('doc-upload-label');
-  label.innerHTML = '<i class="ti ti-loader spin" style="font-size:14px;"></i> Mengupload...';
-
+  const katMap = { '1': 'Identitas', '2': 'Tiket & Voucher', '3': 'Lainnya' }; const kategori = katMap[kat] || 'Lainnya';
+  const label = document.getElementById('doc-upload-label'); label.innerHTML = '<i class="ti ti-loader spin" style="font-size:14px;"></i> Mengupload...';
   try {
     const base64 = await fileToBase64(file);
-    const res = await apiPost({
-      action: 'saveCustomerDoc',
-      noWa: currentRoom.noWa,
-      kategori,
-      namaFile: file.name,
-      fileType: file.type || 'application/octet-stream',
-      fileData: base64,
-      uploadedBy: currentStaff.nama,
-      keterangan: ''
-    });
-
-    if (res.ok) {
-      showToast('✅ ' + file.name + ' tersimpan!');
-      loadDocPanel(currentRoom.noWa);
-    } else {
-      showToast('Gagal upload: ' + (res.msg || 'Error'));
-    }
-  } catch(e) {
-    showToast('Error: ' + e.toString());
-  } finally {
-    // Reset label
-    label.innerHTML = `<i class="ti ti-upload" style="font-size:14px;"></i> Upload Dokumen<input type="file" id="doc-file-input" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleDocUpload(this)">`;
-    input.value = '';
-  }
+    const res = await apiPost({action: 'saveCustomerDoc', noWa: currentRoom.noWa, kategori, namaFile: file.name, fileType: file.type || 'application/octet-stream', fileData: base64, uploadedBy: currentStaff.nama, keterangan: ''});
+    if (res.ok) { showToast('✅ ' + file.name + ' tersimpan!'); loadDocPanel(currentRoom.noWa); } else { showToast('Gagal upload: ' + (res.msg || 'Error')); }
+  } catch(e) { showToast('Error: ' + e.toString()); }
+  finally { label.innerHTML = `<i class="ti ti-upload" style="font-size:14px;"></i> Upload Dokumen<input type="file" id="doc-file-input" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleDocUpload(this)">`; input.value = ''; }
 }
-
-// Lihat dokumen di tab baru
-function viewDoc(fileId) {
-  if (!fileId) return;
-  window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank');
-}
-
-// Kirim dokumen ke tamu
+function viewDoc(fileId) { if (!fileId) return; window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank'); }
 async function sendDocToCustomer(docId, fileId, namaFile) {
-  if (!currentRoom) { showToast('Pilih chat dulu'); return; }
-  if (!confirm('Kirim "' + namaFile + '" ke ' + currentRoom.nama + '?')) return;
-
+  if (!currentRoom) { showToast('Pilih chat dulu'); return; } if (!confirm('Kirim "' + namaFile + '" ke ' + currentRoom.nama + '?')) return;
   showToast('Mengirim...');
-  try {
-    const res = await apiPost({
-      action: 'sendDocToCustomer',
-      noWa: currentRoom.noWa,
-      fileId,
-      namaFile,
-      roomId: currentRoom.roomId,
-      staffName: currentStaff.nama
-    });
-    if (res.ok) {
-      showToast('✅ Dokumen berhasil dikirim!');
-      // Refresh chat messages
-      lastMsgCount = 0;
-      loadMessages(currentRoom.roomId, true);
-    } else {
-      showToast('❌ Gagal: ' + (res.msg || ''));
-    }
-  } catch(e) {
-    showToast('Error: ' + e.toString());
-  }
+  try { const res = await apiPost({action: 'sendDocToCustomer', noWa: currentRoom.noWa, fileId, namaFile, roomId: currentRoom.roomId, staffName: currentStaff.nama}); if (res.ok) { showToast('✅ Dokumen berhasil dikirim!'); lastMsgCount = 0; loadMessages(currentRoom.roomId, true); } else { showToast('❌ Gagal: ' + (res.msg || '')); } } catch(e) { showToast('Error: ' + e.toString()); }
 }
-
-// Hapus dokumen
 async function deleteDoc(docId, fileId) {
   if (!confirm('Hapus dokumen ini? File akan dihapus permanen dari Drive.')) return;
-  try {
-    const res = await apiPost({ action: 'deleteCustomerDoc', docId, fileId });
-    if (res.ok) {
-      showToast('Dokumen dihapus');
-      loadDocPanel(currentDocNoWa);
-    } else {
-      showToast('Gagal hapus: ' + (res.msg || ''));
-    }
-  } catch(e) {
-    showToast('Error: ' + e.toString());
-  }
+  try { const res = await apiPost({ action: 'deleteCustomerDoc', docId, fileId }); if (res.ok) { showToast('Dokumen dihapus'); loadDocPanel(currentDocNoWa); } else { showToast('Gagal hapus: ' + (res.msg || '')); } } catch(e) { showToast('Error: ' + e.toString()); }
 }
 
-// Picture in Picture — buka sebagai popup window browser terpisah
-// Staff bisa buka website maskapai di tab lain, popup paspor tetap terlihat
+// ===================== PiP FLOATING VIEWER — Fase 5A =====================
+let pipScale = 1, pipRotation = 0, pipDragging = false, pipDragStart = {x:0,y:0};
 function openPiP(fileId, namaFile) {
   if (!fileId) return;
-  const url = 'https://drive.google.com/file/d/' + fileId + '/preview';
-
-  // Ukuran dan posisi popup — pojok kanan bawah layar
-  const pw = 440;
-  const ph = 340;
-  const px = window.screen.width  - pw - 20;
-  const py = window.screen.height - ph - 80;
-
-  const pipWin = window.open(
-    url,
-    'goho_pip_' + fileId,
-    'width=' + pw + ',height=' + ph + ',left=' + px + ',top=' + py + ',' +
-    'resizable=yes,scrollbars=no,toolbar=no,menubar=no,' +
-    'location=no,status=no'
-  );
-
-  if (!pipWin) {
-    showToast('⚠️ Popup diblokir! Klik ikon 🔒 di address bar browser → izinkan popup untuk site ini.');
-    return;
-  }
-
-  pipWin.focus();
-  showToast('🖼️ ' + namaFile + ' dibuka di window terpisah');
+  const viewer = document.getElementById('pip-viewer'); const img = document.getElementById('pip-img');
+  pipScale = 1; pipRotation = 0;
+  document.getElementById('pip-opacity').value = 100; document.getElementById('pip-zoom-label').textContent = '100%';
+  viewer.style.opacity = '1'; img.style.transform = 'scale(1) rotate(0deg)';
+  document.getElementById('pip-title').textContent = namaFile || 'Dokumen';
+  img.src = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800';
+  img.onerror = () => { img.src = 'https://drive.google.com/uc?export=view&id=' + fileId; };
+  viewer.style.right = '20px'; viewer.style.bottom = '80px'; viewer.style.left = 'auto'; viewer.style.top = 'auto';
+  viewer.classList.add('show');
+  showToast('🪟 ' + namaFile + ' dibuka di Floating Viewer');
+  initPiPDrag();
 }
-  // ===================== SMART CONTEXT — Fase 3 =====================
-const MASKAPAI_EMOJI = {
-  'LION':'🦁','AIRASIA':'🔴','CITILINK':'🟢',
-  'GARUDA':'🦅','GDS':'🌐','HOTEL':'🏨','TOUR':'🌴','JASA LAYANAN':'🛎️'
-};
-function getMaskapaiEmoji(nama) {
-  const upper = (nama||'').toUpperCase();
-  for (const key of Object.keys(MASKAPAI_EMOJI)) {
-    if (upper.includes(key)) return MASKAPAI_EMOJI[key];
-  }
-  return '✈️';
+function closePiP() { document.getElementById('pip-viewer').classList.remove('show'); }
+function pipZoom(delta) {
+  pipScale = Math.max(0.3, Math.min(4, pipScale + delta));
+  document.getElementById('pip-img').style.transform = 'scale('+pipScale+') rotate('+pipRotation+'deg)';
+  document.getElementById('pip-zoom-label').textContent = Math.round(pipScale*100)+'%';
 }
-function formatHarga(num) {
-  if (!num || num===0) return '';
-  return 'Rp ' + Number(num).toLocaleString('id-ID');
+function pipRotate(deg) {
+  pipRotation = (pipRotation + deg) % 360;
+  document.getElementById('pip-img').style.transform = 'scale('+pipScale+') rotate('+pipRotation+'deg)';
 }
+function pipReset() {
+  pipScale = 1; pipRotation = 0;
+  document.getElementById('pip-opacity').value = 100; document.getElementById('pip-zoom-label').textContent = '100%';
+  document.getElementById('pip-viewer').style.opacity = '1';
+  document.getElementById('pip-img').style.transform = 'scale(1) rotate(0deg)';
+}
+function pipOpacity(val) { document.getElementById('pip-viewer').style.opacity = val/100; }
+function initPiPDrag() {
+  const viewer = document.getElementById('pip-viewer'); const handle = document.getElementById('pip-drag-handle');
+  if (handle._dragInit) return; handle._dragInit = true;
+  handle.addEventListener('mousedown', (e) => { if (e.target.tagName === 'BUTTON') return; pipDragging = true; const r = viewer.getBoundingClientRect(); pipDragStart = {x: e.clientX - r.left, y: e.clientY - r.top}; e.preventDefault(); });
+  document.addEventListener('mousemove', (e) => { if (!pipDragging) return; viewer.style.left = (e.clientX - pipDragStart.x)+'px'; viewer.style.top = (e.clientY - pipDragStart.y)+'px'; viewer.style.right = 'auto'; viewer.style.bottom = 'auto'; });
+  document.addEventListener('mouseup', () => { pipDragging = false; });
+  handle.addEventListener('touchstart', (e) => { if (e.target.tagName === 'BUTTON') return; const t = e.touches[0]; const r = viewer.getBoundingClientRect(); pipDragging = true; pipDragStart = {x: t.clientX - r.left, y: t.clientY - r.top}; }, {passive:true});
+  document.addEventListener('touchmove', (e) => { if (!pipDragging) return; const t = e.touches[0]; viewer.style.left = (t.clientX - pipDragStart.x)+'px'; viewer.style.top = (t.clientY - pipDragStart.y)+'px'; viewer.style.right = 'auto'; viewer.style.bottom = 'auto'; }, {passive:true});
+  document.addEventListener('touchend', () => { pipDragging = false; });
+}
+
+// ===================== SMART CONTEXT =====================
+const MASKAPAI_EMOJI = {'LION':'🦁','AIRASIA':'🔴','CITILINK':'🟢','GARUDA':'🦅','GDS':'🌐','HOTEL':'🏨','TOUR':'🌴','JASA LAYANAN':'🛎️'};
+function getMaskapaiEmoji(nama) { const upper = (nama||'').toUpperCase(); for (const key of Object.keys(MASKAPAI_EMOJI)) { if (upper.includes(key)) return MASKAPAI_EMOJI[key]; } return '✈️'; }
+function formatHarga(num) { if (!num || num===0) return ''; return 'Rp ' + Number(num).toLocaleString('id-ID'); }
 async function loadSmartContext(roomId, noWa) {
-  const block   = document.getElementById('np-context-block');
-  const list    = document.getElementById('np-context-list');
-  const loading = document.getElementById('np-context-loading');
-  if (!block||!list) return;
-  block.style.display = 'block';
-  loading.textContent = 'scanning...';
-  list.innerHTML = '<div class="context-scanning"><span class="poll-dot"></span> Mendeteksi kode booking...</div>';
+  const block = document.getElementById('np-context-block'); const list = document.getElementById('np-context-list'); const loading = document.getElementById('np-context-loading'); if (!block||!list) return;
+  block.style.display = 'block'; loading.textContent = 'scanning...'; list.innerHTML = '<div class="context-scanning"><span class="poll-dot"></span> Mendeteksi kode booking...</div>';
   try {
     const res = await apiGet({action:'getBookingContext', roomId, noWa});
-    if (!res.ok||!res.bookings||res.bookings.length===0) {
-      loading.textContent = '';
-      list.innerHTML = '<div class="context-none">Belum ada kode booking terdeteksi</div>';
-      return;
-    }
-    loading.textContent = res.bookings.length + ' booking';
-    list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
-  } catch(e) {
-    loading.textContent = '';
-    list.innerHTML = '<div class="context-none">Error loading konteks</div>';
-  }
+    if (!res.ok||!res.bookings||res.bookings.length===0) { loading.textContent = ''; list.innerHTML = '<div class="context-none">Belum ada kode booking terdeteksi</div>'; return; }
+    loading.textContent = res.bookings.length + ' booking'; list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
+  } catch(e) { loading.textContent = ''; list.innerHTML = '<div class="context-none">Error loading konteks</div>'; }
 }
 function renderContextCard(b) {
-  const emoji = getMaskapaiEmoji(b.maskapai);
-  const allKodes = (b.allKodes||[b.kode]).join(' · ');
-  return `<div class="context-booking-card">
-    <div class="context-maskapai">
-      <span>${emoji} ${escH(b.maskapai)}</span>
-      <span style="font-size:9px;color:var(--text-hint);">${escH(b.tglTerbang)}</span>
-    </div>
-    <div class="context-kode">${escH(allKodes)}</div>
-    <div class="context-rute">✈️ ${escH(b.jurusan)}</div>
-    <div class="context-detail">
-      👤 ${escH(b.nama)}<br>
-      🛒 Beli: ${escH(b.tglBeli)}
-      ${b.harga ? ' · ' + formatHarga(b.harga) : ''}
-      ${b.noInv&&b.noInv!=='-' ? '<br>📋 '+escH(b.noInv) : ''}
-    </div>
-    <div class="context-action-row">
-      <button class="ctx-btn ctx-btn-checkin" onclick="quickCheckin('${escH(b.kode)}','${escH(b.maskapai)}','${escH(b.jurusan)}')">🛫 Check-in</button>
-      <button class="ctx-btn ctx-btn-arrival" onclick="quickArrival('${escH(b.jurusan)}')">📋 Arrival Card</button>
-      <button class="ctx-btn ctx-btn-beacukai" onclick="quickBeaCukai()">🛃 Bea Cukai</button>
-    </div>
-  </div>`;
+  const emoji = getMaskapaiEmoji(b.maskapai); const allKodes = (b.allKodes||[b.kode]).join(' · ');
+  return `<div class="context-booking-card"><div class="context-maskapai"><span>${emoji} ${escH(b.maskapai)}</span><span style="font-size:9px;color:var(--text-hint);">${escH(b.tglTerbang)}</span></div><div class="context-kode">${escH(allKodes)}</div><div class="context-rute">✈️ ${escH(b.jurusan)}</div><div class="context-detail">👤 ${escH(b.nama)}<br>🛒 Beli: ${escH(b.tglBeli)}${b.harga ? ' · ' + formatHarga(b.harga) : ''}${b.noInv&&b.noInv!=='-' ? '<br>📋 '+escH(b.noInv) : ''}</div><div class="context-action-row"><button class="ctx-btn ctx-btn-checkin" onclick="quickCheckin('${escH(b.kode)}','${escH(b.maskapai)}','${escH(b.jurusan)}')">🛫 Check-in</button><button class="ctx-btn ctx-btn-arrival" onclick="quickArrival('${escH(b.jurusan)}')">📋 Arrival Card</button><button class="ctx-btn ctx-btn-beacukai" onclick="quickBeaCukai()">🛃 Bea Cukai</button></div></div>`;
 }
 function quickCheckin(kode, maskapai, jurusan) {
-  const urls = {
-    'LION':'https://checkin.lionair.co.id',
-    'AIRASIA':'https://www.airasia.com/check-in/v2/en/gb',
-    'CITILINK':'https://www.citilink.co.id/check-in',
-    'GARUDA':'https://www.garuda-indonesia.com/id/id/garuda-online/check-in',
-    'BATIK':'https://www.batikair.com/id/id/check-in'
-  };
-  const upper = (maskapai||'').toUpperCase();
-  let url = null;
-  for (const key of Object.keys(urls)) {
-    if (upper.includes(key)) { url = urls[key]; break; }
-  }
-  if (url) { window.open(url,'_blank'); showToast('🛫 Buka halaman check-in '+maskapai); }
-  else showToast('URL check-in belum tersedia untuk '+maskapai);
+  const urls = {'LION':'https://checkin.lionair.co.id','AIRASIA':'https://www.airasia.com/check-in/v2/en/gb','CITILINK':'https://www.citilink.co.id/check-in','GARUDA':'https://www.garuda-indonesia.com/id/id/garuda-online/check-in','BATIK':'https://www.batikair.com/id/id/check-in'};
+  const upper = (maskapai||'').toUpperCase(); let url = null;
+  for (const key of Object.keys(urls)) { if (upper.includes(key)) { url = urls[key]; break; } }
+  if (url) { window.open(url,'_blank'); showToast('🛫 Buka halaman check-in '+maskapai); } else showToast('URL check-in belum tersedia untuk '+maskapai);
 }
 function quickArrival(jurusan) {
-  const arrivalInfo = {
-    'KUL':{nama:'MDAC',url:'https://imigresen-online.imi.gov.my/mdac'},
-    'PEN':{nama:'MDAC',url:'https://imigresen-online.imi.gov.my/mdac'},
-    'BKK':{nama:'TDAC',url:'https://tdac.immigration.go.th'},
-    'DMK':{nama:'TDAC',url:'https://tdac.immigration.go.th'},
-    'SIN':{nama:'SGAC',url:'https://eservices.ica.gov.sg/sgarrivalcard'},
-    'TPE':{nama:'TWAC',url:'https://niaspeedy.immigration.gov.tw'},
-    'PEK':{nama:'CDAC',url:'https://s.nia.gov.cn'},
-    'PVG':{nama:'CDAC',url:'https://s.nia.gov.cn'},
-    'ICN':{nama:'e-Arrival Card Korea',url:'https://www.hikorea.go.kr'},
-    'NRT':{nama:'Visit Japan Web',url:'https://vjw-lp.digital.go.jp'},
-    'HND':{nama:'Visit Japan Web',url:'https://vjw-lp.digital.go.jp'},
-    'HKG':{nama:'Arrival Card HK',url:'https://www.immd.gov.hk'}
-  };
-  const iataMatch = (jurusan||'').toUpperCase().match(/[A-Z]{3}/g);
-  if (!iataMatch) { showToast('Rute tidak terdeteksi'); return; }
-  const dest = iataMatch[iataMatch.length-1];
-  const info = arrivalInfo[dest];
-  if (info) { window.open(info.url,'_blank'); showToast('📋 Buka '+info.nama+' untuk '+dest); }
-  else showToast('Info arrival card untuk '+dest+' belum tersedia');
+  const arrivalInfo = {'KUL':{nama:'MDAC',url:'https://imigresen-online.imi.gov.my/mdac'},'PEN':{nama:'MDAC',url:'https://imigresen-online.imi.gov.my/mdac'},'BKK':{nama:'TDAC',url:'https://tdac.immigration.go.th'},'DMK':{nama:'TDAC',url:'https://tdac.immigration.go.th'},'SIN':{nama:'SGAC',url:'https://eservices.ica.gov.sg/sgarrivalcard'},'TPE':{nama:'TWAC',url:'https://niaspeedy.immigration.gov.tw'},'PEK':{nama:'CDAC',url:'https://s.nia.gov.cn'},'PVG':{nama:'CDAC',url:'https://s.nia.gov.cn'},'ICN':{nama:'e-Arrival Card Korea',url:'https://www.hikorea.go.kr'},'NRT':{nama:'Visit Japan Web',url:'https://vjw-lp.digital.go.jp'},'HND':{nama:'Visit Japan Web',url:'https://vjw-lp.digital.go.jp'},'HKG':{nama:'Arrival Card HK',url:'https://www.immd.gov.hk'}};
+  const iataMatch = (jurusan||'').toUpperCase().match(/[A-Z]{3}/g); if (!iataMatch) { showToast('Rute tidak terdeteksi'); return; }
+  const dest = iataMatch[iataMatch.length-1]; const info = arrivalInfo[dest];
+  if (info) { window.open(info.url,'_blank'); showToast('📋 Buka '+info.nama+' untuk '+dest); } else showToast('Info arrival card untuk '+dest+' belum tersedia');
 }
-function quickBeaCukai() {
-  window.open('https://ecd.beacukai.go.id','_blank');
-  showToast('🛃 Buka e-CD Bea Cukai Indonesia');
-}
+function quickBeaCukai() { window.open('https://ecd.beacukai.go.id','_blank'); showToast('🛃 Buka e-CD Bea Cukai Indonesia'); }
 async function manualLookupKode() {
-  const kode = prompt('Masukkan kode booking maskapai (6 huruf):');
-  if (!kode||!kode.trim()) return;
-  const clean = kode.trim().toUpperCase();
-  if (!/^[A-Z]{6}$/.test(clean)) { showToast('Kode harus tepat 6 huruf'); return; }
+  const kode = prompt('Masukkan kode booking maskapai (6 huruf):'); if (!kode||!kode.trim()) return;
+  const clean = kode.trim().toUpperCase(); if (!/^[A-Z]{6}$/.test(clean)) { showToast('Kode harus tepat 6 huruf'); return; }
   showToast('Mencari kode '+clean+'...');
-  try {
-    const res = await apiGet({action:'lookupKode', kode:clean});
-    if (res.found) {
-      const block = document.getElementById('np-context-block');
-      const list  = document.getElementById('np-context-list');
-      const loading = document.getElementById('np-context-loading');
-      block.style.display = 'block';
-      loading.textContent = 'manual lookup';
-      list.innerHTML = renderContextCard(res) + list.innerHTML;
-      showToast('✅ Kode '+clean+' ditemukan!');
-    } else { showToast('❌ Kode '+clean+' tidak ditemukan'); }
-  } catch(e) { showToast('Error: '+e.toString()); }
+  try { const res = await apiGet({action:'lookupKode', kode:clean}); if (res.found) { const block = document.getElementById('np-context-block'); const list = document.getElementById('np-context-list'); const loading = document.getElementById('np-context-loading'); block.style.display = 'block'; loading.textContent = 'manual lookup'; list.innerHTML = renderContextCard(res) + list.innerHTML; showToast('✅ Kode '+clean+' ditemukan!'); } else { showToast('❌ Kode '+clean+' tidak ditemukan'); } } catch(e) { showToast('Error: '+e.toString()); }
 }
 </script>
 </body>
