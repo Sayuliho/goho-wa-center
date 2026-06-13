@@ -679,6 +679,7 @@ function showSoundActivation() {
   btn.style.cssText = 'position:fixed;top:56px;right:12px;background:#0F6E56;color:white;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;z-index:9998;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
   btn.onclick = function() { unlockAudio(); playNotifSound(); btn.innerHTML = '✅ Suara Aktif'; btn.style.background = '#666'; setTimeout(() => btn.remove(), 2000); };
   document.body.appendChild(btn);
+  setTimeout(() => { unlockAudio(); const b = document.getElementById('sound-btn'); if (b) { b.innerHTML = '✅ Suara Aktif'; b.style.background = '#666'; setTimeout(() => b.remove(), 1500); } }, 3000);
 }
 function showNotifPopup(nama, noWa, roomId) {
   const old = document.getElementById('notif-popup'); if (old) old.remove();
@@ -1016,6 +1017,12 @@ function switchDocTab(tab, el) { currentDocTab = tab; document.querySelectorAll(
 function getDocIcon(namaFile, kategori) { const ext = (namaFile || '').split('.').pop().toLowerCase(); if (ext === 'pdf') return '📄'; if (['jpg','jpeg','png'].includes(ext)) return '🖼️'; if (kategori === 'Identitas') return '🪪'; if (kategori === 'Tiket & Voucher') return '✈️'; return '📁'; }
 function formatDocDate(isoStr) { if (!isoStr) return ''; try { const d = new Date(isoStr); return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }); } catch(e) { return ''; } }
 function isImageFile(namaFile) { const ext = (namaFile || '').split('.').pop().toLowerCase(); return ['jpg','jpeg','png','gif','webp','bmp'].includes(ext); }
+function truncateFileName(nama, maxLen) {
+  if (!nama || nama.length <= maxLen) return nama;
+  const ext = nama.lastIndexOf('.');
+  if (ext > 0) { const base = nama.substring(0, ext); const extPart = nama.substring(ext); return base.substring(0, maxLen - extPart.length - 2) + '..' + extPart; }
+  return nama.substring(0, maxLen) + '..';
+}
 function renderDocList(docs) {
   const el = document.getElementById('doc-list');
   if (!docs || docs.length === 0) { el.innerHTML = '<div class="doc-empty">Belum ada dokumen<br><span style="font-size:10px;">Klik Upload untuk tambah</span></div>'; return; }
@@ -1025,7 +1032,7 @@ function renderDocList(docs) {
     html += `<div class="doc-category-title"><span>${kat}</span><span style="font-size:9px;">${groups[kat].length} file</span></div>`;
     groups[kat].forEach(d => {
       const safeId = escH(d.docId); const safeFile = escH(d.fileId); const safeName = escH(d.namaFile);
-      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${safeName}</div><div class="doc-item-meta">${formatDocDate(d.uploadedAt)}</div></div><div class="doc-item-acts"><div class="doc-act-btn" onclick="viewDoc('${safeFile}')" title="Lihat">👁️</div><div class="doc-act-btn" onclick="sendDocToCustomer('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div>${isImageFile(d.namaFile) ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Floating Viewer">🪟</div>` : ''}<div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
+      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div><div class="doc-item-meta">${formatDocDate(d.uploadedAt)}</div></div><div class="doc-item-acts"><div class="doc-act-btn" onclick="viewDoc('${safeFile}')" title="Lihat">👁️</div><div class="doc-act-btn" onclick="sendDocToCustomer('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div>${isImageFile(d.namaFile) ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Floating Viewer">🪟</div>` : ''}<div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
     });
   });
   el.innerHTML = html;
