@@ -325,6 +325,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .mpx-result-item:hover { background: var(--green-bg); }
 .mpx-result-foto { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; background: var(--bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 1px solid var(--border); overflow: hidden; }
 .mpx-result-foto img { width: 100%; height: 100%; object-fit: cover; }
+.mpx-foto-popup { position: fixed; z-index: 9999; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); padding: 6px; display: none; pointer-events: none; }
+.mpx-foto-popup img { width: 200px; height: 140px; object-fit: cover; border-radius: 8px; display: block; }
+.mpx-result-foto { cursor: pointer; }
+
 .mpx-result-info { flex: 1; min-width: 0; }
 .mpx-result-nama { font-size: 12px; font-weight: 600; color: var(--text); }
 .mpx-result-paspor { font-size: 10px; color: var(--text-muted); }
@@ -534,6 +538,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 
 <div class="toast" id="toast"></div>
 
+
+<!-- FOTO POPUP -->
+<div class="mpx-foto-popup" id="mpx-foto-popup"><img id="mpx-foto-popup-img" src="" alt=""></div>
 <!-- MULTI PAX PANEL -->
 <div class="multipax-overlay" id="multipax-overlay" onclick="handleMultiPaxOverlayClick(event)">
   <div class="multipax-panel" id="multipax-panel">
@@ -1224,7 +1231,7 @@ function searchPassenger(query) {
       }
       results.innerHTML = res.passengers.map(p => `
         <div class="mpx-result-item" onclick="addPassengerToList(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-          <div class="mpx-result-foto" id="foto-${p.passengerId}">${getInitials(p.namaLengkap)}</div>
+          <div class="mpx-result-foto" id="foto-${p.passengerId}" onmouseenter="showFotoPopup(event,'${p.passengerId}')" onmouseleave="hideFotoPopup()" onclick="showFotoPopup(event,'${p.passengerId}')">${getInitials(p.namaLengkap)}</div>
           <div class="mpx-result-info">
             <div class="mpx-result-nama">${escH(p.namaLengkap)}</div>
             <div class="mpx-result-paspor">${p.noPaspor || '-'} · ${p.tglLahir || '-'}</div>
@@ -1365,6 +1372,23 @@ function addManualPassenger() {
   hideManualForm();
   renderMultiPaxList();
   showToast('✅ ' + nama + ' ditambahkan');
+}
+
+
+function showFotoPopup(e, passengerId) {
+  const el = document.getElementById('foto-' + passengerId);
+  const img = el ? el.querySelector('img') : null;
+  if (!img) return;
+  const popup = document.getElementById('mpx-foto-popup');
+  const pimg  = document.getElementById('mpx-foto-popup-img');
+  pimg.src = img.src;
+  const rect = e.target.getBoundingClientRect();
+  popup.style.display = 'block';
+  popup.style.left = (rect.right + 8) + 'px';
+  popup.style.top  = Math.max(8, rect.top - 60) + 'px';
+}
+function hideFotoPopup() {
+  document.getElementById('mpx-foto-popup').style.display = 'none';
 }
 
 async function manualLookupKode() {
