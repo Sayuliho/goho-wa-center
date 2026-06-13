@@ -311,7 +311,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .multipax-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: flex-end; justify-content: flex-end; z-index: 500; padding: 8px; pointer-events: none; }
 .multipax-overlay.active { display: flex; pointer-events: all; }
 
-.multipax-panel { background: white; border-radius: 14px; width: 360px; max-height: 85dvh; display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.2); transform: translateY(20px); opacity: 0; transition: all 0.2s ease; }
+.multipax-panel { background: white; border-radius: 14px; width: 420px; max-height: 85dvh; display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.2); transform: translateY(20px); opacity: 0; transition: all 0.2s ease; }
 .multipax-overlay.active .multipax-panel { transform: translateY(0); opacity: 1; }
 .multipax-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .multipax-header h4 { font-size: 13px; font-weight: 600; flex: 1; }
@@ -325,10 +325,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .mpx-result-item:hover { background: var(--green-bg); }
 .mpx-result-foto { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; background: var(--bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 1px solid var(--border); overflow: hidden; }
 .mpx-result-foto img { width: 100%; height: 100%; object-fit: cover; }
-.mpx-foto-popup { position: fixed; z-index: 9999; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); padding: 6px; display: none; pointer-events: none; }
-.mpx-foto-popup img { width: 200px; height: 140px; object-fit: cover; border-radius: 8px; display: block; }
+.mpx-foto-popup { position: fixed; z-index: 9999; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); padding: 6px; display: none; }
+.mpx-foto-popup img { width: 300px; height: 210px; object-fit: cover; border-radius: 8px; display: block; }
 .mpx-result-foto { cursor: pointer; }
-
 .mpx-result-info { flex: 1; min-width: 0; }
 .mpx-result-nama { font-size: 12px; font-weight: 600; color: var(--text); }
 .mpx-result-paspor { font-size: 10px; color: var(--text-muted); }
@@ -538,9 +537,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 
 <div class="toast" id="toast"></div>
 
-
-<!-- FOTO POPUP -->
-<div class="mpx-foto-popup" id="mpx-foto-popup"><img id="mpx-foto-popup-img" src="" alt=""></div>
+<div class="mpx-foto-popup" id="mpx-foto-popup"><img id="mpx-foto-popup-img" src="" alt="Paspor"></div>
 <!-- MULTI PAX PANEL -->
 <div class="multipax-overlay" id="multipax-overlay" onclick="handleMultiPaxOverlayClick(event)">
   <div class="multipax-panel" id="multipax-panel">
@@ -1231,10 +1228,10 @@ function searchPassenger(query) {
       }
       results.innerHTML = res.passengers.map(p => `
         <div class="mpx-result-item" onclick="addPassengerToList(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-          <div class="mpx-result-foto" id="foto-${p.passengerId}" onmouseenter="showFotoPopup(event,'${p.passengerId}')" onmouseleave="hideFotoPopup()" onclick="showFotoPopup(event,'${p.passengerId}')">${getInitials(p.namaLengkap)}</div>
+          <div class="mpx-result-foto" id="foto-${p.passengerId}" onclick="showFotoPopup(event,'${p.passengerId}')" onmouseenter="showFotoPopup(event,'${p.passengerId}')" onmouseleave="hideFotoPopup()">${getInitials(p.namaLengkap)}</div>
           <div class="mpx-result-info">
             <div class="mpx-result-nama">${escH(p.namaLengkap)}</div>
-            <div class="mpx-result-paspor">${p.noPaspor || '-'} · ${p.tglLahir || '-'}</div>
+            <div class="mpx-result-paspor">${p.noPaspor || '-'} · ${formatMpxDate(p.tglLahir) || '-'}</div>
           </div>
         </div>`).join('') +
         `<div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
@@ -1374,22 +1371,25 @@ function addManualPassenger() {
   showToast('✅ ' + nama + ' ditambahkan');
 }
 
-
+function formatMpxDate(val) {
+  if (!val) return '';
+  if (String(val).includes('T') || (String(val).includes('-') && !String(val).includes('/'))) {
+    try { const d = new Date(val); if (!isNaN(d.getTime())) return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear(); } catch(e) {}
+  }
+  return val;
+}
 function showFotoPopup(e, passengerId) {
   const el = document.getElementById('foto-' + passengerId);
   const img = el ? el.querySelector('img') : null;
   if (!img) return;
   const popup = document.getElementById('mpx-foto-popup');
-  const pimg  = document.getElementById('mpx-foto-popup-img');
-  pimg.src = img.src;
+  document.getElementById('mpx-foto-popup-img').src = img.src;
   const rect = e.target.getBoundingClientRect();
   popup.style.display = 'block';
-  popup.style.left = (rect.right + 8) + 'px';
-  popup.style.top  = Math.max(8, rect.top - 60) + 'px';
+  popup.style.left = Math.min(rect.right + 8, window.innerWidth - 320) + 'px';
+  popup.style.top  = Math.max(8, rect.top - 80) + 'px';
 }
-function hideFotoPopup() {
-  document.getElementById('mpx-foto-popup').style.display = 'none';
-}
+function hideFotoPopup() { document.getElementById('mpx-foto-popup').style.display = 'none'; }
 
 async function manualLookupKode() {
   const kode = prompt('Masukkan kode booking maskapai (6 huruf):'); if (!kode||!kode.trim()) return;
