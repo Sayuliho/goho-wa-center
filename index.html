@@ -201,7 +201,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .doc-item:hover { background: var(--green-bg); border-color: #a0d9c0; }
 .doc-item-icon { font-size: 18px; flex-shrink: 0; }
 .doc-item-info { flex: 1; min-width: 0; }
-.doc-item-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
+.doc-item-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .doc-item-meta { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
 .doc-item-acts { display: flex; gap: 3px; flex-shrink: 0; }
 .doc-act-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; transition: background 0.15s; }
@@ -1032,7 +1032,7 @@ function renderDocList(docs) {
     html += `<div class="doc-category-title"><span>${kat}</span><span style="font-size:9px;">${groups[kat].length} file</span></div>`;
     groups[kat].forEach(d => {
       const safeId = escH(d.docId); const safeFile = escH(d.fileId); const safeName = escH(d.namaFile);
-      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div><div class="doc-item-meta">${d.uploadedBy || ""}</div></div><div class="doc-item-acts"><div class="doc-act-btn" onclick="viewDoc('${safeFile}')" title="Lihat">👁️</div><div class="doc-act-btn" onclick="sendDocToCustomer('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div>${isImageFile(d.namaFile) ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Floating Viewer">🪟</div>` : ''}<div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
+      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div></div><div class="doc-item-acts"><div class="doc-act-btn" onclick="viewDoc('${safeFile}')" title="Lihat">👁️</div><div class="doc-act-btn" onclick="sendDocToCustomer('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div>${isImageFile(d.namaFile) ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Floating Viewer">🪟</div>` : ''}<div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
     });
   });
   el.innerHTML = html;
