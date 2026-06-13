@@ -67,7 +67,9 @@ body {
 }
 .header-customer-doc {
   font-size: 10px; color: rgba(255,255,255,0.5);
-  max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 200px; white-space: normal; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  word-break: break-all;
 }
 .btn-close {
   width: 32px; height: 32px; border-radius: 8px;
@@ -359,9 +361,10 @@ body {
   <div class="tool-group" id="ocr-tool-group" style="display:none;">
     <button class="btn-ocr" id="btn-baca-paspor" onclick="bacaPaspor()" disabled>
       <i class="ti ti-scan" style="font-size:15px;"></i>
-      <span id="ocr-btn-text">Baca Paspor</span>
+      <span id="ocr-btn-text">Baca Paspor 🔍</span>
     </button>
   </div>
+</div><!-- end toolbar -->
 
 <!-- CANVAS -->
 <div class="canvas-wrap" id="canvas-wrap">
@@ -494,35 +497,39 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===== LOAD IMAGE =====
-function loadImage(id) {
+async function loadImage(id) {
   const img = document.getElementById('passport-img');
   originalUrl = 'https://drive.google.com/file/d/' + id + '/view';
 
-  // Try thumbnail first (faster load)
-  const thumbUrl = 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1600';
+  try {
+    // Ambil gambar via proxy (Drive private → base64)
+    const proxyUrl = '/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(id);
+    const resp = await fetch(proxyUrl);
+    if (!resp.ok) throw new Error('Proxy error ' + resp.status);
+    const data = await resp.json();
+    if (!data.base64) throw new Error('Base64 kosong');
 
-  img.onload = () => {
-    imgNaturalW = img.naturalWidth;
-    imgNaturalH = img.naturalHeight;
-    document.getElementById('loading-state').style.display = 'none';
-    document.getElementById('img-container').style.display = 'block';
-    fitToScreen();
-    // Aktifkan tombol OCR setelah foto loaded
-    document.getElementById('ocr-tool-group').style.display = 'flex';
-    document.getElementById('btn-baca-paspor').disabled = false;
-  };
+    const mimeType = data.mimeType || 'image/jpeg';
+    const dataUrl = 'data:' + mimeType + ';base64,' + data.base64;
 
-  img.onerror = () => {
-    // Fallback to direct URL
-    const directUrl = 'https://drive.google.com/uc?export=view&id=' + id;
-    if (img.src !== directUrl) {
-      img.src = directUrl;
-    } else {
-      showError();
-    }
-  };
+    img.onload = () => {
+      imgNaturalW = img.naturalWidth;
+      imgNaturalH = img.naturalHeight;
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('img-container').style.display = 'block';
+      fitToScreen();
+      // Aktifkan tombol OCR setelah foto loaded
+      document.getElementById('ocr-tool-group').style.display = 'flex';
+      document.getElementById('btn-baca-paspor').disabled = false;
+    };
 
-  img.src = thumbUrl;
+    img.onerror = () => showError();
+    img.src = dataUrl;
+
+  } catch (err) {
+    console.error('loadImage error:', err);
+    showError();
+  }
 }
 
 function showError() {
