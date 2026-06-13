@@ -1058,6 +1058,7 @@ async function deleteDoc(docId, fileId) {
 function openPiP(fileId, namaFile) {
   if (!fileId) return;
   const nama = currentRoom ? currentRoom.nama : '';
+  const noWa = currentRoom ? currentRoom.noWa : '';
   const params = new URLSearchParams({ fileId, docName: namaFile || '', nama });
   const url = '/viewer.html?' + params.toString();
   const pw = Math.min(960, window.screen.width - 80);
