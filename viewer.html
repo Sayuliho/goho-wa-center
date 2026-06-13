@@ -852,7 +852,7 @@ async function simpanPassenger() {
     });
 
     const result = await resp.json();
-    if (!result.ok) throw new Error(result.msg || 'Gagal simpan');
+    if (!result.ok && !result.success) throw new Error(result.msg || result.message || 'Gagal simpan');
 
     tutupOcrModal();
     showToast('✅ Data paspor ' + nama + ' tersimpan ke PASSENGER_LIST');
