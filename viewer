@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOHO Passport Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green-dark: #0a2e2a;
+  --green-mid: #0F6E56;
+  --green-light: #25D366;
+  --green-bg: #E1F5EE;
+  --text: #111;
+  --text-muted: #666;
+  --border: rgba(0,0,0,0.1);
+  --bg: #1a1a1a;
+  --panel: #242424;
+  --panel-border: rgba(255,255,255,0.08);
+  --font: 'Plus Jakarta Sans', sans-serif;
+}
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: white;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: var(--green-dark);
+  padding: 0 16px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.header-logo {
+  width: 28px; height: 28px;
+  background: var(--green-light);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--green-dark); font-size: 14px; flex-shrink: 0;
+}
+.header-title {
+  font-size: 13px; font-weight: 600; color: white; flex: 1;
+}
+.header-sub {
+  font-size: 11px; color: rgba(255,255,255,0.5);
+}
+.header-customer {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.08);
+  padding: 4px 10px; border-radius: 20px;
+}
+.header-customer-name {
+  font-size: 12px; font-weight: 600; color: white;
+}
+.header-customer-doc {
+  font-size: 10px; color: rgba(255,255,255,0.5);
+  max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.btn-close {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.1); border: none;
+  color: rgba(255,255,255,0.7); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: background 0.15s;
+}
+.btn-close:hover { background: rgba(220,50,50,0.6); color: white; }
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--panel-border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.tool-group {
+  display: flex; align-items: center; gap: 4px;
+  padding-right: 8px;
+  border-right: 1px solid var(--panel-border);
+}
+.tool-group:last-child { border-right: none; padding-right: 0; }
+.tool-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all 0.15s; font-family: var(--font);
+}
+.tool-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+.tool-btn:active { background: var(--green-mid); border-color: var(--green-mid); }
+.tool-btn.active { background: var(--green-mid); border-color: var(--green-mid); color: white; }
+.tool-label {
+  font-size: 11px; color: rgba(255,255,255,0.4);
+  white-space: nowrap; min-width: 36px; text-align: center;
+}
+.tool-slider {
+  width: 80px; height: 3px;
+  accent-color: var(--green-light);
+  cursor: pointer;
+}
+.tool-divider { width: 1px; height: 24px; background: var(--panel-border); flex-shrink: 0; }
+
+/* ===== CANVAS AREA ===== */
+.canvas-wrap {
+  flex: 1; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: #111;
+  cursor: grab;
+}
+.canvas-wrap.dragging { cursor: grabbing; }
+.canvas-wrap.loading { cursor: default; }
+
+#img-container {
+  position: absolute;
+  transform-origin: center center;
+  transition: none;
+}
+#passport-img {
+  display: block;
+  max-width: none;
+  pointer-events: none;
+  filter: brightness(1) contrast(1);
+}
+
+/* Loading state */
+.loading-state {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; color: rgba(255,255,255,0.4);
+}
+.loading-state i { font-size: 40px; }
+.loading-state p { font-size: 13px; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.spin { animation: spin 1s linear infinite; }
+
+/* Error state */
+.error-state {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; color: rgba(255,255,255,0.4);
+}
+.error-state i { font-size: 40px; color: #A32D2D; }
+.error-state p { font-size: 13px; }
+
+/* ===== ZOOM INDICATOR ===== */
+.zoom-indicator {
+  position: absolute; bottom: 16px; right: 16px;
+  background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 6px 12px;
+  font-size: 12px; color: rgba(255,255,255,0.7);
+  pointer-events: none; backdrop-filter: blur(4px);
+}
+
+/* ===== HINT BAR ===== */
+.hint-bar {
+  position: absolute; bottom: 16px; left: 16px;
+  background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px; padding: 6px 12px;
+  font-size: 10px; color: rgba(255,255,255,0.35);
+  pointer-events: none; backdrop-filter: blur(4px);
+  display: flex; gap: 12px;
+}
+.hint-bar span { display: flex; align-items: center; gap: 4px; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .header-customer-doc { display: none; }
+  .tool-slider { width: 60px; }
+  .hint-bar { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo"><i class="ti ti-id-badge"></i></div>
+  <div style="flex:1;min-width:0;">
+    <div class="header-title">GOHO Passport Viewer</div>
+  </div>
+  <div class="header-customer" id="customer-info" style="display:none;">
+    <i class="ti ti-user" style="font-size:13px;color:rgba(255,255,255,0.5);"></i>
+    <div>
+      <div class="header-customer-name" id="customer-name">-</div>
+      <div class="header-customer-doc" id="doc-name">-</div>
+    </div>
+  </div>
+  <button class="btn-close" onclick="window.close()" title="Tutup"><i class="ti ti-x"></i></button>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <!-- Zoom -->
+  <div class="tool-group">
+    <button class="tool-btn" onclick="zoom(-0.25)" title="Zoom Out"><i class="ti ti-zoom-out"></i></button>
+    <span class="tool-label" id="zoom-label">100%</span>
+    <button class="tool-btn" onclick="zoom(0.25)" title="Zoom In"><i class="ti ti-zoom-in"></i></button>
+    <button class="tool-btn" onclick="resetZoom()" title="Fit to Screen" style="font-size:11px;width:auto;padding:0 8px;">Fit</button>
+    <button class="tool-btn" onclick="zoomActual()" title="Ukuran Asli" style="font-size:11px;width:auto;padding:0 8px;">1:1</button>
+  </div>
+
+  <!-- Rotate -->
+  <div class="tool-group">
+    <button class="tool-btn" onclick="rotate(-90)" title="Putar Kiri"><i class="ti ti-rotate-counterclockwise"></i></button>
+    <button class="tool-btn" onclick="rotate(90)" title="Putar Kanan"><i class="ti ti-rotate-clockwise"></i></button>
+    <button class="tool-btn" onclick="flipH()" title="Flip Horizontal"><i class="ti ti-flip-horizontal"></i></button>
+  </div>
+
+  <!-- Brightness -->
+  <div class="tool-group">
+    <i class="ti ti-sun" style="font-size:14px;color:rgba(255,255,255,0.4);"></i>
+    <input type="range" class="tool-slider" id="brightness-slider"
+           min="50" max="200" value="100"
+           oninput="setBrightness(this.value)" title="Kecerahan">
+    <span class="tool-label" id="brightness-label">100%</span>
+  </div>
+
+  <!-- Contrast -->
+  <div class="tool-group">
+    <i class="ti ti-contrast" style="font-size:14px;color:rgba(255,255,255,0.4);"></i>
+    <input type="range" class="tool-slider" id="contrast-slider"
+           min="50" max="200" value="100"
+           oninput="setContrast(this.value)" title="Kontras">
+    <span class="tool-label" id="contrast-label">100%</span>
+  </div>
+
+  <!-- Reset -->
+  <div class="tool-group">
+    <button class="tool-btn" onclick="resetAll()" title="Reset Semua" style="font-size:11px;width:auto;padding:0 10px;">
+      <i class="ti ti-refresh" style="font-size:13px;"></i> Reset
+    </button>
+  </div>
+
+  <!-- Spacer -->
+  <div style="flex:1;"></div>
+
+  <!-- Open in new tab -->
+  <div class="tool-group">
+    <button class="tool-btn" onclick="openOriginal()" title="Buka file original" style="font-size:11px;width:auto;padding:0 10px;">
+      <i class="ti ti-external-link" style="font-size:13px;"></i> Original
+    </button>
+  </div>
+</div>
+
+<!-- CANVAS -->
+<div class="canvas-wrap" id="canvas-wrap">
+  <!-- Loading -->
+  <div class="loading-state" id="loading-state">
+    <i class="ti ti-loader spin"></i>
+    <p>Memuat dokumen...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" id="error-state" style="display:none;">
+    <i class="ti ti-alert-circle"></i>
+    <p>Gagal memuat foto. File mungkin tidak tersedia.</p>
+    <button onclick="retryLoad()" style="margin-top:8px;padding:6px 16px;background:var(--green-mid);color:white;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-family:var(--font);">Coba Lagi</button>
+  </div>
+
+  <!-- Image container -->
+  <div id="img-container" style="display:none;">
+    <img id="passport-img" src="" alt="Dokumen Paspor" draggable="false">
+  </div>
+
+  <!-- Zoom indicator -->
+  <div class="zoom-indicator" id="zoom-indicator">100%</div>
+
+  <!-- Hints -->
+  <div class="hint-bar">
+    <span><i class="ti ti-mouse" style="font-size:11px;"></i> Drag untuk geser</span>
+    <span><i class="ti ti-arrows-up-down" style="font-size:11px;"></i> Scroll untuk zoom</span>
+    <span><i class="ti ti-hand-click" style="font-size:11px;"></i> Double-click untuk reset</span>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let scale = 1;
+let rotation = 0;
+let flipHorizontal = false;
+let translateX = 0;
+let translateY = 0;
+let brightness = 100;
+let contrast = 100;
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let imgNaturalW = 0;
+let imgNaturalH = 0;
+let fileId = '';
+let originalUrl = '';
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  fileId = params.get('fileId') || '';
+  const nama = params.get('nama') || '';
+  const docName = params.get('docName') || '';
+
+  // Set customer info
+  if (nama) {
+    document.getElementById('customer-info').style.display = 'flex';
+    document.getElementById('customer-name').textContent = nama;
+    document.getElementById('doc-name').textContent = docName || 'Dokumen';
+    document.title = 'GOHO Viewer — ' + nama;
+  }
+
+  if (fileId) {
+    loadImage(fileId);
+  } else {
+    showError();
+  }
+});
+
+// ===== LOAD IMAGE =====
+function loadImage(id) {
+  const img = document.getElementById('passport-img');
+  originalUrl = 'https://drive.google.com/file/d/' + id + '/view';
+
+  // Try thumbnail first (faster load)
+  const thumbUrl = 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1600';
+
+  img.onload = () => {
+    imgNaturalW = img.naturalWidth;
+    imgNaturalH = img.naturalHeight;
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('img-container').style.display = 'block';
+    fitToScreen();
+  };
+
+  img.onerror = () => {
+    // Fallback to direct URL
+    const directUrl = 'https://drive.google.com/uc?export=view&id=' + id;
+    if (img.src !== directUrl) {
+      img.src = directUrl;
+    } else {
+      showError();
+    }
+  };
+
+  img.src = thumbUrl;
+}
+
+function showError() {
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('error-state').style.display = 'flex';
+}
+
+function retryLoad() {
+  document.getElementById('error-state').style.display = 'none';
+  document.getElementById('loading-state').style.display = 'flex';
+  if (fileId) loadImage(fileId);
+}
+
+function openOriginal() {
+  if (originalUrl) window.open(originalUrl, '_blank');
+}
+
+// ===== TRANSFORM =====
+function applyTransform() {
+  const container = document.getElementById('img-container');
+  const flipVal = flipHorizontal ? -1 : 1;
+  container.style.transform =
+    'translate(' + translateX + 'px, ' + translateY + 'px) ' +
+    'scale(' + (scale * flipVal) + ', ' + scale + ') ' +
+    'rotate(' + rotation + 'deg)';
+  const pct = Math.round(scale * 100);
+  document.getElementById('zoom-label').textContent = pct + '%';
+  document.getElementById('zoom-indicator').textContent = pct + '%';
+}
+
+function applyFilter() {
+  const img = document.getElementById('passport-img');
+  img.style.filter = 'brightness(' + brightness + '%) contrast(' + contrast + '%)';
+}
+
+// ===== FIT TO SCREEN =====
+function fitToScreen() {
+  const wrap = document.getElementById('canvas-wrap');
+  const ww = wrap.clientWidth - 40;
+  const wh = wrap.clientHeight - 40;
+
+  // Account for rotation
+  const isRotated = Math.abs(rotation % 180) === 90;
+  const effectiveW = isRotated ? imgNaturalH : imgNaturalW;
+  const effectiveH = isRotated ? imgNaturalW : imgNaturalH;
+
+  const scaleX = ww / effectiveW;
+  const scaleY = wh / effectiveH;
+  scale = Math.min(scaleX, scaleY, 1); // never exceed 100% on fit
+  translateX = 0;
+  translateY = 0;
+  applyTransform();
+}
+
+// ===== ZOOM =====
+function zoom(delta) {
+  const newScale = Math.max(0.1, Math.min(8, scale + delta));
+  scale = newScale;
+  applyTransform();
+}
+
+function resetZoom() {
+  fitToScreen();
+}
+
+function zoomActual() {
+  scale = 1;
+  translateX = 0;
+  translateY = 0;
+  applyTransform();
+}
+
+// ===== ROTATE =====
+function rotate(deg) {
+  rotation = (rotation + deg) % 360;
+  applyTransform();
+  // Re-fit after rotate
+  setTimeout(fitToScreen, 50);
+}
+
+// ===== FLIP =====
+function flipH() {
+  flipHorizontal = !flipHorizontal;
+  applyTransform();
+}
+
+// ===== BRIGHTNESS / CONTRAST =====
+function setBrightness(val) {
+  brightness = parseInt(val);
+  document.getElementById('brightness-label').textContent = brightness + '%';
+  applyFilter();
+}
+
+function setContrast(val) {
+  contrast = parseInt(val);
+  document.getElementById('contrast-label').textContent = contrast + '%';
+  applyFilter();
+}
+
+// ===== RESET ALL =====
+function resetAll() {
+  rotation = 0;
+  flipHorizontal = false;
+  brightness = 100;
+  contrast = 100;
+  document.getElementById('brightness-slider').value = 100;
+  document.getElementById('contrast-slider').value = 100;
+  document.getElementById('brightness-label').textContent = '100%';
+  document.getElementById('contrast-label').textContent = '100%';
+  applyFilter();
+  fitToScreen();
+}
+
+// ===== DRAG TO PAN =====
+const canvasWrap = document.getElementById('canvas-wrap');
+
+canvasWrap.addEventListener('mousedown', (e) => {
+  if (e.target === document.getElementById('passport-img') ||
+      e.target === document.getElementById('img-container') ||
+      e.target === canvasWrap) {
+    isDragging = true;
+    dragStartX = e.clientX - translateX;
+    dragStartY = e.clientY - translateY;
+    canvasWrap.classList.add('dragging');
+    e.preventDefault();
+  }
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  translateX = e.clientX - dragStartX;
+  translateY = e.clientY - dragStartY;
+  applyTransform();
+});
+
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+  canvasWrap.classList.remove('dragging');
+});
+
+// ===== DOUBLE CLICK RESET =====
+canvasWrap.addEventListener('dblclick', () => {
+  translateX = 0;
+  translateY = 0;
+  fitToScreen();
+});
+
+// ===== SCROLL TO ZOOM =====
+canvasWrap.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.15 : 0.15;
+  // Zoom toward cursor position
+  const rect = canvasWrap.getBoundingClientRect();
+  const cursorX = e.clientX - rect.left - rect.width / 2;
+  const cursorY = e.clientY - rect.top - rect.height / 2;
+  const oldScale = scale;
+  scale = Math.max(0.1, Math.min(8, scale + delta));
+  const scaleDiff = scale - oldScale;
+  translateX -= cursorX * scaleDiff / oldScale;
+  translateY -= cursorY * scaleDiff / oldScale;
+  applyTransform();
+}, { passive: false });
+
+// ===== TOUCH SUPPORT (tablet) =====
+let lastTouchDist = 0;
+let lastTouchMidX = 0;
+let lastTouchMidY = 0;
+let touchStartX = 0;
+let touchStartY = 0;
+let isTouchDragging = false;
+
+canvasWrap.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    isTouchDragging = true;
+    touchStartX = e.touches[0].clientX - translateX;
+    touchStartY = e.touches[0].clientY - translateY;
+  } else if (e.touches.length === 2) {
+    isTouchDragging = false;
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    lastTouchDist = Math.sqrt(dx*dx + dy*dy);
+    lastTouchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    lastTouchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+  }
+  e.preventDefault();
+}, { passive: false });
+
+canvasWrap.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 1 && isTouchDragging) {
+    translateX = e.touches[0].clientX - touchStartX;
+    translateY = e.touches[0].clientY - touchStartY;
+    applyTransform();
+  } else if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const scaleFactor = dist / lastTouchDist;
+    scale = Math.max(0.1, Math.min(8, scale * scaleFactor));
+    lastTouchDist = dist;
+    applyTransform();
+  }
+  e.preventDefault();
+}, { passive: false });
+
+canvasWrap.addEventListener('touchend', () => {
+  isTouchDragging = false;
+});
+
+// ===== KEYBOARD SHORTCUTS =====
+window.addEventListener('keydown', (e) => {
+  switch(e.key) {
+    case '+': case '=': zoom(0.25); break;
+    case '-': zoom(-0.25); break;
+    case '0': resetZoom(); break;
+    case '1': zoomActual(); break;
+    case 'ArrowLeft': translateX -= 20; applyTransform(); break;
+    case 'ArrowRight': translateX += 20; applyTransform(); break;
+    case 'ArrowUp': translateY -= 20; applyTransform(); break;
+    case 'ArrowDown': translateY += 20; applyTransform(); break;
+    case 'r': case 'R': rotate(90); break;
+    case 'Escape': resetAll(); break;
+  }
+});
+
+// ===== RESIZE =====
+window.addEventListener('resize', () => {
+  if (imgNaturalW > 0) fitToScreen();
+});
+</script>
+</body>
+</html>
