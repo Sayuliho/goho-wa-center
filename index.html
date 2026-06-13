@@ -307,6 +307,50 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .context-scanning { font-size: 11px; color: var(--text-hint); padding: 6px 0; display: flex; align-items: center; gap: 5px; }
 .context-none { font-size: 11px; color: var(--text-hint); padding: 4px 0; }
 .arsip-badge { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; font-size: 10px; color: var(--text-muted); font-weight: 600; }
+/* ===== MULTI PAX PANEL ===== */
+.multipax-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; justify-content: flex-end; z-index: 500; padding: 8px; pointer-events: none; }
+.multipax-overlay.active { pointer-events: all; }
+.multipax-panel { background: white; border-radius: 14px; width: 360px; max-height: 85dvh; display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.2); transform: translateY(20px); opacity: 0; transition: all 0.2s ease; }
+.multipax-overlay.active .multipax-panel { transform: translateY(0); opacity: 1; }
+.multipax-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.multipax-header h4 { font-size: 13px; font-weight: 600; flex: 1; }
+.multipax-search { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; position: relative; }
+.multipax-search input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-family: var(--font); outline: none; }
+.multipax-search input:focus { border-color: var(--green-mid); }
+.multipax-results { position: absolute; top: 100%; left: 12px; right: 12px; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 10; max-height: 200px; overflow-y: auto; display: none; }
+.multipax-results.show { display: block; }
+.mpx-result-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.mpx-result-item:last-child { border-bottom: none; }
+.mpx-result-item:hover { background: var(--green-bg); }
+.mpx-result-foto { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; background: var(--bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 1px solid var(--border); overflow: hidden; }
+.mpx-result-foto img { width: 100%; height: 100%; object-fit: cover; }
+.mpx-result-info { flex: 1; min-width: 0; }
+.mpx-result-nama { font-size: 12px; font-weight: 600; color: var(--text); }
+.mpx-result-paspor { font-size: 10px; color: var(--text-muted); }
+.mpax-add-manual { padding: 8px 12px; font-size: 11px; color: var(--blue); cursor: pointer; display: flex; align-items: center; gap: 5px; border-top: 1px solid var(--border); }
+.multipax-list { flex: 1; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
+.mpx-card { background: var(--bg); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+.mpx-card-header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--green-dark); color: white; }
+.mpx-card-num { width: 20px; height: 20px; border-radius: 50%; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.mpx-card-nama { font-size: 12px; font-weight: 600; flex: 1; }
+.mpx-card-remove { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+.mpx-card-remove:hover { color: white; }
+.mpx-fields { padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.mpx-field { display: flex; align-items: center; gap: 6px; }
+.mpx-field-label { font-size: 9px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; width: 64px; flex-shrink: 0; }
+.mpx-field-value { font-size: 11px; color: var(--text); flex: 1; font-family: monospace; }
+.mpx-copy-btn { width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--border); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; transition: background 0.15s; }
+.mpx-copy-btn:hover { background: var(--green-bg); border-color: var(--green-mid); }
+.mpx-copy-btn.copied { background: var(--green-mid); border-color: var(--green-mid); color: white; }
+.mpx-empty { text-align: center; padding: 24px 12px; color: var(--text-muted); font-size: 12px; }
+.mpx-manual-form { padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; display: none; }
+.mpx-manual-form.show { display: block; }
+.mpx-manual-form .form-group { margin-bottom: 8px; }
+.mpx-manual-form label { font-size: 10px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px; }
+.mpx-manual-form input { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--font); outline: none; }
+.mpx-manual-form input:focus { border-color: var(--green-mid); }
+.abtn-multipax { background: var(--blue-bg); color: var(--blue); border-color: var(--bot-border); }
+
 @media (max-width: 768px) {
   .sidebar { position: absolute; top: 0; left: 0; bottom: 0; z-index: 100; width: 100%; box-shadow: 2px 0 12px rgba(0,0,0,0.1); }
   .sidebar.slide-out { transform: translateX(-100%); }
@@ -488,6 +532,41 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- MULTI PAX PANEL -->
+<div class="multipax-overlay" id="multipax-overlay" onclick="handleMultiPaxOverlayClick(event)">
+  <div class="multipax-panel" id="multipax-panel">
+    <div class="multipax-header">
+      <i class="ti ti-users" style="font-size:16px;color:var(--green-mid);"></i>
+      <h4>👥 Multi Pax</h4>
+      <span id="mpx-count" style="font-size:10px;color:var(--text-muted);"></span>
+      <button onclick="toggleMultiPax()" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted);line-height:1;">✕</button>
+    </div>
+    <div class="multipax-search">
+      <input type="text" id="mpx-search" placeholder="🔍 Cari nama penumpang..." oninput="searchPassenger(this.value)" autocomplete="off">
+      <div class="multipax-results" id="mpx-results"></div>
+    </div>
+    <div class="multipax-list" id="mpx-list">
+      <div class="mpx-empty">Cari dan tambah penumpang<br><span style="font-size:10px;">Ketik nama di kolom search</span></div>
+    </div>
+    <div class="mpx-manual-form" id="mpx-manual-form">
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">✏️ Input Manual</div>
+      <div class="form-group"><label>Nama Lengkap *</label><input type="text" id="mpx-m-nama" placeholder="Sesuai paspor"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="form-group"><label>No Paspor</label><input type="text" id="mpx-m-paspor"></div>
+        <div class="form-group"><label>Tgl Lahir</label><input type="text" id="mpx-m-lahir" placeholder="DD/MM/YYYY"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="form-group"><label>Expired</label><input type="text" id="mpx-m-expired" placeholder="DD/MM/YYYY"></div>
+        <div class="form-group"><label>Nationality</label><input type="text" id="mpx-m-nat" placeholder="INDONESIA"></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <button onclick="hideManualForm()" style="flex:1;padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:11px;cursor:pointer;font-family:var(--font);">Batal</button>
+        <button onclick="addManualPassenger()" style="flex:2;padding:6px;border:none;border-radius:6px;background:var(--green-mid);color:white;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">+ Tambah</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <!-- MODALS -->
@@ -842,7 +921,7 @@ function renderActionRow(chat) {
   const row = document.getElementById('action-row'); const reply = document.getElementById('reply-row'); const uploadBar = document.getElementById('upload-bar');
   const isMyChat = chat.assignedTo === currentStaff.nama; const isOwner = currentStaff.role === 'OWNER';
   if (isMyChat || isOwner) {
-    row.innerHTML = `<button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button><button class="abtn abtn-booked" onclick="tandaiBooked()"><i class="ti ti-check"></i> Booked</button><button class="abtn abtn-lepas" onclick="lepasChat()"><i class="ti ti-logout"></i> Lepas</button><button class="abtn abtn-selesai" onclick="selesaiChat()"><i class="ti ti-circle-check"></i> Selesai</button>`;
+    row.innerHTML = `<button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button><button class="abtn abtn-multipax" onclick="toggleMultiPax()"><i class="ti ti-users"></i> Multi Pax</button><button class="abtn abtn-booked" onclick="tandaiBooked()"><i class="ti ti-check"></i> Booked</button><button class="abtn abtn-lepas" onclick="lepasChat()"><i class="ti ti-logout"></i> Lepas</button><button class="abtn abtn-selesai" onclick="selesaiChat()"><i class="ti ti-circle-check"></i> Selesai</button>`;
     reply.style.display = 'flex';
   } else { row.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px;">Di-handle oleh ${escH(chat.assignedTo)}</div>`; reply.style.display = 'none'; uploadBar.classList.remove('show'); }
 }
@@ -1104,6 +1183,189 @@ function quickArrival(jurusan) {
   if (info) { window.open(info.url,'_blank'); showToast('📋 Buka '+info.nama+' untuk '+dest); } else showToast('Info arrival card untuk '+dest+' belum tersedia');
 }
 function quickBeaCukai() { window.open('https://ecd.beacukai.go.id','_blank'); showToast('🛃 Buka e-CD Bea Cukai Indonesia'); }
+
+
+// ===================== MULTI PAX — Fase 5C =====================
+let multiPaxOpen = false;
+let multiPaxList = []; // array penumpang yg sudah ditambah
+let mpxSearchTimer = null;
+const fotoCache = {}; // cache base64 foto paspor
+
+function toggleMultiPax() {
+  multiPaxOpen = !multiPaxOpen;
+  const overlay = document.getElementById('multipax-overlay');
+  overlay.classList.toggle('active', multiPaxOpen);
+  if (multiPaxOpen) {
+    setTimeout(() => document.getElementById('mpx-search').focus(), 200);
+  } else {
+    document.getElementById('mpx-results').classList.remove('show');
+  }
+}
+
+function handleMultiPaxOverlayClick(e) {
+  if (e.target === document.getElementById('multipax-overlay')) toggleMultiPax();
+}
+
+function searchPassenger(query) {
+  clearTimeout(mpxSearchTimer);
+  const results = document.getElementById('mpx-results');
+  if (!query || query.trim().length < 2) { results.classList.remove('show'); return; }
+  // Debounce 400ms
+  mpxSearchTimer = setTimeout(async () => {
+    results.innerHTML = '<div style="padding:8px 12px;font-size:11px;color:var(--text-muted);">Mencari...</div>';
+    results.classList.add('show');
+    try {
+      const res = await apiGet({ action: 'getPassengersByName', query: query.trim() });
+      if (!res.ok || !res.passengers || res.passengers.length === 0) {
+        results.innerHTML = `<div style="padding:8px 12px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div>
+          <div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
+        return;
+      }
+      results.innerHTML = res.passengers.map(p => `
+        <div class="mpx-result-item" onclick="addPassengerToList(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+          <div class="mpx-result-foto" id="foto-${p.passengerId}">${getInitials(p.namaLengkap)}</div>
+          <div class="mpx-result-info">
+            <div class="mpx-result-nama">${escH(p.namaLengkap)}</div>
+            <div class="mpx-result-paspor">${p.noPaspor || '-'} · ${p.tglLahir || '-'}</div>
+          </div>
+        </div>`).join('') +
+        `<div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
+      // Load foto secara async
+      res.passengers.forEach(p => { if (p.fotoFileId) loadFotoPreview(p.passengerId, p.fotoFileId); });
+    } catch(e) {
+      results.innerHTML = '<div style="padding:8px 12px;font-size:11px;color:var(--red);">Error: ' + e.message + '</div>';
+    }
+  }, 400);
+}
+
+async function loadFotoPreview(passengerId, fotoFileId) {
+  if (!fotoFileId) return;
+  if (fotoCache[fotoFileId]) {
+    setFotoEl(passengerId, fotoCache[fotoFileId]);
+    return;
+  }
+  try {
+    const res = await fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(fotoFileId));
+    const data = await res.json();
+    if (data.base64) {
+      const src = 'data:' + (data.mimeType || 'image/jpeg') + ';base64,' + data.base64;
+      fotoCache[fotoFileId] = src;
+      setFotoEl(passengerId, src);
+    }
+  } catch(e) {}
+}
+
+function setFotoEl(passengerId, src) {
+  const el = document.getElementById('foto-' + passengerId);
+  if (el) el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;">';
+}
+
+function addPassengerToList(p) {
+  // Cek duplikat
+  if (multiPaxList.find(x => x.passengerId === p.passengerId)) {
+    showToast('Penumpang sudah ditambahkan');
+    return;
+  }
+  multiPaxList.push(p);
+  document.getElementById('mpx-search').value = '';
+  document.getElementById('mpx-results').classList.remove('show');
+  renderMultiPaxList();
+}
+
+function removePassenger(idx) {
+  multiPaxList.splice(idx, 1);
+  renderMultiPaxList();
+}
+
+function renderMultiPaxList() {
+  const list = document.getElementById('mpx-list');
+  const count = document.getElementById('mpx-count');
+  count.textContent = multiPaxList.length > 0 ? multiPaxList.length + ' pax' : '';
+
+  if (multiPaxList.length === 0) {
+    list.innerHTML = '<div class="mpx-empty">Cari dan tambah penumpang<br><span style="font-size:10px;">Ketik nama di kolom search</span></div>';
+    return;
+  }
+
+  list.innerHTML = multiPaxList.map((p, i) => `
+    <div class="mpx-card">
+      <div class="mpx-card-header">
+        <div class="mpx-card-num">${i + 1}</div>
+        <div class="mpx-card-nama">${escH(p.namaLengkap)}</div>
+        <button class="mpx-card-remove" onclick="removePassenger(${i})">✕</button>
+      </div>
+      <div class="mpx-fields">
+        ${mpxField('Nama', p.namaLengkap)}
+        ${mpxField('Paspor', p.noPaspor)}
+        ${mpxField('Tgl Lahir', p.tglLahir)}
+        ${mpxField('Expired', p.expiryPaspor)}
+        ${mpxField('Nationality', p.kewarganegaraan)}
+        ${p.jenisKelamin ? mpxField('Kelamin', p.jenisKelamin === 'L' ? 'M' : 'F') : ''}
+      </div>
+    </div>`).join('');
+}
+
+function mpxField(label, value) {
+  if (!value) return '';
+  const safe = escH(value);
+  return `<div class="mpx-field">
+    <span class="mpx-field-label">${label}</span>
+    <span class="mpx-field-value">${safe}</span>
+    <button class="mpx-copy-btn" onclick="copyField(this, '${safe}')" title="Salin">📋</button>
+  </div>`;
+}
+
+function copyField(btn, value) {
+  navigator.clipboard.writeText(value).then(() => {
+    btn.classList.add('copied');
+    btn.textContent = '✓';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500);
+  }).catch(() => {
+    // Fallback untuk browser yang tidak support clipboard API
+    const el = document.createElement('textarea');
+    el.value = value;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    btn.classList.add('copied');
+    btn.textContent = '✓';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500);
+  });
+}
+
+function showManualForm() {
+  document.getElementById('mpx-results').classList.remove('show');
+  document.getElementById('mpx-manual-form').classList.add('show');
+  document.getElementById('mpx-m-nama').focus();
+}
+
+function hideManualForm() {
+  document.getElementById('mpx-manual-form').classList.remove('show');
+  ['mpx-m-nama','mpx-m-paspor','mpx-m-lahir','mpx-m-expired','mpx-m-nat'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function addManualPassenger() {
+  const nama = document.getElementById('mpx-m-nama').value.trim();
+  if (!nama) { showToast('Nama lengkap wajib diisi'); return; }
+  const p = {
+    passengerId: 'MANUAL-' + Date.now(),
+    namaLengkap: nama,
+    noPaspor: document.getElementById('mpx-m-paspor').value.trim(),
+    tglLahir: document.getElementById('mpx-m-lahir').value.trim(),
+    expiryPaspor: document.getElementById('mpx-m-expired').value.trim(),
+    kewarganegaraan: document.getElementById('mpx-m-nat').value.trim() || 'INDONESIA',
+    jenisKelamin: '',
+    fotoFileId: ''
+  };
+  multiPaxList.push(p);
+  hideManualForm();
+  renderMultiPaxList();
+  showToast('✅ ' + nama + ' ditambahkan');
+}
+
 async function manualLookupKode() {
   const kode = prompt('Masukkan kode booking maskapai (6 huruf):'); if (!kode||!kode.trim()) return;
   const clean = kode.trim().toUpperCase(); if (!/^[A-Z]{6}$/.test(clean)) { showToast('Kode harus tepat 6 huruf'); return; }
