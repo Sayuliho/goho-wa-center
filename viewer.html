@@ -767,21 +767,20 @@ async function bacaPaspor() {
     if (!imgData.base64) throw new Error('Data gambar kosong');
 
     // Step 2: Kirim ke Apps Script → handleOcrPaspor → Claude Vision
-    const ocrResp = await fetch(APPS_SCRIPT_URL, {
+    const ocrResp = await fetch('/api/proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'ocrPaspor',
-        fileId: fileId,
-        base64: imgData.base64,
-        mimeType: imgData.mimeType || 'image/jpeg'
+        base64Image: imgData.base64,
+        mediaType: imgData.mimeType || 'image/jpeg'
       })
     });
 
     if (!ocrResp.ok) throw new Error('Gagal koneksi ke server');
     const result = await ocrResp.json();
 
-    if (!result.success) throw new Error(result.message || 'OCR gagal');
+    if (!result.ok) throw new Error(result.msg || 'OCR gagal');
 
     // Step 3: Tampilkan hasil di modal
     tampilkanHasilOcr(result.data);
@@ -796,16 +795,18 @@ async function bacaPaspor() {
 }
 
 function tampilkanHasilOcr(data) {
-  // Isi form dari hasil OCR
-  document.getElementById('ocr-nama').value = data.nama || '';
-  document.getElementById('ocr-no-paspor').value = data.noPaspor || '';
-  document.getElementById('ocr-tgl-lahir').value = data.tglLahir || '';
-  document.getElementById('ocr-expired').value = data.expired || '';
+  // Mapping field Code.gs → form input
+  document.getElementById('ocr-nama').value = data.nama_lengkap || '';
+  document.getElementById('ocr-no-paspor').value = data.no_paspor || '';
+  document.getElementById('ocr-tgl-lahir').value = data.tgl_lahir || '';
+  document.getElementById('ocr-expired').value = data.tgl_expired || '';
   document.getElementById('ocr-nationality').value = data.nationality || '';
-  document.getElementById('ocr-gender').value = data.gender || '';
+  document.getElementById('ocr-gender').value = data.jenis_kelamin || '';
 
-  // Sub info
-  const sub = data.mrz ? 'MRZ terdeteksi ✓' : 'Verifikasi data sebelum menyimpan';
+  // Sub info — tampilkan catatan dari Claude jika ada
+  const sub = data.mrz_line1
+    ? 'MRZ terdeteksi ✓ — periksa sebelum menyimpan'
+    : (data.catatan || 'Verifikasi data sebelum menyimpan');
   document.getElementById('ocr-modal-sub').textContent = sub;
 
   // Tampilkan modal
@@ -834,25 +835,24 @@ async function simpanPassenger() {
   saveBtn.textContent = 'Menyimpan...';
 
   try {
-    const resp = await fetch(APPS_SCRIPT_URL, {
+    const resp = await fetch('/api/proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'savePassenger',
-        noWa: noWaCustomer,
-        nama: nama,
+        noWaCustomer: noWaCustomer,
+        namaLengkap: nama,
         noPaspor: noPaspor,
         tglLahir: tglLahir,
-        expired: expired,
-        nationality: nationality,
-        gender: gender,
-        savedBy: 'viewer',
-        fileId: fileId
+        expiryPaspor: expired,
+        kewarganegaraan: nationality,
+        jenisKelamin: gender,
+        sumber: 'viewer-ocr'
       })
     });
 
     const result = await resp.json();
-    if (!result.success) throw new Error(result.message || 'Gagal simpan');
+    if (!result.ok) throw new Error(result.msg || 'Gagal simpan');
 
     tutupOcrModal();
     showToast('✅ Data paspor ' + nama + ' tersimpan ke PASSENGER_LIST');
