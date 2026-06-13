@@ -24,6 +24,7 @@ export default async function handler(req, res) {
       const appsResp = await fetch(appsScriptUrl, { redirect: 'follow' });
       const data = await appsResp.text();
 
+      res.setHeader('Content-Type', 'application/json');
       return res.status(200).send(data);
     }
 
