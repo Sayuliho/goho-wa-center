@@ -29,7 +29,11 @@ export default async function handler(req, res) {
 
       const buffer = await driveResp.arrayBuffer();
       const base64 = Buffer.from(buffer).toString('base64');
-      const mimeType = driveResp.headers.get('content-type') || 'image/jpeg';
+
+      // Claude API hanya terima: image/jpeg, image/png, image/gif, image/webp
+      const rawMime = driveResp.headers.get('content-type') || '';
+      const validMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const mimeType = validMimes.find(m => rawMime.includes(m)) || 'image/jpeg';
 
       return res.status(200).json({ base64, mimeType });
     }
