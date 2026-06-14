@@ -1324,6 +1324,7 @@ function renderMultiPaxList() {
       <div class="mpx-card-header">
         <div class="mpx-card-num">${i + 1}</div>
         <div class="mpx-card-nama">${escH(p.namaLengkap)}</div>
+        <button onclick="copyPaxData(${i})" style="background:#25D366;border:none;color:white;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;" title="Copy semua data pax ini">📋 Copy</button>
         <button class="mpx-card-remove" onclick="removePassenger(${i})">✕</button>
       </div>
       <div class="mpx-fields">
