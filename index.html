@@ -1486,6 +1486,24 @@ function modalViewDoc(fileId, namaFile) {
   }
 }
 
+function modalOpenViewer(fileId, namaFile) {
+  if (!fileId) return;
+  const params = new URLSearchParams({
+    fileId,
+    docName: namaFile || '',
+    nama: currentContactNama || '',
+    noWa: currentContactNoWa || ''
+  });
+  const pw = Math.min(960, window.screen.width - 80);
+  const ph = Math.min(720, window.screen.height - 80);
+  const px = Math.round((window.screen.width - pw) / 2);
+  const py = Math.round((window.screen.height - ph) / 2);
+  window.open('/viewer.html?' + params.toString(), 'goho_passport_viewer',
+    'width='+pw+',height='+ph+',left='+px+',top='+py+
+    ',resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no');
+  showToast('🪟 Membuka GOHO Passport Viewer...');
+}
+
 async function modalSendDoc(docId, fileId, namaFile) {
   if (!currentContactNoWa) { showToast('Tidak ada nomor WA customer'); return; }
   if (!confirm('Kirim "' + namaFile + '" ke ' + currentContactNama + ' via WA?')) return;
