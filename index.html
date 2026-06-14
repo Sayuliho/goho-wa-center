@@ -608,9 +608,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
         </div>
       </div>
       <div class="inner-tabs">
-        <button class="inner-tab active" onclick="showInnerTab('riwayat', event)">📋 Riwayat Booking</button>
-        <button class="inner-tab" onclick="showInnerTab('passenger', event)">👤 Penumpang</button>
-      </div>
+  <button class="inner-tab active" onclick="showInnerTab('riwayat', event)">📋 Riwayat Booking</button>
+  <button class="inner-tab" onclick="showInnerTab('passenger', event)">👤 Penumpang</button>
+  <button class="inner-tab" onclick="showInnerTab('dokumen', event)">📄 Dokumen</button>
+</div>
       <div id="inner-riwayat"><div id="booking-history"><button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">🔍 Muat Riwayat Booking</button></div></div>
       <div id="inner-passenger" style="display:none;">
         <button class="btn-primary btn-sm" style="margin-bottom:10px;" onclick="showAddPassenger()"><i class="ti ti-plus"></i> Tambah Penumpang</button>
