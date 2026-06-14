@@ -617,6 +617,27 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
         <button class="btn-primary btn-sm" style="margin-bottom:10px;" onclick="showAddPassenger()"><i class="ti ti-plus"></i> Tambah Penumpang</button>
         <div id="passenger-list"><div class="loading">Klik tab untuk muat...</div></div>
       </div>
+      <div id="inner-dokumen" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <select id="modal-doc-kategori" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;">
+            <option value="Identitas">🪪 Identitas (KTP/Paspor/Visa)</option>
+            <option value="Tiket & Voucher">✈️ Tiket & Voucher</option>
+            <option value="Lainnya">📎 Lainnya</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:5px;padding:7px 12px;background:var(--green-mid);color:white;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
+            <i class="ti ti-upload" style="font-size:13px;"></i> Upload
+            <input type="file" id="modal-doc-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none;" onchange="handleModalDocUpload(this)">
+          </label>
+        </div>
+        <div id="modal-doc-loading" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text-muted);">
+          <i class="ti ti-loader spin"></i> Memuat...
+        </div>
+        <div id="modal-doc-empty" style="display:none;text-align:center;padding:24px;font-size:12px;color:var(--text-hint);">
+          <i class="ti ti-folder-open" style="font-size:28px;display:block;margin-bottom:6px;"></i>
+          Belum ada dokumen
+        </div>
+        <div id="modal-doc-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
     </div>
   </div>
 </div>
