@@ -1545,7 +1545,7 @@ async function handleModalDocUpload(input) {
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally {
     label.style.background = '';
-    label.innerHTML = '<i class="ti ti-upload" style="font-size:13px;"></i> Upload<input type="file" id="modal-doc-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none;" onchange="handleModalDocUpload(this)">';
+    label.innerHTML = '<i class="ti ti-upload" style="font-size:13px;"></i>&nbsp;Upload<input type="file" id="modal-doc-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="position:absolute;width:0;height:0;opacity:0;" onchange="handleModalDocUpload(this)">';
     input.value = '';
   }
 }
