@@ -1340,14 +1340,25 @@ function renderMultiPaxList() {
  function copyPaxData(idx) {
   const p = multiPaxList[idx];
   if (!p) return;
-  const lines = [
-    'NAMA      : ' + (p.namaLengkap || '-'),
-    'PASPOR    : ' + (p.noPaspor || '-'),
-    'TGL LAHIR : ' + (p.tglLahir || '-'),
-    'EXPIRED   : ' + (p.expiryPaspor || '-'),
-    'NATIONALITY: ' + (p.kewarganegaraan || '-'),
-    'KELAMIN   : ' + (p.jenisKelamin === 'L' ? 'M' : p.jenisKelamin === 'P' ? 'F' : p.jenisKelamin === 'Laki-laki' ? 'M' : p.jenisKelamin === 'Perempuan' ? 'F' : (p.jenisKelamin || '-'))
-  ].join('\n');
+  // Split nama jadi given name dan last name
+const namaParts = (p.namaLengkap || '').trim().split(/\s+/);
+const lastName  = namaParts.length > 1 ? namaParts[namaParts.length - 1] : (namaParts[0] || '-');
+const givenName = namaParts.length > 1 ? namaParts.slice(0, -1).join(' ') : (namaParts[0] || '-');
+
+// Title dari jenis kelamin
+const isLaki = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki';
+const isPrmp = p.jenisKelamin === 'P' || p.jenisKelamin === 'Perempuan';
+const title  = isLaki ? 'MR' : isPrmp ? 'MRS' : '-';
+
+const lines = [
+  'TITLE     : ' + title,
+  'GIVEN NAME: ' + givenName,
+  'LAST NAME : ' + lastName,
+  'PASPOR    : ' + (p.noPaspor || '-'),
+  'TGL LAHIR : ' + (p.tglLahir || '-'),
+  'EXPIRED   : ' + (p.expiryPaspor || '-'),
+  'NATIONALITY: ' + (p.kewarganegaraan || '-'),
+].join('\n');
   navigator.clipboard.writeText(lines).then(() => {
     showToast('✅ Data ' + p.namaLengkap + ' tersalin!');
   }).catch(() => {
