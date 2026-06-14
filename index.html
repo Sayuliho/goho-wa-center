@@ -1462,9 +1462,10 @@ async function loadModalDocs() {
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0;">
           <button onclick="modalViewDoc('${doc.fileId}','${escH(doc.namaFile)}')" title="Lihat" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">👁️</button>
+          ${isImg ? `<button onclick="modalOpenViewer('${doc.fileId}','${escH(doc.namaFile)}')" title="Buka Passport Viewer (OCR)" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🪟</button>` : ''}
           <button onclick="modalSendDoc('${doc.docId}','${doc.fileId}','${escH(doc.namaFile)}')" title="Kirim ke customer via WA" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">📤</button>
           <button onclick="modalDeleteDoc('${doc.docId}','${doc.fileId}',this)" title="Hapus" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🗑️</button>
-        </div>`;
+        </div>
       list.appendChild(div);
     });
   } catch(e) {
