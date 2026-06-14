@@ -1346,7 +1346,7 @@ function renderMultiPaxList() {
     'TGL LAHIR : ' + (p.tglLahir || '-'),
     'EXPIRED   : ' + (p.expiryPaspor || '-'),
     'NATIONALITY: ' + (p.kewarganegaraan || '-'),
-    'KELAMIN   : ' + (p.jenisKelamin === 'L' ? 'M' : p.jenisKelamin === 'P' ? 'F' : '-')
+    'KELAMIN   : ' + (p.jenisKelamin === 'L' ? 'M' : p.jenisKelamin === 'P' ? 'F' : p.jenisKelamin === 'Laki-laki' ? 'M' : p.jenisKelamin === 'Perempuan' ? 'F' : (p.jenisKelamin || '-'))
   ].join('\n');
   navigator.clipboard.writeText(lines).then(() => {
     showToast('✅ Data ' + p.namaLengkap + ' tersalin!');
