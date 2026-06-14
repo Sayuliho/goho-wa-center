@@ -1337,6 +1337,29 @@ function renderMultiPaxList() {
       </div>
     </div>`).join('');
 }
+ function copyPaxData(idx) {
+  const p = multiPaxList[idx];
+  if (!p) return;
+  const lines = [
+    'NAMA      : ' + (p.namaLengkap || '-'),
+    'PASPOR    : ' + (p.noPaspor || '-'),
+    'TGL LAHIR : ' + (p.tglLahir || '-'),
+    'EXPIRED   : ' + (p.expiryPaspor || '-'),
+    'NATIONALITY: ' + (p.kewarganegaraan || '-'),
+    'KELAMIN   : ' + (p.jenisKelamin === 'L' ? 'M' : p.jenisKelamin === 'P' ? 'F' : '-')
+  ].join('\n');
+  navigator.clipboard.writeText(lines).then(() => {
+    showToast('✅ Data ' + p.namaLengkap + ' tersalin!');
+  }).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = lines;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('✅ Data ' + p.namaLengkap + ' tersalin!');
+  });
+} 
 
 function mpxField(label, value) {
   if (!value) return '';
