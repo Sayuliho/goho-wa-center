@@ -1333,7 +1333,7 @@ function renderMultiPaxList() {
         ${mpxField('Tgl Lahir', p.tglLahir)}
         ${mpxField('Expired', p.expiryPaspor)}
         ${mpxField('Nationality', p.kewarganegaraan)}
-        ${p.jenisKelamin ? mpxField('Kelamin', p.jenisKelamin === 'L' ? 'M' : 'F') : ''}
+        ${p.jenisKelamin ? mpxField('Kelamin', p.jenisKelamin === 'L' ? 'Laki-laki' : p.jenisKelamin === 'P' ? 'Perempuan' : p.jenisKelamin) : ''}
       </div>
     </div>`).join('');
 }
