@@ -254,8 +254,11 @@
         </select>
       </div>
       <div id="save-custom-nowa-row" style="display:none;" class="form-group">
-        <label>No WA Customer Tujuan *</label>
-        <input type="text" id="save-nowa-custom" placeholder="628xxxxxxxxx atau 08xxxxxxxxx">
+        <label>Cari Customer (nama atau nomor WA)</label>
+        <div style="position:relative;">
+          <input type="text" id="save-contact-search" placeholder="Ketik nama atau nomor WA..." oninput="searchSaveContact(this.value)" autocomplete="off">
+          <div id="save-contact-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;"></div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -275,8 +278,11 @@
         <input type="text" id="forward-file-rename" placeholder="contoh: Paspor_Budi.jpeg">
       </div>
       <div class="form-group">
-        <label>Nomor WA Tujuan *</label>
-        <input type="text" id="forward-nowa" placeholder="628xxxxxxxxx atau 08xxxxxxxxx">
+        <label>Cari Customer (nama atau nomor WA)</label>
+        <div style="position:relative;">
+          <input type="text" id="forward-contact-search" placeholder="Ketik nama atau nomor WA..." oninput="searchForwardContact(this.value)" autocomplete="off">
+          <div id="forward-contact-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;"></div>
+        </div>
       </div>
       <div style="font-size:11px;color:var(--text-muted);">💡 File akan dikirim langsung ke nomor WA tujuan via Fonnte.</div>
     </div>

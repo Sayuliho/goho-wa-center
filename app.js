@@ -450,17 +450,44 @@ async function getBase64FromFileId(fileId) {
   return { base64: data.base64, fileType: data.mimeType || 'image/jpeg' };
 }
 
+let _saveSearchTimer = null;
+
 function openSaveModal() {
   if (!_previewFileId) { showToast('Tidak ada file untuk disimpan'); return; }
   document.getElementById('save-file-name').value = _previewFileName || '';
-  document.getElementById('save-nowa-custom').value = '';
   document.getElementById('save-target').value = 'aktif';
   document.getElementById('save-custom-nowa-row').style.display = 'none';
+  document.getElementById('save-contact-search').value = '';
+  document.getElementById('save-contact-results').style.display = 'none';
   document.getElementById('modal-save-media').style.display = 'flex';
 }
 
 function toggleSaveTarget(val) {
   document.getElementById('save-custom-nowa-row').style.display = val === 'lain' ? 'block' : 'none';
+  document.getElementById('save-contact-search').value = '';
+  document.getElementById('save-contact-results').style.display = 'none';
+}
+
+function searchSaveContact(query) {
+  clearTimeout(_saveSearchTimer);
+  const results = document.getElementById('save-contact-results');
+  if (!query || query.trim().length < 2) { results.style.display = 'none'; return; }
+  _saveSearchTimer = setTimeout(() => {
+    const q = query.toLowerCase();
+    const matches = allContactsCache.filter(c =>
+      String(c.nama || '').toLowerCase().includes(q) ||
+      String(c.noWa || '').toLowerCase().includes(q)
+    ).slice(0, 6);
+    if (!matches.length) { results.innerHTML = '<div style="padding:8px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div>'; results.style.display = 'block'; return; }
+    results.innerHTML = matches.map(c => `<div onclick="selectSaveContact('${escH(c.noWa)}','${escH(c.nama||c.noWa)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'"><div style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;">${getInitials(c.nama||c.noWa)}</div><div><div style="font-weight:600;">${escH(c.nama||c.noWa)}</div><div style="font-size:10px;color:var(--text-muted);">${c.noWa}</div></div></div>`).join('');
+    results.style.display = 'block';
+  }, 300);
+}
+
+function selectSaveContact(noWa, nama) {
+  document.getElementById('save-contact-search').value = nama + ' (' + noWa + ')';
+  document.getElementById('save-contact-search').dataset.selectedNowa = noWa;
+  document.getElementById('save-contact-results').style.display = 'none';
 }
 
 async function submitSaveMedia() {
@@ -470,8 +497,9 @@ async function submitSaveMedia() {
   const target   = document.getElementById('save-target').value;
   let noWaTujuan = currentRoom ? currentRoom.noWa : '';
   if (target === 'lain') {
-    noWaTujuan = document.getElementById('save-nowa-custom').value.trim();
-    if (!noWaTujuan) { showToast('Nomor WA customer tujuan wajib diisi'); return; }
+    const searchEl = document.getElementById('save-contact-search');
+    noWaTujuan = searchEl.dataset.selectedNowa || searchEl.value.trim();
+    if (!noWaTujuan) { showToast('Pilih customer tujuan dulu'); return; }
   }
   const btn = document.getElementById('save-media-btn');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Menyimpan...';
@@ -487,17 +515,44 @@ async function submitSaveMedia() {
   finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Simpan'; }
 }
 
+let _fwdSearchTimer = null;
+
 function openForwardModal() {
   if (!_previewFileId) { showToast('Tidak ada file untuk di-forward'); return; }
   document.getElementById('forward-file-rename').value = _previewFileName || '';
-  document.getElementById('forward-nowa').value = '';
+  document.getElementById('forward-contact-search').value = '';
+  document.getElementById('forward-contact-search').dataset.selectedNowa = '';
+  document.getElementById('forward-contact-results').style.display = 'none';
   document.getElementById('modal-forward').style.display = 'flex';
 }
 
+function searchForwardContact(query) {
+  clearTimeout(_fwdSearchTimer);
+  const results = document.getElementById('forward-contact-results');
+  if (!query || query.trim().length < 2) { results.style.display = 'none'; return; }
+  _fwdSearchTimer = setTimeout(() => {
+    const q = query.toLowerCase();
+    const matches = allContactsCache.filter(c =>
+      String(c.nama || '').toLowerCase().includes(q) ||
+      String(c.noWa || '').toLowerCase().includes(q)
+    ).slice(0, 6);
+    if (!matches.length) { results.innerHTML = '<div style="padding:8px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div>'; results.style.display = 'block'; return; }
+    results.innerHTML = matches.map(c => `<div onclick="selectForwardContact('${escH(c.noWa)}','${escH(c.nama||c.noWa)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'"><div style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;">${getInitials(c.nama||c.noWa)}</div><div><div style="font-weight:600;">${escH(c.nama||c.noWa)}</div><div style="font-size:10px;color:var(--text-muted);">${c.noWa}</div></div></div>`).join('');
+    results.style.display = 'block';
+  }, 300);
+}
+
+function selectForwardContact(noWa, nama) {
+  document.getElementById('forward-contact-search').value = nama + ' (' + noWa + ')';
+  document.getElementById('forward-contact-search').dataset.selectedNowa = noWa;
+  document.getElementById('forward-contact-results').style.display = 'none';
+}
+
 async function submitForward() {
-  const noWaTujuan = document.getElementById('forward-nowa').value.trim();
+  const searchEl  = document.getElementById('forward-contact-search');
+  const noWaTujuan = searchEl.dataset.selectedNowa || searchEl.value.trim();
   const namaFile   = document.getElementById('forward-file-rename').value.trim() || _previewFileName;
-  if (!noWaTujuan) { showToast('Nomor WA tujuan wajib diisi'); return; }
+  if (!noWaTujuan) { showToast('Pilih atau ketik nomor WA tujuan'); return; }
   if (!namaFile)   { showToast('Nama file wajib diisi'); return; }
   const btn = document.getElementById('forward-send-btn');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
