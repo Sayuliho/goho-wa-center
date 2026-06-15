@@ -335,30 +335,72 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
   });
 }, { threshold: 0.1 }) : null;
 
-async function loadMessages(roomId, forceScroll) { msgOffset = 0; await fetchMessages(roomId, 0, forceScroll); }
-async function loadMoreMessages(roomId) { const area = document.getElementById('chat-area'); const prevHeight = area.scrollHeight; msgOffset += 50; await fetchMessages(roomId, msgOffset, false, true); area.scrollTop = area.scrollHeight - prevHeight; }
+// Set berisi msgId yang sudah di-render — untuk diff agar tidak replace DOM
+const renderedMsgIds = new Set();
+
+async function loadMessages(roomId, forceScroll) {
+  msgOffset = 0;
+  renderedMsgIds.clear(); // reset saat buka chat baru
+  await fetchMessages(roomId, 0, forceScroll);
+}
+async function loadMoreMessages(roomId) {
+  const area = document.getElementById('chat-area');
+  const prevHeight = area.scrollHeight;
+  msgOffset += 50;
+  await fetchMessages(roomId, msgOffset, false, true);
+  area.scrollTop = area.scrollHeight - prevHeight;
+}
 async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
   try {
-    const res = await apiGet({action: 'getChatMessages', roomId, offset}); if (!res.ok) return; if (!currentRoom || currentRoom.roomId !== roomId) return;
+    const res = await apiGet({action: 'getChatMessages', roomId, offset});
+    if (!res.ok) return;
+    if (!currentRoom || currentRoom.roomId !== roomId) return;
+
     const area = document.getElementById('chat-area');
-    const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100; const hasNewMessages = res.total > lastMsgCount; const hasMore = res.total > offset + 50;
-    const bubblesHTML = res.data.map(m => renderBubble(m)).join('');
-    if (prepend) { const btn = document.getElementById('load-more-btn'); if (btn) btn.remove(); area.insertAdjacentHTML('afterbegin', bubblesHTML); } else if (hasNewMessages || forceScroll) { area.innerHTML = bubblesHTML; }
-    if (hasMore && !document.getElementById('load-more-btn')) { area.insertAdjacentHTML('afterbegin', `<div id="load-more-btn" style="text-align:center;padding:8px;"><button onclick="loadMoreMessages('${roomId}')" style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;background:white;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:var(--font);">↑ Muat pesan lebih lama</button></div>`); }
+    const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
+    const hasNewMessages = res.total > lastMsgCount;
+    const hasMore = res.total > offset + 50;
+
+    if (prepend) {
+      // Muat pesan lebih lama — tambah di atas
+      const btn = document.getElementById('load-more-btn'); if (btn) btn.remove();
+      const html = res.data.map(m => renderBubble(m)).join('');
+      area.insertAdjacentHTML('afterbegin', html);
+      res.data.forEach(m => renderedMsgIds.add(m.msgId));
+    } else if (forceScroll || renderedMsgIds.size === 0) {
+      // Pertama kali buka chat — render semua sekaligus
+      area.innerHTML = res.data.map(m => renderBubble(m)).join('');
+      renderedMsgIds.clear();
+      res.data.forEach(m => renderedMsgIds.add(m.msgId));
+    } else {
+      // Polling — hanya tambah pesan yang belum ada, DOM lama tidak disentuh
+      const newMsgs = res.data.filter(m => !renderedMsgIds.has(m.msgId));
+      if (newMsgs.length > 0) {
+        const html = newMsgs.map(m => renderBubble(m)).join('');
+        area.insertAdjacentHTML('beforeend', html);
+        newMsgs.forEach(m => renderedMsgIds.add(m.msgId));
+      }
+    }
+
+    if (hasMore && !document.getElementById('load-more-btn')) {
+      area.insertAdjacentHTML('afterbegin', `<div id="load-more-btn" style="text-align:center;padding:8px;"><button onclick="loadMoreMessages('${roomId}')" style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;background:white;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:var(--font);">↑ Muat pesan lebih lama</button></div>`);
+    }
+
     if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
     lastMsgCount = res.total;
-    // Observe lazy images — kalau sudah di cache, langsung isi tanpa observer
-    if (imgObserver) {
-      area.querySelectorAll('.b-img-lazy[data-file-id]').forEach(el => {
-        const fid = el.dataset.fileId;
-        if (fid && imgCache[fid] && !el.dataset.loaded) {
-          el.dataset.loaded = '1';
-          el.innerHTML = '<img src="' + imgCache[fid] + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
-        } else if (!el.dataset.loaded) {
-          imgObserver.observe(el);
-        }
-      });
-    }
+
+    // Inject gambar dari cache, observe sisanya
+    area.querySelectorAll('.b-img-lazy[data-file-id]').forEach(el => {
+      if (el.dataset.loaded) return;
+      const fid = el.dataset.fileId;
+      if (fid && imgCache[fid]) {
+        el.dataset.loaded = '1';
+        el.innerHTML = '<img src="' + imgCache[fid] + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
+      } else if (imgObserver) {
+        imgObserver.observe(el);
+      }
+    });
+
   } catch(e) { console.error('fetchMessages error:', e); }
 }
 
