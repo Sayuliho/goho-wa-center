@@ -336,7 +336,7 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
 }, { threshold: 0.1 }) : null;
 
 // Set berisi msgId yang sudah di-render — untuk diff agar tidak replace DOM
-const renderedMsgIds = new Set();
+var renderedMsgIds = new Set();
 
 async function loadMessages(roomId, forceScroll) {
   msgOffset = 0;
