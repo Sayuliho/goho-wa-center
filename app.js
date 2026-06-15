@@ -422,6 +422,78 @@ async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
   } catch(e) { console.error('fetchMessages error:', e); }
 }
 
+// ===================== MEDIA PREVIEW & FORWARD =====================
+let _previewFileId = '', _previewFileName = '', _previewMediaUrl = '';
+
+function openImgPreview(src, fileId, namaFile, mediaUrl) {
+  _previewFileId  = fileId  || '';
+  _previewFileName = namaFile || '';
+  _previewMediaUrl = mediaUrl || '';
+  document.getElementById('img-preview-src').src  = src;
+  document.getElementById('img-preview-name').textContent = namaFile || '';
+  const modal = document.getElementById('modal-img-preview');
+  modal.style.display = 'flex';
+}
+function closeImgPreview() {
+  document.getElementById('modal-img-preview').style.display = 'none';
+  document.getElementById('img-preview-src').src = '';
+}
+
+async function saveMediaFromPreview() {
+  if (!currentRoom) { showToast('Pilih chat dulu'); return; }
+  if (!_previewFileId && !_previewMediaUrl) { showToast('Tidak ada file untuk disimpan'); return; }
+  const btn = document.getElementById('img-preview-save-btn');
+  btn.textContent = '⏳ Menyimpan...'; btn.disabled = true;
+  try {
+    let base64Data = '', fileType = 'image/jpeg';
+    if (_previewFileId) {
+      // Ambil dari cache atau fetch
+      const src = imgCache[_previewFileId];
+      if (src) {
+        const parts = src.split(',');
+        base64Data = parts[1];
+        fileType   = src.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+      } else {
+        const res = await fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(_previewFileId));
+        const data = await res.json();
+        base64Data = data.base64; fileType = data.mimeType || 'image/jpeg';
+      }
+    }
+    const ext = fileType.split('/')[1] || 'jpg';
+    const namaFile = _previewFileName || ('foto_' + Date.now() + '.' + ext);
+    const res = await apiPost({ action: 'saveCustomerDoc', noWa: currentRoom.noWa, kategori: 'Identitas', namaFile, fileType, fileData: base64Data, uploadedBy: currentStaff.nama, keterangan: 'Disimpan dari bubble chat' });
+    if (res.ok) { showToast('✅ Tersimpan ke Dokumen Customer!'); btn.textContent = '✅ Tersimpan!'; setTimeout(() => { btn.textContent = '💾 Simpan ke Dokumen'; btn.disabled = false; }, 2000); if (docPanelOpen) loadDocPanel(currentRoom.noWa); }
+    else { showToast('Gagal simpan: ' + (res.msg || '')); btn.textContent = '💾 Simpan ke Dokumen'; btn.disabled = false; }
+  } catch(e) { showToast('Error: ' + e.toString()); btn.textContent = '💾 Simpan ke Dokumen'; btn.disabled = false; }
+}
+
+function openForwardModal() {
+  document.getElementById('forward-file-name').textContent = _previewFileName || 'File';
+  document.getElementById('forward-nowa').value = '';
+  document.getElementById('modal-forward').style.display = 'flex';
+}
+
+async function submitForward() {
+  const noWaTujuan = document.getElementById('forward-nowa').value.trim();
+  if (!noWaTujuan) { showToast('Nomor WA tujuan wajib diisi'); return; }
+  const btn = document.getElementById('forward-send-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
+  try {
+    let base64Data = '', fileType = 'image/jpeg';
+    if (_previewFileId) {
+      const src = imgCache[_previewFileId];
+      if (src) { const parts = src.split(','); base64Data = parts[1]; fileType = src.match(/data:([^;]+)/)?.[1] || 'image/jpeg'; }
+      else { const res = await fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(_previewFileId)); const data = await res.json(); base64Data = data.base64; fileType = data.mimeType || 'image/jpeg'; }
+    }
+    const ext = fileType.split('/')[1] || 'jpg';
+    const namaFile = _previewFileName || ('foto_' + Date.now() + '.' + ext);
+    const res = await apiPost({ action: 'forwardFile', noWa: noWaTujuan, fileData: base64Data, fileName: namaFile, fileType, staffName: currentStaff.nama });
+    if (res.ok) { showToast('✅ File berhasil di-forward ke ' + noWaTujuan); closeModal('modal-forward'); closeImgPreview(); }
+    else { showToast('Gagal forward: ' + (res.msg || '')); }
+  } catch(e) { showToast('Error: ' + e.toString()); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
+}
+
 function renderBubble(m) {
   const isStaff = m.sender === 'STAFF'; const isBot = m.sender === 'BOT'; const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
 
@@ -438,11 +510,14 @@ function renderBubble(m) {
   if (imgMatch) {
     const fileId = imgMatch[1]; const namaFile = imgMatch[2];
     const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
-    // Kalau sudah di cache, render langsung tanpa placeholder
+    const mediaActions = !isStaff ? `<div style="display:flex;gap:4px;margin-top:4px;">
+      <button onclick="saveBubbleMedia('${escH(fileId)}','${escH(namaFile)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
+      <button onclick="forwardBubbleMedia('${escH(fileId)}','${escH(namaFile)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">📤 Forward</button>
+    </div>` : '';
     if (imgCache[fileId]) {
-      return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-loaded="1" style="width:200px;height:140px;border-radius:8px;overflow:hidden;"><img src="${imgCache[fileId]}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,'_blank')"></div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
+      return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-loaded="1" style="width:200px;height:140px;border-radius:8px;overflow:hidden;"><img src="${imgCache[fileId]}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview('${imgCache[fileId]}','${escH(fileId)}','${escH(namaFile)}','')"></div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
     }
-    return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
+    return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg" data-nama="${escH(namaFile)}">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
   }
 
   // Bubble teks biasa
@@ -450,6 +525,15 @@ function renderBubble(m) {
   return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-txt">${escH(m.message)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
 }
 
+
+function saveBubbleMedia(fileId, namaFile) {
+  _previewFileId = fileId; _previewFileName = namaFile; _previewMediaUrl = '';
+  saveMediaFromPreview();
+}
+function forwardBubbleMedia(fileId, namaFile) {
+  _previewFileId = fileId; _previewFileName = namaFile; _previewMediaUrl = '';
+  openForwardModal();
+}
 async function lepasChat() { if (!currentRoom) return; const res = await apiPost({action: 'releaseChat', roomId: currentRoom.roomId}); if (res.ok) { showToast('Chat dilepas'); closeCurrentChat(); } }
 async function selesaiChat() { if (!currentRoom) return; if (!confirm('Tandai chat ini selesai? Chat akan dipindah ke Arsip.')) return; const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId}); if (res.ok) { showToast('Chat selesai → Arsip'); closeCurrentChat(); } }
 function closeCurrentChat() {
