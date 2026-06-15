@@ -757,7 +757,16 @@ async function handleDocUpload(input) {
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { label.innerHTML = `<i class="ti ti-upload" style="font-size:14px;"></i> Upload Dokumen<input type="file" id="doc-file-input" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleDocUpload(this)">`; input.value = ''; }
 }
-function viewDoc(fileId) { if (!fileId) return; window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank'); }
+function viewDoc(fileId, namaFile) {
+  if (!fileId) return;
+  const ext = (namaFile || '').split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','webp'].includes(ext)) {
+    const params = new URLSearchParams({ fileId, docName: namaFile || '', nama: currentRoom ? currentRoom.nama : '', noWa: currentRoom ? currentRoom.noWa : '' });
+    window.open('/viewer.html?' + params.toString(), '_blank');
+  } else {
+    window.open('https://drive.google.com/file/d/' + fileId + '/preview', '_blank');
+  }
+}
 async function sendDocToCustomer(docId, fileId, namaFile) {
   if (!currentRoom) { showToast('Pilih chat dulu'); return; } if (!confirm('Kirim "' + namaFile + '" ke ' + currentRoom.nama + '?')) return;
   showToast('Mengirim...');
