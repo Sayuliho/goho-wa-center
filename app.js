@@ -145,8 +145,21 @@ function checkNewChats(waitingChats) {
 function startPolling() {
   if (pollInterval) clearInterval(pollInterval);
   apiGet({action: 'getWaitingQueue'}).then(res => { if (res.ok) lastWaitingRooms = new Set(res.data.map(c => c.roomId)); });
-  pollInterval = setInterval(() => { loadStats(); if (currentRoom) loadMessages(currentRoom.roomId, false); if (currentMainTab === 'chat') loadChats(false); if (currentMainTab === 'dashboard') loadOwnerStats(); }, 4000);
-  setInterval(async () => { try { const res = await apiGet({action: 'getWaitingQueue'}); if (res.ok) checkNewChats(res.data); } catch(e) {} }, 5000);
+
+  // Poll messages setiap 3 detik (hanya saat ada chat terbuka)
+  setInterval(() => {
+    if (currentRoom) fetchMessages(currentRoom.roomId, 0, false);
+  }, 3000);
+
+  // Poll chat list setiap 5 detik (lebih jarang, tidak perlu secepat pesan)
+  setInterval(() => {
+    loadStats();
+    if (currentMainTab === 'chat') loadChats(false);
+    if (currentMainTab === 'dashboard') loadOwnerStats();
+  }, 5000);
+
+  // Poll waiting queue setiap 6 detik
+  setInterval(async () => { try { const res = await apiGet({action: 'getWaitingQueue'}); if (res.ok) checkNewChats(res.data); } catch(e) {} }, 6000);
 }
 async function loadStats() {
   try { const res = await apiGet({action: 'getDashboardStats'}); if (res.ok) { document.getElementById('stat-bot').textContent = res.data.bot || 0; document.getElementById('stat-waiting').textContent = res.data.waiting || 0; document.getElementById('stat-active').textContent = res.data.active || 0; document.getElementById('stat-selesai').textContent = res.data.selesai || 0; } } catch(e) {}
@@ -247,8 +260,13 @@ async function openChat(roomId) {
   document.getElementById('np-produk').textContent = chat.produk || '-';
   document.getElementById('np-status') && (document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`);
   document.getElementById('chat-area').innerHTML = '<div class="loading">Memuat pesan...</div>';
-  loadCustomerInfoPanel(chat.noWa); loadSmartContext(chat.roomId, chat.noWa); renderActionRow(chat);
-  await loadMessages(roomId, true);
+  renderActionRow(chat);
+  // Jalankan semua paralel — tidak saling tunggu
+  Promise.all([
+    loadMessages(roomId, true),
+    loadCustomerInfoPanel(chat.noWa),
+    loadSmartContext(chat.roomId, chat.noWa)
+  ]);
   if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('slide-out');
   renderChatList(allChats);
 }
@@ -336,7 +354,7 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
 }, { threshold: 0.1 }) : null;
 
 // Set berisi msgId yang sudah di-render — untuk diff agar tidak replace DOM
-var renderedMsgIds = new Set();
+const renderedMsgIds = new Set();
 
 async function loadMessages(roomId, forceScroll) {
   msgOffset = 0;
@@ -442,11 +460,39 @@ function closeCurrentChat() {
 }
 async function tandaiBooked() { if (!currentRoom) return; const res = await apiPost({action: 'markBooked', roomId: currentRoom.roomId}); if (res.ok) { showToast('Ditandai Booked'); currentRoom.status = 'BOOKED'; renderActionRow(currentRoom); loadChats(false); } }
 async function kirimPesan() {
-  if (!currentRoom) return; const input = document.getElementById('reply-input'); const msg = input.value.trim(); if (!msg) return;
+  if (!currentRoom) return;
+  const input = document.getElementById('reply-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  // Optimistic UI: tampilkan pesan langsung tanpa tunggu server
   input.value = ''; input.style.height = 'auto';
-  const res = await apiPost({action: 'sendMessage', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, message: msg});
-  if (res.ok) { lastMsgCount = 0; await loadMessages(currentRoom.roomId, true); loadChats(false); }
-  else { showToast('Gagal kirim pesan'); input.value = msg; autoExpandTextarea(input); }
+  const tempId = 'TEMP-' + Date.now();
+  const area = document.getElementById('chat-area');
+  area.insertAdjacentHTML('beforeend', `<div class="bw right" id="${tempId}"><div class="bubble b-staff"><div class="b-txt">${escH(msg)}</div><div class="b-meta">${formatTime(new Date().toISOString())} <span style="color:#bbb;font-size:9px;">⏳</span></div></div></div>`);
+  area.scrollTop = area.scrollHeight;
+  renderedMsgIds.add(tempId);
+
+  try {
+    const res = await apiPost({action: 'sendMessage', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, message: msg});
+    if (res.ok) {
+      const tempEl = document.getElementById(tempId);
+      if (tempEl) { tempEl.remove(); renderedMsgIds.delete(tempId); }
+      lastMsgCount = 0;
+      await fetchMessages(currentRoom.roomId, 0, true);
+      loadChats(false);
+    } else {
+      const tempEl = document.getElementById(tempId);
+      if (tempEl) tempEl.querySelector('.b-staff').style.opacity = '0.5';
+      showToast('Gagal kirim pesan');
+      input.value = msg; autoExpandTextarea(input);
+    }
+  } catch(e) {
+    const tempEl = document.getElementById(tempId);
+    if (tempEl) tempEl.querySelector('.b-staff').style.opacity = '0.5';
+    showToast('Gagal kirim pesan');
+    input.value = msg; autoExpandTextarea(input);
+  }
 }
 function handleReplyKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kirimPesan(); } }
 async function showNoteInput() { const note = prompt('Catatan internal:'); if (!note || !note.trim()) return; const res = await apiPost({action: 'addNote', roomId: currentRoom.roomId, staffName: currentStaff.nama, note: note.trim()}); if (res.ok) showToast('Catatan disimpan'); }
