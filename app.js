@@ -439,56 +439,72 @@ function closeImgPreview() {
   document.getElementById('img-preview-src').src = '';
 }
 
-async function saveMediaFromPreview() {
-  if (!currentRoom) { showToast('Pilih chat dulu'); return; }
-  if (!_previewFileId && !_previewMediaUrl) { showToast('Tidak ada file untuk disimpan'); return; }
-  const btn = document.getElementById('img-preview-save-btn');
-  btn.textContent = '⏳ Menyimpan...'; btn.disabled = true;
+// Ambil base64 dari fileId (cache atau fetch)
+async function getBase64FromFileId(fileId) {
+  if (imgCache[fileId]) {
+    const src = imgCache[fileId];
+    return { base64: src.split(',')[1], fileType: src.match(/data:([^;]+)/)?.[1] || 'image/jpeg' };
+  }
+  const res = await fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(fileId));
+  const data = await res.json();
+  return { base64: data.base64, fileType: data.mimeType || 'image/jpeg' };
+}
+
+function openSaveModal() {
+  if (!_previewFileId) { showToast('Tidak ada file untuk disimpan'); return; }
+  document.getElementById('save-file-name').value = _previewFileName || '';
+  document.getElementById('save-nowa-custom').value = '';
+  document.getElementById('save-target').value = 'aktif';
+  document.getElementById('save-custom-nowa-row').style.display = 'none';
+  document.getElementById('modal-save-media').style.display = 'flex';
+}
+
+function toggleSaveTarget(val) {
+  document.getElementById('save-custom-nowa-row').style.display = val === 'lain' ? 'block' : 'none';
+}
+
+async function submitSaveMedia() {
+  const namaFile = document.getElementById('save-file-name').value.trim();
+  if (!namaFile) { showToast('Nama file wajib diisi'); return; }
+  const kategori = document.getElementById('save-kategori').value;
+  const target   = document.getElementById('save-target').value;
+  let noWaTujuan = currentRoom ? currentRoom.noWa : '';
+  if (target === 'lain') {
+    noWaTujuan = document.getElementById('save-nowa-custom').value.trim();
+    if (!noWaTujuan) { showToast('Nomor WA customer tujuan wajib diisi'); return; }
+  }
+  const btn = document.getElementById('save-media-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Menyimpan...';
   try {
-    let base64Data = '', fileType = 'image/jpeg';
-    if (_previewFileId) {
-      // Ambil dari cache atau fetch
-      const src = imgCache[_previewFileId];
-      if (src) {
-        const parts = src.split(',');
-        base64Data = parts[1];
-        fileType   = src.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
-      } else {
-        const res = await fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(_previewFileId));
-        const data = await res.json();
-        base64Data = data.base64; fileType = data.mimeType || 'image/jpeg';
-      }
-    }
-    const ext = fileType.split('/')[1] || 'jpg';
-    const namaFile = _previewFileName || ('foto_' + Date.now() + '.' + ext);
-    const res = await apiPost({ action: 'saveCustomerDoc', noWa: currentRoom.noWa, kategori: 'Identitas', namaFile, fileType, fileData: base64Data, uploadedBy: currentStaff.nama, keterangan: 'Disimpan dari bubble chat' });
-    if (res.ok) { showToast('✅ Tersimpan ke Dokumen Customer!'); btn.textContent = '✅ Tersimpan!'; setTimeout(() => { btn.textContent = '💾 Simpan ke Dokumen'; btn.disabled = false; }, 2000); if (docPanelOpen) loadDocPanel(currentRoom.noWa); }
-    else { showToast('Gagal simpan: ' + (res.msg || '')); btn.textContent = '💾 Simpan ke Dokumen'; btn.disabled = false; }
-  } catch(e) { showToast('Error: ' + e.toString()); btn.textContent = '💾 Simpan ke Dokumen'; btn.disabled = false; }
+    const { base64, fileType } = await getBase64FromFileId(_previewFileId);
+    const res = await apiPost({ action: 'saveCustomerDoc', noWa: noWaTujuan, kategori, namaFile, fileType, fileData: base64, uploadedBy: currentStaff.nama, keterangan: 'Disimpan dari bubble chat' });
+    if (res.ok) {
+      showToast('✅ Tersimpan ke Dokumen ' + (target === 'lain' ? noWaTujuan : 'Customer') + '!');
+      closeModal('modal-save-media');
+      if (docPanelOpen && target === 'aktif') loadDocPanel(currentRoom ? currentRoom.noWa : '');
+    } else { showToast('Gagal simpan: ' + (res.msg || '')); }
+  } catch(e) { showToast('Error: ' + e.toString()); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Simpan'; }
 }
 
 function openForwardModal() {
-  document.getElementById('forward-file-name').textContent = _previewFileName || 'File';
+  if (!_previewFileId) { showToast('Tidak ada file untuk di-forward'); return; }
+  document.getElementById('forward-file-rename').value = _previewFileName || '';
   document.getElementById('forward-nowa').value = '';
   document.getElementById('modal-forward').style.display = 'flex';
 }
 
 async function submitForward() {
   const noWaTujuan = document.getElementById('forward-nowa').value.trim();
+  const namaFile   = document.getElementById('forward-file-rename').value.trim() || _previewFileName;
   if (!noWaTujuan) { showToast('Nomor WA tujuan wajib diisi'); return; }
+  if (!namaFile)   { showToast('Nama file wajib diisi'); return; }
   const btn = document.getElementById('forward-send-btn');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
   try {
-    let base64Data = '', fileType = 'image/jpeg';
-    if (_previewFileId) {
-      const src = imgCache[_previewFileId];
-      if (src) { const parts = src.split(','); base64Data = parts[1]; fileType = src.match(/data:([^;]+)/)?.[1] || 'image/jpeg'; }
-      else { const res = await fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(_previewFileId)); const data = await res.json(); base64Data = data.base64; fileType = data.mimeType || 'image/jpeg'; }
-    }
-    const ext = fileType.split('/')[1] || 'jpg';
-    const namaFile = _previewFileName || ('foto_' + Date.now() + '.' + ext);
-    const res = await apiPost({ action: 'forwardFile', noWa: noWaTujuan, fileData: base64Data, fileName: namaFile, fileType, staffName: currentStaff.nama });
-    if (res.ok) { showToast('✅ File berhasil di-forward ke ' + noWaTujuan); closeModal('modal-forward'); closeImgPreview(); }
+    const { base64, fileType } = await getBase64FromFileId(_previewFileId);
+    const res = await apiPost({ action: 'forwardFile', noWa: noWaTujuan, fileData: base64, fileName: namaFile, fileType, staffName: currentStaff.nama });
+    if (res.ok) { showToast('✅ File berhasil di-forward ke ' + noWaTujuan); closeModal('modal-forward'); }
     else { showToast('Gagal forward: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
@@ -528,7 +544,7 @@ function renderBubble(m) {
 
 function saveBubbleMedia(fileId, namaFile) {
   _previewFileId = fileId; _previewFileName = namaFile; _previewMediaUrl = '';
-  saveMediaFromPreview();
+  openSaveModal();
 }
 function forwardBubbleMedia(fileId, namaFile) {
   _previewFileId = fileId; _previewFileName = namaFile; _previewMediaUrl = '';

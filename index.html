@@ -198,14 +198,50 @@
   <div id="img-preview-name" style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:10px;"></div>
 </div>
 
+<!-- MODAL SIMPAN MEDIA -->
+<div class="modal" id="modal-save-media" style="display:none;">
+  <div class="modal-box modal-sm">
+    <div class="modal-header"><h3>💾 Simpan ke Dokumen</h3><button onclick="closeModal('modal-save-media')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nama File *</label>
+        <input type="text" id="save-file-name" placeholder="contoh: Paspor_Budi.jpeg">
+      </div>
+      <div class="form-group">
+        <label>Kategori</label>
+        <select id="save-kategori">
+          <option value="Identitas">🪪 Identitas (KTP/Paspor/Visa)</option>
+          <option value="Tiket & Voucher">✈️ Tiket & Voucher</option>
+          <option value="Lainnya">📎 Lainnya</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Simpan ke Customer</label>
+        <select id="save-target" onchange="toggleSaveTarget(this.value)">
+          <option value="aktif">Customer aktif (chat ini)</option>
+          <option value="lain">Customer lain</option>
+        </select>
+      </div>
+      <div id="save-custom-nowa-row" style="display:none;" class="form-group">
+        <label>No WA Customer Tujuan *</label>
+        <input type="text" id="save-nowa-custom" placeholder="628xxxxxxxxx atau 08xxxxxxxxx">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-save-media')">Batal</button>
+      <button class="btn-primary" id="save-media-btn" onclick="submitSaveMedia()"><i class="ti ti-device-floppy"></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL FORWARD FILE -->
 <div class="modal" id="modal-forward" style="display:none;">
   <div class="modal-box modal-sm">
     <div class="modal-header"><h3>📤 Forward ke Nomor Lain</h3><button onclick="closeModal('modal-forward')">✕</button></div>
     <div class="modal-body">
-      <div style="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;">
-        <div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">File yang akan dikirim:</div>
-        <div id="forward-file-name" style="font-weight:600;color:var(--text);"></div>
+      <div class="form-group">
+        <label>Nama File (bisa direname)</label>
+        <input type="text" id="forward-file-rename" placeholder="contoh: Paspor_Budi.jpeg">
       </div>
       <div class="form-group">
         <label>Nomor WA Tujuan *</label>
