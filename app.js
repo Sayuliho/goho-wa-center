@@ -291,24 +291,46 @@ function renderActionRow(chat) {
 // ===================== MESSAGES =====================
 let msgOffset = 0;
 
-// PATCH 4: IntersectionObserver untuk lazy load gambar di bubble
+// Cache gambar supaya tidak fetch ulang tiap polling → gambar steady tidak kedip
+const imgCache = {};
+
+// IntersectionObserver untuk lazy load gambar di bubble
 const imgObserver = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       const el = entry.target;
       const fileId = el.dataset.fileId;
       const mimeType = el.dataset.mime || 'image/jpeg';
-      if (fileId && !el.dataset.loaded) {
+      if (!fileId) return;
+
+      // Sudah di-cache? Langsung tampil, tidak perlu fetch
+      if (imgCache[fileId]) {
         el.dataset.loaded = '1';
+        el.innerHTML = '<img src="' + imgCache[fileId] + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
         imgObserver.unobserve(el);
-        fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(fileId))
-          .then(r => r.json())
-          .then(data => {
-            if (data.base64) {
-              el.innerHTML = '<img src="data:' + (data.mimeType || mimeType) + ';base64,' + data.base64 + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onclick="window.open(this.src,\'_blank\')">';
-            }
-          }).catch(() => {});
+        return;
       }
+
+      if (el.dataset.loaded) return;
+      el.dataset.loaded = '1';
+      imgObserver.unobserve(el);
+
+      // Tampil spinner saat loading
+      el.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;">⏳</div>';
+
+      fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(fileId))
+        .then(r => r.json())
+        .then(data => {
+          if (data.base64) {
+            const src = 'data:' + (data.mimeType || mimeType) + ';base64,' + data.base64;
+            imgCache[fileId] = src; // simpan ke cache
+            el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
+          } else {
+            el.innerHTML = '<div style="padding:8px;font-size:11px;color:#aaa;">🖼️ Gambar tidak tersedia</div>';
+          }
+        }).catch(() => {
+          el.innerHTML = '<div style="padding:8px;font-size:11px;color:#aaa;">🖼️ Gagal load</div>';
+        });
     }
   });
 }, { threshold: 0.1 }) : null;
@@ -325,14 +347,21 @@ async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
     if (hasMore && !document.getElementById('load-more-btn')) { area.insertAdjacentHTML('afterbegin', `<div id="load-more-btn" style="text-align:center;padding:8px;"><button onclick="loadMoreMessages('${roomId}')" style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;background:white;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:var(--font);">↑ Muat pesan lebih lama</button></div>`); }
     if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
     lastMsgCount = res.total;
-    // Observe lazy images setelah render
+    // Observe lazy images — kalau sudah di cache, langsung isi tanpa observer
     if (imgObserver) {
-      area.querySelectorAll('.b-img-lazy[data-file-id]').forEach(el => { if (!el.dataset.loaded) imgObserver.observe(el); });
+      area.querySelectorAll('.b-img-lazy[data-file-id]').forEach(el => {
+        const fid = el.dataset.fileId;
+        if (fid && imgCache[fid] && !el.dataset.loaded) {
+          el.dataset.loaded = '1';
+          el.innerHTML = '<img src="' + imgCache[fid] + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
+        } else if (!el.dataset.loaded) {
+          imgObserver.observe(el);
+        }
+      });
     }
   } catch(e) { console.error('fetchMessages error:', e); }
 }
 
-// PATCH 7: renderBubble dengan tanda ✓ staff + PATCH 4: lazy image
 function renderBubble(m) {
   const isStaff = m.sender === 'STAFF'; const isBot = m.sender === 'BOT'; const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
 
@@ -344,11 +373,15 @@ function renderBubble(m) {
     return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
   }
 
-  // PATCH 4: Deteksi pesan gambar dengan fileId (format: [IMG:fileId:namaFile])
+  // Deteksi pesan gambar dengan fileId (format: [IMG:fileId:namaFile])
   const imgMatch = m.message && typeof m.message === 'string' && m.message.match(/^\[IMG:([^:]+):(.+)\]$/);
   if (imgMatch) {
     const fileId = imgMatch[1]; const namaFile = imgMatch[2];
     const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
+    // Kalau sudah di cache, render langsung tanpa placeholder
+    if (imgCache[fileId]) {
+      return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-loaded="1" style="width:200px;height:140px;border-radius:8px;overflow:hidden;"><img src="${imgCache[fileId]}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,'_blank')"></div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
+    }
     return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
   }
 
@@ -547,7 +580,7 @@ async function deleteDoc(docId, fileId) {
   try { const res = await apiPost({ action: 'deleteCustomerDoc', docId, fileId }); if (res.ok) { showToast('Dokumen dihapus'); loadDocPanel(currentDocNoWa); } else { showToast('Gagal hapus: ' + (res.msg || '')); } } catch(e) { showToast('Error: ' + e.toString()); }
 }
 
-// ===================== PiP FLOATING VIEWER — Fase 5A =====================
+// ===================== PiP FLOATING VIEWER =====================
 function openPiP(fileId, namaFile) {
   if (!fileId) return;
   const nama = currentRoom ? currentRoom.nama : '';
@@ -594,8 +627,7 @@ function quickArrival(jurusan) {
 }
 function quickBeaCukai() { window.open('https://ecd.beacukai.go.id','_blank'); showToast('🛃 Buka e-CD Bea Cukai Indonesia'); }
 
-
-// ===================== MULTI PAX — Fase 5C =====================
+// ===================== MULTI PAX =====================
 let multiPaxOpen = false;
 let multiPaxList = [];
 let mpxSearchTimer = null;
@@ -605,16 +637,10 @@ function toggleMultiPax() {
   multiPaxOpen = !multiPaxOpen;
   const overlay = document.getElementById('multipax-overlay');
   overlay.classList.toggle('active', multiPaxOpen);
-  if (multiPaxOpen) {
-    setTimeout(() => document.getElementById('mpx-search').focus(), 200);
-  } else {
-    document.getElementById('mpx-results').classList.remove('show');
-  }
+  if (multiPaxOpen) { setTimeout(() => document.getElementById('mpx-search').focus(), 200); }
+  else { document.getElementById('mpx-results').classList.remove('show'); }
 }
-
-function handleMultiPaxOverlayClick(e) {
-  if (e.target === document.getElementById('multipax-overlay')) toggleMultiPax();
-}
+function handleMultiPaxOverlayClick(e) { if (e.target === document.getElementById('multipax-overlay')) toggleMultiPax(); }
 
 function searchPassenger(query) {
   clearTimeout(mpxSearchTimer);
@@ -626,8 +652,7 @@ function searchPassenger(query) {
     try {
       const res = await apiGet({ action: 'getPassengersByName', query: query.trim() });
       if (!res.ok || !res.passengers || res.passengers.length === 0) {
-        results.innerHTML = `<div style="padding:8px 12px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div>
-          <div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
+        results.innerHTML = `<div style="padding:8px 12px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div><div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
         return;
       }
       results.innerHTML = res.passengers.map(p => `
@@ -658,11 +683,7 @@ async function loadFotoPreview(passengerId, fotoFileId) {
     }
   } catch(e) {}
 }
-
-function setFotoEl(passengerId, src) {
-  const el = document.getElementById('foto-' + passengerId);
-  if (el) el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;">';
-}
+function setFotoEl(passengerId, src) { const el = document.getElementById('foto-' + passengerId); if (el) el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;">'; }
 
 function addPassengerToList(p) {
   if (multiPaxList.find(x => x.passengerId === p.passengerId)) { showToast('Penumpang sudah ditambahkan'); return; }
@@ -671,49 +692,46 @@ function addPassengerToList(p) {
   document.getElementById('mpx-results').classList.remove('show');
   renderMultiPaxList();
 }
+function removePassenger(idx) { multiPaxList.splice(idx, 1); renderMultiPaxList(); }
 
-function removePassenger(idx) {
-  multiPaxList.splice(idx, 1);
-  renderMultiPaxList();
+// Helper pisah nama: kata pertama = depan, sisanya = belakang
+function splitNama(namaLengkap) {
+  const parts = (namaLengkap || '').trim().split(/\s+/);
+  const depan    = parts[0] || '-';
+  const belakang = parts.length > 1 ? parts.slice(1).join(' ') : '-';
+  return { depan, belakang };
 }
 
-// PATCH 6: renderMultiPaxList — pisah nama jadi DEPAN dan BELAKANG
 function renderMultiPaxList() {
   const list = document.getElementById('mpx-list');
   const count = document.getElementById('mpx-count');
   count.textContent = multiPaxList.length > 0 ? multiPaxList.length + ' pax' : '';
-
   if (multiPaxList.length === 0) {
     list.innerHTML = '<div class="mpx-empty">Cari dan tambah penumpang<br><span style="font-size:10px;">Ketik nama di kolom search</span></div>';
     return;
   }
-
   list.innerHTML = multiPaxList.map((p, i) => {
-    // Pisah nama: kata pertama = NAMA DEPAN, sisanya = NAMA BELAKANG
-    const namaParts = (p.namaLengkap || '').trim().split(/\s+/);
-    const namaDepan  = namaParts[0] || '-';
-    const namaBelakang = namaParts.length > 1 ? namaParts.slice(1).join(' ') : '-';
-
+    const { depan, belakang } = splitNama(p.namaLengkap);
     return `<div class="mpx-card">
       <div class="mpx-card-header">
         <div class="mpx-card-num">${i + 1}</div>
         <div class="mpx-card-nama">${escH(p.namaLengkap)}</div>
-        <button onclick="copyPaxData(${i})" style="background:#25D366;border:none;color:white;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;" title="Copy semua data pax ini">📋 Copy</button>
+        <button onclick="copyPaxData(${i})" style="background:#25D366;border:none;color:white;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;">📋 Copy</button>
         <button class="mpx-card-remove" onclick="removePassenger(${i})">✕</button>
       </div>
       <div class="mpx-name-row">
         <div class="mpx-name-half">
           <div class="mpx-name-half-label">Nama Depan</div>
           <div class="mpx-name-half-row">
-            <span class="mpx-name-half-val">${escH(namaDepan)}</span>
-            <button class="mpx-copy-btn" onclick="copyField(this,'${escH(namaDepan)}')" title="Salin nama depan">📋</button>
+            <span class="mpx-name-half-val">${escH(depan)}</span>
+            <button class="mpx-copy-btn" onclick="copyField(this,'${escH(depan)}')" title="Salin">📋</button>
           </div>
         </div>
         <div class="mpx-name-half">
           <div class="mpx-name-half-label">Nama Belakang</div>
           <div class="mpx-name-half-row">
-            <span class="mpx-name-half-val">${escH(namaBelakang)}</span>
-            <button class="mpx-copy-btn" onclick="copyField(this,'${escH(namaBelakang)}')" title="Salin nama belakang">📋</button>
+            <span class="mpx-name-half-val">${escH(belakang)}</span>
+            <button class="mpx-copy-btn" onclick="copyField(this,'${escH(belakang)}')" title="Salin">📋</button>
           </div>
         </div>
       </div>
@@ -730,16 +748,14 @@ function renderMultiPaxList() {
 
 function copyPaxData(idx) {
   const p = multiPaxList[idx]; if (!p) return;
-  const namaParts = (p.namaLengkap || '').trim().split(/\s+/);
-  const lastName  = namaParts.length > 1 ? namaParts[namaParts.length - 1] : (namaParts[0] || '-');
-  const givenName = namaParts.length > 1 ? namaParts.slice(0, -1).join(' ') : (namaParts[0] || '-');
+  const { depan, belakang } = splitNama(p.namaLengkap);
   const isLaki = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki';
   const isPrmp = p.jenisKelamin === 'P' || p.jenisKelamin === 'Perempuan';
   const title  = isLaki ? 'MR' : isPrmp ? 'MRS' : '-';
   const lines = [
     'TITLE     : ' + title,
-    'GIVEN NAME: ' + givenName,
-    'LAST NAME : ' + lastName,
+    'GIVEN NAME: ' + depan,
+    'LAST NAME : ' + belakang,
     'PASPOR    : ' + (p.noPaspor || '-'),
     'TGL LAHIR : ' + (p.tglLahir || '-'),
     'EXPIRED   : ' + (p.expiryPaspor || '-'),
@@ -755,54 +771,22 @@ function copyPaxData(idx) {
 function mpxField(label, value) {
   if (!value) return '';
   const safe = escH(value);
-  return `<div class="mpx-field">
-    <span class="mpx-field-label">${label}</span>
-    <span class="mpx-field-value">${safe}</span>
-    <button class="mpx-copy-btn" onclick="copyField(this, '${safe}')" title="Salin">📋</button>
-  </div>`;
+  return `<div class="mpx-field"><span class="mpx-field-label">${label}</span><span class="mpx-field-value">${safe}</span><button class="mpx-copy-btn" onclick="copyField(this,'${safe}')" title="Salin">📋</button></div>`;
 }
-
 function copyField(btn, value) {
-  navigator.clipboard.writeText(value).then(() => {
-    btn.classList.add('copied'); btn.textContent = '✓';
-    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500);
-  }).catch(() => {
+  navigator.clipboard.writeText(value).then(() => { btn.classList.add('copied'); btn.textContent = '✓'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500); }).catch(() => {
     const el = document.createElement('textarea'); el.value = value; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-    btn.classList.add('copied'); btn.textContent = '✓';
-    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500);
+    btn.classList.add('copied'); btn.textContent = '✓'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500);
   });
 }
-
-function showManualForm() {
-  document.getElementById('mpx-results').classList.remove('show');
-  document.getElementById('mpx-manual-form').classList.add('show');
-  document.getElementById('mpx-m-nama').focus();
-}
-
-function hideManualForm() {
-  document.getElementById('mpx-manual-form').classList.remove('show');
-  ['mpx-m-nama','mpx-m-paspor','mpx-m-lahir','mpx-m-expired','mpx-m-nat'].forEach(id => { document.getElementById(id).value = ''; });
-}
-
+function showManualForm() { document.getElementById('mpx-results').classList.remove('show'); document.getElementById('mpx-manual-form').classList.add('show'); document.getElementById('mpx-m-nama').focus(); }
+function hideManualForm() { document.getElementById('mpx-manual-form').classList.remove('show'); ['mpx-m-nama','mpx-m-paspor','mpx-m-lahir','mpx-m-expired','mpx-m-nat'].forEach(id => { document.getElementById(id).value = ''; }); }
 function addManualPassenger() {
   const nama = document.getElementById('mpx-m-nama').value.trim();
   if (!nama) { showToast('Nama lengkap wajib diisi'); return; }
-  const p = {
-    passengerId: 'MANUAL-' + Date.now(),
-    namaLengkap: nama,
-    noPaspor: document.getElementById('mpx-m-paspor').value.trim(),
-    tglLahir: document.getElementById('mpx-m-lahir').value.trim(),
-    expiryPaspor: document.getElementById('mpx-m-expired').value.trim(),
-    kewarganegaraan: document.getElementById('mpx-m-nat').value.trim() || 'INDONESIA',
-    jenisKelamin: '',
-    fotoFileId: ''
-  };
-  multiPaxList.push(p);
-  hideManualForm();
-  renderMultiPaxList();
-  showToast('✅ ' + nama + ' ditambahkan');
+  const p = { passengerId: 'MANUAL-' + Date.now(), namaLengkap: nama, noPaspor: document.getElementById('mpx-m-paspor').value.trim(), tglLahir: document.getElementById('mpx-m-lahir').value.trim(), expiryPaspor: document.getElementById('mpx-m-expired').value.trim(), kewarganegaraan: document.getElementById('mpx-m-nat').value.trim() || 'INDONESIA', jenisKelamin: '', fotoFileId: '' };
+  multiPaxList.push(p); hideManualForm(); renderMultiPaxList(); showToast('✅ ' + nama + ' ditambahkan');
 }
-
 function formatMpxDate(val) {
   if (!val) return '';
   if (String(val).includes('T') || (String(val).includes('-') && !String(val).includes('/'))) {
@@ -811,18 +795,12 @@ function formatMpxDate(val) {
   return val;
 }
 function showFotoPopup(e, passengerId) {
-  const el = document.getElementById('foto-' + passengerId);
-  const img = el ? el.querySelector('img') : null;
-  if (!img) return;
-  const popup = document.getElementById('mpx-foto-popup');
-  document.getElementById('mpx-foto-popup-img').src = img.src;
+  const el = document.getElementById('foto-' + passengerId); const img = el ? el.querySelector('img') : null; if (!img) return;
+  const popup = document.getElementById('mpx-foto-popup'); document.getElementById('mpx-foto-popup-img').src = img.src;
   const rect = e.target.getBoundingClientRect();
-  popup.style.display = 'block';
-  popup.style.left = Math.min(rect.right + 8, window.innerWidth - 320) + 'px';
-  popup.style.top  = Math.max(8, rect.top - 80) + 'px';
+  popup.style.display = 'block'; popup.style.left = Math.min(rect.right + 8, window.innerWidth - 320) + 'px'; popup.style.top = Math.max(8, rect.top - 80) + 'px';
 }
 function hideFotoPopup() { document.getElementById('mpx-foto-popup').style.display = 'none'; }
-
 async function manualLookupKode() {
   const kode = prompt('Masukkan kode booking maskapai (6 huruf):'); if (!kode||!kode.trim()) return;
   const clean = kode.trim().toUpperCase(); if (!/^[A-Z]{6}$/.test(clean)) { showToast('Kode harus tepat 6 huruf'); return; }
@@ -832,7 +810,6 @@ async function manualLookupKode() {
 
 // ===================== DOKUMEN DI MODAL KONTAK =====================
 let modalDocCache = [];
-
 function showInnerTabById(tab) {
   document.getElementById('inner-riwayat').style.display = tab === 'riwayat' ? 'block' : 'none';
   document.getElementById('inner-passenger').style.display = tab === 'passenger' ? 'block' : 'none';
@@ -840,12 +817,9 @@ function showInnerTabById(tab) {
   if (tab === 'passenger') loadPassengers();
   if (tab === 'dokumen') loadModalDocs();
 }
-
 async function loadModalDocs() {
   if (!currentContactNoWa) return;
-  const loading = document.getElementById('modal-doc-loading');
-  const empty   = document.getElementById('modal-doc-empty');
-  const list    = document.getElementById('modal-doc-list');
+  const loading = document.getElementById('modal-doc-loading'); const empty = document.getElementById('modal-doc-empty'); const list = document.getElementById('modal-doc-list');
   list.innerHTML = ''; loading.style.display = 'block'; empty.style.display = 'none';
   try {
     const res = await apiGet({ action: 'getCustomerDocs', noWa: currentContactNoWa });
@@ -854,191 +828,102 @@ async function loadModalDocs() {
     modalDocCache = res.docs;
     res.docs.forEach(doc => {
       const ext = (doc.namaFile || '').split('.').pop().toLowerCase();
-      const isImg = ['jpg','jpeg','png','webp'].includes(ext);
-      const isPdf = ext === 'pdf';
-      const icon  = isPdf ? '📄' : isImg ? '🖼️' : '📎';
+      const isImg = ['jpg','jpeg','png','webp'].includes(ext); const isPdf = ext === 'pdf';
+      const icon = isPdf ? '📄' : isImg ? '🖼️' : '📎';
       const uploadedAt = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) : '-';
       const div = document.createElement('div');
       div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);';
-      div.innerHTML = `
-        <span style="font-size:20px;flex-shrink:0;">${icon}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escH(doc.namaFile)}">${escH(doc.namaFile)}</div>
-          <div style="font-size:10px;color:var(--text-muted);">${escH(doc.kategori)} · ${uploadedAt}</div>
-        </div>
-        <div style="display:flex;gap:4px;flex-shrink:0;">
-          <button onclick="modalViewDoc('${doc.fileId}','${escH(doc.namaFile)}')" title="Lihat" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">👁️</button>
-          ${isImg ? `<button onclick="modalOpenViewer('${doc.fileId}','${escH(doc.namaFile)}')" title="Buka Passport Viewer (OCR)" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🪟</button>` : ''}
-          <button onclick="modalSendDoc('${doc.docId}','${doc.fileId}','${escH(doc.namaFile)}')" title="Kirim ke customer via WA" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">📤</button>
-          <button onclick="modalDeleteDoc('${doc.docId}','${doc.fileId}',this)" title="Hapus" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🗑️</button>
-        </div>
-      `;
+      div.innerHTML = `<span style="font-size:20px;flex-shrink:0;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escH(doc.namaFile)}">${escH(doc.namaFile)}</div><div style="font-size:10px;color:var(--text-muted);">${escH(doc.kategori)} · ${uploadedAt}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button onclick="modalViewDoc('${doc.fileId}','${escH(doc.namaFile)}')" title="Lihat" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">👁️</button>${isImg ? `<button onclick="modalOpenViewer('${doc.fileId}','${escH(doc.namaFile)}')" title="Buka Passport Viewer" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🪟</button>` : ''}<button onclick="modalSendDoc('${doc.docId}','${doc.fileId}','${escH(doc.namaFile)}')" title="Kirim via WA" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">📤</button><button onclick="modalDeleteDoc('${doc.docId}','${doc.fileId}',this)" title="Hapus" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🗑️</button></div>`;
       list.appendChild(div);
     });
-  } catch(e) {
-    loading.style.display = 'none';
-    empty.style.display = 'block';
-  }
+  } catch(e) { loading.style.display = 'none'; empty.style.display = 'block'; }
 }
-
 function modalViewDoc(fileId, namaFile) {
   if (!fileId) return;
   const ext = (namaFile || '').split('.').pop().toLowerCase();
-  const isImg = ['jpg','jpeg','png','webp'].includes(ext);
-  if (isImg) {
-    const params = new URLSearchParams({ fileId, docName: namaFile, nama: currentContactNama, noWa: currentContactNoWa });
-    window.open('/viewer.html?' + params.toString(), '_blank');
-  } else {
-    window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank');
-  }
+  if (['jpg','jpeg','png','webp'].includes(ext)) { const params = new URLSearchParams({ fileId, docName: namaFile, nama: currentContactNama, noWa: currentContactNoWa }); window.open('/viewer.html?' + params.toString(), '_blank'); }
+  else { window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank'); }
 }
-
 function modalOpenViewer(fileId, namaFile) {
   if (!fileId) return;
   const params = new URLSearchParams({ fileId, docName: namaFile || '', nama: currentContactNama || '', noWa: currentContactNoWa || '' });
-  const pw = Math.min(960, window.screen.width - 80);
-  const ph = Math.min(720, window.screen.height - 80);
-  const px = Math.round((window.screen.width - pw) / 2);
-  const py = Math.round((window.screen.height - ph) / 2);
-  window.open('/viewer.html?' + params.toString(), 'goho_passport_viewer',
-    'width='+pw+',height='+ph+',left='+px+',top='+py+
-    ',resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no');
+  const pw = Math.min(960, window.screen.width - 80); const ph = Math.min(720, window.screen.height - 80);
+  const px = Math.round((window.screen.width - pw) / 2); const py = Math.round((window.screen.height - ph) / 2);
+  window.open('/viewer.html?' + params.toString(), 'goho_passport_viewer', 'width='+pw+',height='+ph+',left='+px+',top='+py+',resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no');
   showToast('🪟 Membuka GOHO Passport Viewer...');
 }
-
 async function modalSendDoc(docId, fileId, namaFile) {
   if (!currentContactNoWa) { showToast('Tidak ada nomor WA customer'); return; }
   if (!confirm('Kirim "' + namaFile + '" ke ' + currentContactNama + ' via WA?')) return;
   showToast('Mengirim...');
-  try {
-    const res = await apiPost({ action: 'sendDocToCustomer', noWa: currentContactNoWa, fileId, namaFile, roomId: '', staffName: currentStaff?.nama || 'STAFF' });
-    showToast(res.ok ? '✅ Dokumen terkirim!' : '❌ Gagal: ' + (res.msg || ''));
-  } catch(e) { showToast('Error: ' + e.toString()); }
+  try { const res = await apiPost({ action: 'sendDocToCustomer', noWa: currentContactNoWa, fileId, namaFile, roomId: '', staffName: currentStaff?.nama || 'STAFF' }); showToast(res.ok ? '✅ Dokumen terkirim!' : '❌ Gagal: ' + (res.msg || '')); } catch(e) { showToast('Error: ' + e.toString()); }
 }
-
 async function modalDeleteDoc(docId, fileId, btn) {
   if (!confirm('Hapus dokumen ini? File akan dihapus permanen.')) return;
   try {
     const res = await apiPost({ action: 'deleteCustomerDoc', docId, fileId });
-    if (res.ok) {
-      btn.closest('div[style]').remove();
-      const list = document.getElementById('modal-doc-list');
-      if (!list.children.length) document.getElementById('modal-doc-empty').style.display = 'block';
-      showToast('🗑️ Dokumen dihapus');
-    } else { showToast('Gagal hapus: ' + (res.msg || '')); }
+    if (res.ok) { btn.closest('div[style]').remove(); const list = document.getElementById('modal-doc-list'); if (!list.children.length) document.getElementById('modal-doc-empty').style.display = 'block'; showToast('🗑️ Dokumen dihapus'); }
+    else { showToast('Gagal hapus: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
-
 async function handleModalDocUpload(input) {
   if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  if (file.size > 15 * 1024 * 1024) { showToast('File maksimal 15MB'); input.value = ''; return; }
-  const kategori = document.getElementById('modal-doc-kategori').value;
-  const label = input.closest('label');
-  label.innerHTML = '<i class="ti ti-loader spin" style="font-size:13px;"></i> Uploading...';
-  label.style.background = '#555';
+  const file = input.files[0]; if (file.size > 15 * 1024 * 1024) { showToast('File maksimal 15MB'); input.value = ''; return; }
+  const kategori = document.getElementById('modal-doc-kategori').value; const label = input.closest('label');
+  label.innerHTML = '<i class="ti ti-loader spin" style="font-size:13px;"></i> Uploading...'; label.style.background = '#555';
   try {
     const base64 = await fileToBase64(file);
     const res = await apiPost({ action: 'saveCustomerDoc', noWa: currentContactNoWa, kategori, namaFile: file.name, fileType: file.type || 'application/octet-stream', fileData: base64, uploadedBy: currentStaff?.nama || 'STAFF', keterangan: '' });
-    if (res.ok) { showToast('✅ ' + file.name + ' tersimpan!'); loadModalDocs(); }
-    else { showToast('Gagal upload: ' + (res.msg || '')); }
+    if (res.ok) { showToast('✅ ' + file.name + ' tersimpan!'); loadModalDocs(); } else { showToast('Gagal upload: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
-  finally {
-    label.style.background = '';
-    label.innerHTML = '<i class="ti ti-upload" style="font-size:13px;"></i>&nbsp;Upload<input type="file" id="modal-doc-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="position:absolute;width:0;height:0;opacity:0;" onchange="handleModalDocUpload(this)">';
-    input.value = '';
-  }
+  finally { label.style.background = ''; label.innerHTML = '<i class="ti ti-upload" style="font-size:13px;"></i>&nbsp;Upload<input type="file" id="modal-doc-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="position:absolute;width:0;height:0;opacity:0;" onchange="handleModalDocUpload(this)">'; input.value = ''; }
 }
 
-// ===================== PATCH 5: SMART NOTES =====================
+// ===================== SMART NOTES =====================
 window._snNoWa = '';
 window._snTag  = 'TODO';
-
 function selectNoteTag(el, tag) {
   window._snTag = tag;
   document.querySelectorAll('#modal-smart-notes .sn-tag').forEach(t => t.style.opacity = '0.5');
-  el.style.opacity = '1';
-  el.style.fontWeight = '700';
+  el.style.opacity = '1'; el.style.fontWeight = '700';
 }
-
 function showNoteModal(noWa) {
   if (!noWa) { showToast('Pilih chat dulu'); return; }
-  window._snNoWa = noWa;
-  window._snTag  = 'TODO';
-  document.querySelectorAll('#modal-smart-notes .sn-tag').forEach((t, i) => {
-    t.style.opacity  = i === 0 ? '1' : '0.5';
-    t.style.fontWeight = i === 0 ? '700' : '500';
-  });
-  const textEl = document.getElementById('sn-text');
-  if (textEl) textEl.value = '';
+  window._snNoWa = noWa; window._snTag = 'TODO';
+  document.querySelectorAll('#modal-smart-notes .sn-tag').forEach((t, i) => { t.style.opacity = i === 0 ? '1' : '0.5'; t.style.fontWeight = i === 0 ? '700' : '500'; });
+  const textEl = document.getElementById('sn-text'); if (textEl) textEl.value = '';
   document.getElementById('modal-smart-notes').style.display = 'flex';
   loadNotes(noWa);
 }
-
 async function submitNote(noWa) {
   const text = document.getElementById('sn-text')?.value.trim();
   if (!text) { showToast('Catatan tidak boleh kosong'); return; }
   if (!noWa) { showToast('Tidak ada customer yang dipilih'); return; }
   try {
-    const res = await apiPost({
-      action: 'saveSmartNote',
-      noWa,
-      text,
-      tag: window._snTag || 'TODO',
-      staffName: currentStaff?.nama || 'STAFF'
-    });
-    if (res.ok || res.success) {
-      document.getElementById('sn-text').value = '';
-      showToast('✅ Catatan disimpan!');
-      loadNotes(noWa);
-    } else {
-      showToast('Gagal simpan: ' + (res.msg || 'Error'));
-    }
+    const res = await apiPost({ action: 'saveSmartNote', noWa, text, tag: window._snTag || 'TODO', staffName: currentStaff?.nama || 'STAFF' });
+    if (res.ok || res.success) { document.getElementById('sn-text').value = ''; showToast('✅ Catatan disimpan!'); loadNotes(noWa); }
+    else { showToast('Gagal simpan: ' + (res.msg || 'Error')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
-
 async function loadNotes(noWa) {
-  const listEl = document.getElementById('sn-notes-list');
-  const countEl = document.getElementById('sn-count');
+  const listEl = document.getElementById('sn-notes-list'); const countEl = document.getElementById('sn-count');
   if (!listEl) return;
   listEl.innerHTML = '<div class="loading" style="padding:12px;">Memuat...</div>';
   try {
     const res = await apiGet({ action: 'getSmartNotes', noWa });
     const notes = res.notes || res.data || [];
     if (countEl) countEl.textContent = notes.length + ' catatan';
-    if (!notes.length) {
-      listEl.innerHTML = '<div style="font-size:11px;color:var(--text-hint);text-align:center;padding:16px;">Belum ada catatan</div>';
-      return;
-    }
+    if (!notes.length) { listEl.innerHTML = '<div style="font-size:11px;color:var(--text-hint);text-align:center;padding:16px;">Belum ada catatan</div>'; return; }
     const tagClass = { TODO: 'sn-tag-todo', INFO: 'sn-tag-info', PENTING: 'sn-tag-penting', DONE: 'sn-tag-done' };
     const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
-    listEl.innerHTML = notes.map(n => `
-      <div class="sn-note-item" id="sn-note-${escH(n.noteId || n.id || '')}">
-        <div style="margin-bottom:4px;">
-          <span class="sn-tag ${tagClass[n.tag] || 'sn-tag-info'}" style="font-size:9px;padding:2px 7px;">
-            ${tagEmoji[n.tag] || '📝'} ${n.tag || 'INFO'}
-          </span>
-        </div>
-        <div class="sn-note-text">${escH(n.text || n.catatan || '')}</div>
-        <div class="sn-note-footer">
-          <span class="sn-note-meta">${escH(n.staffName || '')} · ${n.createdAt ? new Date(n.createdAt).toLocaleDateString('id-ID') : ''}</span>
-          ${n.tag !== 'DONE' ? `<button class="sn-done-btn" onclick="doneNote('${escH(n.noteId || n.id || '')}','${escH(noWa)}')">✓ Done</button>` : '<span style="font-size:10px;color:var(--green-mid);">✅ Selesai</span>'}
-        </div>
-      </div>`).join('');
-  } catch(e) {
-    listEl.innerHTML = '<div style="font-size:11px;color:var(--red);text-align:center;padding:12px;">Gagal memuat catatan</div>';
-  }
+    listEl.innerHTML = notes.map(n => `<div class="sn-note-item" id="sn-note-${escH(n.noteId||n.id||'')}"><div style="margin-bottom:4px;"><span class="sn-tag ${tagClass[n.tag]||'sn-tag-info'}" style="font-size:9px;padding:2px 7px;">${tagEmoji[n.tag]||'📝'} ${n.tag||'INFO'}</span></div><div class="sn-note-text">${escH(n.text||n.catatan||'')}</div><div class="sn-note-footer"><span class="sn-note-meta">${escH(n.staffName||'')} · ${n.createdAt?new Date(n.createdAt).toLocaleDateString('id-ID'):''}</span>${n.tag!=='DONE'?`<button class="sn-done-btn" onclick="doneNote('${escH(n.noteId||n.id||'')}','${escH(noWa)}')">✓ Done</button>`:'<span style="font-size:10px;color:var(--green-mid);">✅ Selesai</span>'}</div></div>`).join('');
+  } catch(e) { listEl.innerHTML = '<div style="font-size:11px;color:var(--red);text-align:center;padding:12px;">Gagal memuat catatan</div>'; }
 }
-
 async function doneNote(noteId, noWa) {
   if (!noteId) return;
   try {
     const res = await apiPost({ action: 'doneSmartNote', noteId, noWa });
-    if (res.ok || res.success) {
-      showToast('✅ Catatan ditandai selesai');
-      loadNotes(noWa || window._snNoWa);
-    } else {
-      showToast('Gagal: ' + (res.msg || ''));
-    }
+    if (res.ok || res.success) { showToast('✅ Catatan ditandai selesai'); loadNotes(noWa || window._snNoWa); }
+    else { showToast('Gagal: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
