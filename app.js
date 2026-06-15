@@ -573,7 +573,8 @@ function renderBubble(m) {
   if (fileMatch) {
     const fileName = fileMatch[1]; const fileUrl = fileMatch[2]; const ispdf = fileName.toLowerCase().endsWith('.pdf');
     const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
-    return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
+    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
+    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
   }
 
   // Deteksi pesan gambar dengan fileId (format: [IMG:fileId:namaFile])
@@ -585,17 +586,38 @@ function renderBubble(m) {
       <button onclick="saveBubbleMedia('${escH(fileId)}','${escH(namaFile)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
       <button onclick="forwardBubbleMedia('${escH(fileId)}','${escH(namaFile)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">📤 Forward</button>
     </div>` : '';
+    const delBtnImg = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
     if (imgCache[fileId]) {
-      return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-loaded="1" style="width:200px;height:140px;border-radius:8px;overflow:hidden;"><img src="${imgCache[fileId]}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview('${imgCache[fileId]}','${escH(fileId)}','${escH(namaFile)}','')"></div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
+      return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-loaded="1" style="width:200px;height:140px;border-radius:8px;overflow:hidden;"><img src="${imgCache[fileId]}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview('${imgCache[fileId]}','${escH(fileId)}','${escH(namaFile)}','')"></div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnImg}</div></div></div>`;
     }
-    return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg" data-nama="${escH(namaFile)}">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
+    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg" data-nama="${escH(namaFile)}">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnImg}</div></div></div>`;
   }
 
   // Bubble teks biasa
   const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
-  return `<div class="bw ${isStaff?'right':''}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-txt">${escH(m.message)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}</div></div></div>`;
+  const delBtnTxt = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
+  return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-txt">${escH(m.message)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnTxt}</div></div></div>`;
 }
 
+
+
+async function deleteBubbleMsg(msgId) {
+  if (!msgId) return;
+  if (!confirm('Hapus pesan ini dari dashboard? Pesan yang sudah terkirim ke customer tidak terpengaruh.')) return;
+  try {
+    const res = await apiPost({ action: 'deleteMessage', msgId });
+    if (res.ok) {
+      const el = document.getElementById('msg-' + msgId);
+      if (el) el.remove();
+      renderedMsgIds.delete(msgId);
+      showToast('Pesan dihapus dari dashboard');
+    } else {
+      showToast('Gagal hapus: ' + (res.msg || ''));
+    }
+  } catch(e) {
+    showToast('Error: ' + e.toString());
+  }
+}
 
 function saveBubbleMedia(fileId, namaFile) {
   _previewFileId = fileId; _previewFileName = namaFile; _previewMediaUrl = '';
