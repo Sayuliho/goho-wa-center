@@ -198,6 +198,37 @@
   <div id="img-preview-name" style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:10px;"></div>
 </div>
 
+<!-- MODAL KIRIM DOKUMEN -->
+<div class="modal" id="modal-send-doc" style="display:none;">
+  <div class="modal-box modal-sm">
+    <div class="modal-header"><h3>📤 Kirim Dokumen ke Customer</h3><button onclick="closeModal('modal-send-doc')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;">
+        <div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">File yang akan dikirim:</div>
+        <div id="send-doc-file-name" style="font-weight:600;color:var(--text);"></div>
+      </div>
+      <div class="form-group">
+        <label>Kirim ke</label>
+        <select id="send-doc-target" onchange="toggleSendDocTarget(this.value)">
+          <option value="aktif">Customer aktif (chat ini)</option>
+          <option value="lain">Customer lain</option>
+        </select>
+      </div>
+      <div id="send-doc-custom-row" style="display:none;" class="form-group">
+        <label>Cari Customer (nama atau nomor WA)</label>
+        <div style="position:relative;">
+          <input type="text" id="send-doc-search" placeholder="Ketik nama atau nomor WA..." oninput="searchSendDocContact(this.value)" autocomplete="off">
+          <div id="send-doc-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-send-doc')">Batal</button>
+      <button class="btn-primary" id="send-doc-submit-btn" onclick="submitSendDoc()"><i class="ti ti-send"></i> Kirim</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL SIMPAN MEDIA -->
 <div class="modal" id="modal-save-media" style="display:none;">
   <div class="modal-box modal-sm">

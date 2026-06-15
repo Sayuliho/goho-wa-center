@@ -739,7 +739,7 @@ function renderDocList(docs) {
     html += `<div class="doc-category-title"><span>${kat}</span><span style="font-size:9px;">${groups[kat].length} file</span></div>`;
     groups[kat].forEach(d => {
       const safeId = escH(d.docId); const safeFile = escH(d.fileId); const safeName = escH(d.namaFile);
-      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div></div><div class="doc-item-acts"><div class="doc-act-btn" onclick="viewDoc('${safeFile}','${safeName}')" title="Lihat">👁️</div><div class="doc-act-btn" onclick="sendDocToCustomer('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div>${isImageFile(d.namaFile) ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Floating Viewer">🪟</div>` : ''}<div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
+      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div></div><div class="doc-item-acts">${isImageFile(d.namaFile) ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Floating Viewer">🪟</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
     });
   });
   el.innerHTML = html;
@@ -757,20 +757,75 @@ async function handleDocUpload(input) {
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { label.innerHTML = `<i class="ti ti-upload" style="font-size:14px;"></i> Upload Dokumen<input type="file" id="doc-file-input" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleDocUpload(this)">`; input.value = ''; }
 }
-function viewDoc(fileId, namaFile) {
-  if (!fileId) return;
-  const ext = (namaFile || '').split('.').pop().toLowerCase();
-  if (['jpg','jpeg','png','webp'].includes(ext)) {
-    const params = new URLSearchParams({ fileId, docName: namaFile || '', nama: currentRoom ? currentRoom.nama : '', noWa: currentRoom ? currentRoom.noWa : '' });
-    window.open('/viewer.html?' + params.toString(), '_blank');
-  } else {
-    window.open('https://drive.google.com/file/d/' + fileId + '/preview', '_blank');
-  }
+function viewDoc(fileId) { if (!fileId) return; window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank'); }
+// State untuk modal kirim dokumen
+let _sendDocId = '', _sendDocFileId = '', _sendDocNama = '';
+let _sendDocSearchTimer = null;
+
+function openSendDocModal(docId, fileId, namaFile) {
+  _sendDocId = docId; _sendDocFileId = fileId; _sendDocNama = namaFile;
+  document.getElementById('send-doc-file-name').textContent = namaFile;
+  document.getElementById('send-doc-target').value = 'aktif';
+  document.getElementById('send-doc-custom-row').style.display = 'none';
+  document.getElementById('send-doc-search').value = '';
+  document.getElementById('send-doc-results').style.display = 'none';
+  document.getElementById('send-doc-results').innerHTML = '';
+  document.getElementById('modal-send-doc').style.display = 'flex';
 }
+
+function toggleSendDocTarget(val) {
+  document.getElementById('send-doc-custom-row').style.display = val === 'lain' ? 'block' : 'none';
+  document.getElementById('send-doc-search').value = '';
+  document.getElementById('send-doc-results').style.display = 'none';
+}
+
+function searchSendDocContact(query) {
+  clearTimeout(_sendDocSearchTimer);
+  const results = document.getElementById('send-doc-results');
+  if (!query || query.trim().length < 2) { results.style.display = 'none'; return; }
+  _sendDocSearchTimer = setTimeout(() => {
+    const q = query.toLowerCase();
+    const matches = allContactsCache.filter(c =>
+      String(c.nama || '').toLowerCase().includes(q) ||
+      String(c.noWa || '').toLowerCase().includes(q)
+    ).slice(0, 6);
+    if (!matches.length) { results.innerHTML = '<div style="padding:8px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div>'; results.style.display = 'block'; return; }
+    results.innerHTML = matches.map(c => `<div onclick="selectSendDocContact('${escH(c.noWa)}','${escH(c.nama||c.noWa)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'"><div style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;">${getInitials(c.nama||c.noWa)}</div><div><div style="font-weight:600;">${escH(c.nama||c.noWa)}</div><div style="font-size:10px;color:var(--text-muted);">${c.noWa}</div></div></div>`).join('');
+    results.style.display = 'block';
+  }, 300);
+}
+
+function selectSendDocContact(noWa, nama) {
+  document.getElementById('send-doc-search').value = nama + ' (' + noWa + ')';
+  document.getElementById('send-doc-search').dataset.selectedNowa = noWa;
+  document.getElementById('send-doc-results').style.display = 'none';
+}
+
+async function submitSendDoc() {
+  const target = document.getElementById('send-doc-target').value;
+  let noWaTujuan = currentRoom ? currentRoom.noWa : '';
+  let roomIdTujuan = currentRoom ? currentRoom.roomId : '';
+  if (target === 'lain') {
+    const searchEl = document.getElementById('send-doc-search');
+    noWaTujuan = searchEl.dataset.selectedNowa || searchEl.value.trim();
+    if (!noWaTujuan) { showToast('Pilih customer tujuan dulu'); return; }
+    roomIdTujuan = '';
+  }
+  const btn = document.getElementById('send-doc-submit-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
+  try {
+    const res = await apiPost({action: 'sendDocToCustomer', noWa: noWaTujuan, fileId: _sendDocFileId, namaFile: _sendDocNama, roomId: roomIdTujuan, staffName: currentStaff.nama});
+    if (res.ok) {
+      showToast('✅ Dokumen berhasil dikirim!');
+      closeModal('modal-send-doc');
+      if (target === 'aktif' && currentRoom) { lastMsgCount = 0; loadMessages(currentRoom.roomId, true); }
+    } else { showToast('❌ Gagal: ' + (res.msg || '')); }
+  } catch(e) { showToast('Error: ' + e.toString()); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
+}
+
 async function sendDocToCustomer(docId, fileId, namaFile) {
-  if (!currentRoom) { showToast('Pilih chat dulu'); return; } if (!confirm('Kirim "' + namaFile + '" ke ' + currentRoom.nama + '?')) return;
-  showToast('Mengirim...');
-  try { const res = await apiPost({action: 'sendDocToCustomer', noWa: currentRoom.noWa, fileId, namaFile, roomId: currentRoom.roomId, staffName: currentStaff.nama}); if (res.ok) { showToast('✅ Dokumen berhasil dikirim!'); lastMsgCount = 0; loadMessages(currentRoom.roomId, true); } else { showToast('❌ Gagal: ' + (res.msg || '')); } } catch(e) { showToast('Error: ' + e.toString()); }
+  openSendDocModal(docId, fileId, namaFile);
 }
 async function deleteDoc(docId, fileId) {
   if (!confirm('Hapus dokumen ini? File akan dihapus permanen dari Drive.')) return;
