@@ -343,7 +343,7 @@ async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
     const area = document.getElementById('chat-area');
     const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100; const hasNewMessages = res.total > lastMsgCount; const hasMore = res.total > offset + 50;
     const bubblesHTML = res.data.map(m => renderBubble(m)).join('');
-    if (prepend) { const btn = document.getElementById('load-more-btn'); if (btn) btn.remove(); area.insertAdjacentHTML('afterbegin', bubblesHTML); } else { area.innerHTML = bubblesHTML; }
+    if (prepend) { const btn = document.getElementById('load-more-btn'); if (btn) btn.remove(); area.insertAdjacentHTML('afterbegin', bubblesHTML); } else if (hasNewMessages || forceScroll) { area.innerHTML = bubblesHTML; }
     if (hasMore && !document.getElementById('load-more-btn')) { area.insertAdjacentHTML('afterbegin', `<div id="load-more-btn" style="text-align:center;padding:8px;"><button onclick="loadMoreMessages('${roomId}')" style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;background:white;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:var(--font);">↑ Muat pesan lebih lama</button></div>`); }
     if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
     lastMsgCount = res.total;
