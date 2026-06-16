@@ -146,17 +146,17 @@ function startPolling() {
   if (pollInterval) clearInterval(pollInterval);
   apiGet({action: 'getWaitingQueue'}).then(res => { if (res.ok) lastWaitingRooms = new Set(res.data.map(c => c.roomId)); });
 
-  // Poll messages setiap 3 detik (hanya saat ada chat terbuka)
+  // Poll messages setiap 2 detik (hanya saat ada chat terbuka)
   setInterval(() => {
     if (currentRoom) fetchMessages(currentRoom.roomId, 0, false);
-  }, 3000);
+  }, 2000);
 
-  // Poll chat list setiap 5 detik (lebih jarang, tidak perlu secepat pesan)
+  // Poll chat list setiap 3 detik
   setInterval(() => {
     loadStats();
     if (currentMainTab === 'chat') loadChats(false);
     if (currentMainTab === 'dashboard') loadOwnerStats();
-  }, 5000);
+  }, 3000);
 
   // Poll waiting queue setiap 6 detik
   setInterval(async () => { try { const res = await apiGet({action: 'getWaitingQueue'}); if (res.ok) checkNewChats(res.data); } catch(e) {} }, 6000);
@@ -816,7 +816,8 @@ function renderDocList(docs) {
     html += `<div class="doc-category-title"><span>${kat}</span><span style="font-size:9px;">${groups[kat].length} file</span></div>`;
     groups[kat].forEach(d => {
       const safeId = escH(d.docId); const safeFile = escH(d.fileId); const safeName = escH(d.namaFile);
-      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div></div><div class="doc-item-acts">${isImageFile(d.namaFile) ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Floating Viewer">🪟</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
+      const isImg = isImageFile(d.namaFile);
+      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div></div><div class="doc-item-acts">${isImg ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Passport Viewer">🪟</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
     });
   });
   el.innerHTML = html;
