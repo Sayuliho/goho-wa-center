@@ -1041,6 +1041,14 @@ function splitNama(namaLengkap) {
   return { depan, belakang };
 }
 
+// State expand/collapse per pax index
+let mpxExpandedIdx = 0; // default pax pertama expand
+
+function toggleMpxCard(idx) {
+  mpxExpandedIdx = (mpxExpandedIdx === idx) ? -1 : idx;
+  renderMultiPaxList();
+}
+
 function renderMultiPaxList() {
   const list = document.getElementById('mpx-list');
   const count = document.getElementById('mpx-count');
@@ -1051,38 +1059,49 @@ function renderMultiPaxList() {
   }
   list.innerHTML = multiPaxList.map((p, i) => {
     const { depan, belakang } = splitNama(p.namaLengkap);
-    return `<div class="mpx-card">
-      <div class="mpx-card-header">
-        <div class="mpx-card-num">${i + 1}</div>
-        <div class="mpx-card-nama">${escH(p.namaLengkap)}</div>
-        <button onclick="copyPaxData(${i})" style="background:#25D366;border:none;color:white;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;">📋 Copy</button>
-        <button class="mpx-card-remove" onclick="removePassenger(${i})">✕</button>
-      </div>
-      <div class="mpx-name-row">
-        <div class="mpx-name-half">
-          <div class="mpx-name-half-label">Nama Depan</div>
-          <div class="mpx-name-half-row">
-            <span class="mpx-name-half-val">${escH(depan)}</span>
-            <button class="mpx-copy-btn" onclick="copyField(this,'${escH(depan)}')" title="Salin">📋</button>
-          </div>
-        </div>
-        <div class="mpx-name-half">
-          <div class="mpx-name-half-label">Nama Belakang</div>
-          <div class="mpx-name-half-row">
-            <span class="mpx-name-half-val">${escH(belakang)}</span>
-            <button class="mpx-copy-btn" onclick="copyField(this,'${escH(belakang)}')" title="Salin">📋</button>
-          </div>
-        </div>
-      </div>
-      <div class="mpx-fields">
-        ${mpxField('Paspor', p.noPaspor)}
-        ${mpxField('Tgl Lahir', p.tglLahir)}
-        ${mpxField('Expired', p.expiryPaspor)}
-        ${mpxField('Nationality', p.kewarganegaraan)}
-        ${p.jenisKelamin ? mpxField('Kelamin', p.jenisKelamin === 'L' ? 'Laki-laki' : p.jenisKelamin === 'P' ? 'Perempuan' : p.jenisKelamin) : ''}
-      </div>
+    const isLaki = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki';
+    const isPrmp = p.jenisKelamin === 'P' || p.jenisKelamin === 'Perempuan';
+    const title  = isLaki ? 'MR' : isPrmp ? 'MRS' : '';
+    const titleBadge = title ? `<span style="background:#1a6b4a;color:white;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-right:4px;">${title}</span>` : '';
+    const isExpanded = mpxExpandedIdx === i;
+    const paspor = p.noPaspor || '';
+
+    // Collapsed row — klik untuk expand
+    const collapsedRow = `<div class="mpx-collapsed-row" onclick="toggleMpxCard(${i})" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:${isExpanded?'#1a4a35':'#0d2b1f'};border-radius:${isExpanded?'10px 10px 0 0':'10px'};transition:background 0.15s;">
+      <div style="width:22px;height:22px;border-radius:50%;background:#25D366;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
+      ${titleBadge}
+      <div style="flex:1;font-size:12px;font-weight:600;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(p.namaLengkap)}</div>
+      ${paspor ? `<span style="font-size:10px;color:rgba(255,255,255,0.5);flex-shrink:0;">${escH(paspor)}</span>` : ''}
+      <span style="font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0;margin-left:4px;">${isExpanded ? '▲' : '▼'}</span>
+      <button onclick="event.stopPropagation();removePassenger(${i})" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.6);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>`;
+
+    // Expanded detail — field berurutan sesuai form airline
+    const expandedDetail = isExpanded ? `<div style="background:#0a1f16;border-radius:0 0 10px 10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex;gap:4px;margin-bottom:2px;">
+        <button onclick="copyPaxData(${i})" style="flex:1;background:#25D366;border:none;color:white;padding:5px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📋 Copy Semua</button>
+      </div>
+      ${mpxFieldAirline('Title', title || '-')}
+      ${mpxFieldAirline('Given Name', depan)}
+      ${mpxFieldAirline('Last Name', belakang)}
+      ${mpxFieldAirline('Nationality', p.kewarganegaraan)}
+      ${mpxFieldAirline('Tgl Lahir', p.tglLahir)}
+      ${mpxFieldAirline('No Paspor', p.noPaspor)}
+      ${mpxFieldAirline('Expired', p.expiryPaspor)}
+    </div>` : '';
+
+    return `<div style="margin-bottom:6px;">${collapsedRow}${expandedDetail}</div>`;
   }).join('');
+}
+
+function mpxFieldAirline(label, value) {
+  if (!value) return '';
+  const safe = escH(value);
+  return `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;background:rgba(255,255,255,0.04);">
+    <span style="font-size:10px;color:rgba(255,255,255,0.4);width:82px;flex-shrink:0;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">${label}</span>
+    <span style="flex:1;font-size:12px;color:white;font-weight:500;">${safe}</span>
+    <button class="mpx-copy-btn" onclick="copyField(this,'${safe}')" title="Salin" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:11px;flex-shrink:0;">📋</button>
+  </div>`;
 }
 
 function copyPaxData(idx) {
