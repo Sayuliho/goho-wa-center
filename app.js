@@ -454,7 +454,13 @@ let _saveSearchTimer = null;
 
 function openSaveModal() {
   if (!_previewFileId) { showToast('Tidak ada file untuk disimpan'); return; }
-  document.getElementById('save-file-name').value = _previewFileName || '';
+  // Deteksi ekstensi dari file asli — simpan ke window._saveFileExt
+  const origName = _previewFileName || '';
+  const dotIdx = origName.lastIndexOf('.');
+  window._saveFileExt = dotIdx >= 0 ? origName.substring(dotIdx).toLowerCase() : '.jpeg';
+  // Pre-fill nama file dengan nama asli, tapi user bisa ganti
+  document.getElementById('save-file-name').value = origName;
+  document.getElementById('save-file-name').placeholder = 'Contoh: Paspor Budi' + (window._saveFileExt || '.jpeg');
   document.getElementById('save-target').value = 'aktif';
   document.getElementById('save-custom-nowa-row').style.display = 'none';
   document.getElementById('save-contact-search').value = '';
@@ -491,8 +497,11 @@ function selectSaveContact(noWa, nama) {
 }
 
 async function submitSaveMedia() {
-  const namaFile = document.getElementById('save-file-name').value.trim();
+  let namaFile = document.getElementById('save-file-name').value.trim();
   if (!namaFile) { showToast('Nama file wajib diisi'); return; }
+  // Pastikan nama file punya ekstensi — tambahkan dari file asli jika tidak ada
+  const ext = window._saveFileExt || '.jpeg';
+  if (namaFile.indexOf('.') === -1) { namaFile = namaFile + ext; }
   const kategori = document.getElementById('save-kategori').value;
   const target   = document.getElementById('save-target').value;
   let noWaTujuan = currentRoom ? currentRoom.noWa : '';
@@ -1163,7 +1172,7 @@ async function loadModalDocs() {
       const uploadedAt = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) : '-';
       const div = document.createElement('div');
       div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);';
-      div.innerHTML = `<span style="font-size:20px;flex-shrink:0;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escH(doc.namaFile)}">${escH(doc.namaFile)}</div><div style="font-size:10px;color:var(--text-muted);">${escH(doc.kategori)} · ${uploadedAt}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button onclick="modalViewDoc('${doc.fileId}','${escH(doc.namaFile)}')" title="Lihat" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">👁️</button>${isImg ? `<button onclick="modalOpenViewer('${doc.fileId}','${escH(doc.namaFile)}')" title="Buka Passport Viewer" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🪟</button>` : ''}<button onclick="modalSendDoc('${doc.docId}','${doc.fileId}','${escH(doc.namaFile)}')" title="Kirim via WA" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">📤</button><button onclick="modalDeleteDoc('${doc.docId}','${doc.fileId}',this)" title="Hapus" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🗑️</button></div>`;
+      div.innerHTML = `<span style="font-size:20px;flex-shrink:0;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escH(doc.namaFile)}">${escH(doc.namaFile)}</div><div style="font-size:10px;color:var(--text-muted);">${escH(doc.kategori)} · ${uploadedAt}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button onclick="modalOpenViewer('${doc.fileId}','${escH(doc.namaFile)}')" title="Buka Passport Viewer" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🪟</button><button onclick="modalSendDoc('${doc.docId}','${doc.fileId}','${escH(doc.namaFile)}')" title="Kirim via WA" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">📤</button><button onclick="modalDeleteDoc('${doc.docId}','${doc.fileId}',this)" title="Hapus" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🗑️</button></div>`;
       list.appendChild(div);
     });
   } catch(e) { loading.style.display = 'none'; empty.style.display = 'block'; }
