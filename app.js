@@ -632,9 +632,10 @@ function renderBubble(m) {
     const isImg = ['jpg','jpeg','png','webp'].includes(ext);
     const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
     const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
+    const _fid = fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || '';
     const mediaActions = !isStaff ? `<div style="display:flex;gap:4px;margin-top:4px;">
-      <button onclick="saveBubbleMedia('','${escH(fileName)}','${escH(fileUrl)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
-      <a href="${escH(fileUrl)}" target="_blank" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;text-decoration:none;color:inherit;">📥 Buka</a>
+      <button onclick="saveBubbleMedia('${_fid}','${escH(fileName)}','${escH(fileUrl)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
+      <button onclick="openDocBlob('${_fid}','${escH(fileName)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">📄 Buka</button>
     </div>` : '';
     if (isImg) {
       return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<img src="${escH(fileUrl)}" style="max-width:200px;max-height:160px;border-radius:8px;cursor:pointer;" onclick="openImgPreview('${escH(fileUrl)}','','${escH(fileName)}','${escH(fileUrl)}')"><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(fileName)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
@@ -682,6 +683,26 @@ async function deleteBubbleMsg(msgId) {
   } catch(e) {
     showToast('Error: ' + e.toString());
   }
+}
+
+async function openDocBlob(fileId, fileName) {
+  if (!fileId) { showToast('File ID tidak ditemukan'); return; }
+  const btn = event && event.target ? event.target : null;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  try {
+    const res = await apiGet({ action: 'getImageBase64', fileId });
+    if (!res.ok) { showToast('Gagal ambil file: ' + (res.msg || '')); return; }
+    // getImageBase64 returns base64 — works for PDF too
+    const mimeType = fileName && fileName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : (res.mimeType || 'application/octet-stream');
+    const byteChars = atob(res.base64);
+    const byteArr = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+    const blob = new Blob([byteArr], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  } catch(e) { showToast('Error: ' + e.toString()); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '📄 Buka'; } }
 }
 
 function saveBubbleMedia(fileId, namaFile, mediaUrl) {
