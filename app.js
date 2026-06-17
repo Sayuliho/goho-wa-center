@@ -623,7 +623,7 @@ function renderBubble(m) {
   }
 
   // Deteksi pesan dokumen dari customer (MEDIA_URL ada, message = [Dokumen/PDF] atau [Dokumen/...])
-  const isDocMsg = m.message && typeof m.message === 'string' && m.message.match(/^\[Dokumen\/?/i);
+  const isDocMsg = m.message && typeof m.message === 'string' && m.message.match(/\[Dokumen/i);
   if (isDocMsg && m.mediaUrl) {
     const fileName = m.mediaFilename || 'Dokumen';
     const fileUrl = m.mediaUrl;
