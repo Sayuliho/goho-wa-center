@@ -476,7 +476,7 @@ async function getBase64FromFileId(fileId) {
 let _saveSearchTimer = null;
 
 function openSaveModal() {
-  if (!_previewFileId) { showToast('Tidak ada file untuk disimpan'); return; }
+  if (!_previewFileId && !_previewMediaUrl) { showToast('Tidak ada file untuk disimpan'); return; }
   // Deteksi ekstensi dari file asli — simpan ke window._saveFileExt
   const origName = _previewFileName || '';
   const dotIdx = origName.lastIndexOf('.');
@@ -536,7 +536,20 @@ async function submitSaveMedia() {
   const btn = document.getElementById('save-media-btn');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Menyimpan...';
   try {
-    const { base64, fileType } = await getBase64FromFileId(_previewFileId);
+    let base64, fileType;
+    if (_previewFileId) {
+      ({ base64, fileType } = await getBase64FromFileId(_previewFileId));
+    } else if (_previewMediaUrl) {
+      // PDF/dokumen dari customer — ambil via proxy menggunakan Drive URL
+      const fileIdMatch = _previewMediaUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (fileIdMatch) {
+        ({ base64, fileType } = await getBase64FromFileId(fileIdMatch[1]));
+      } else {
+        throw new Error('Tidak bisa mengambil file: URL tidak dikenali');
+      }
+    } else {
+      throw new Error('Tidak ada file untuk disimpan');
+    }
     const res = await apiPost({ action: 'saveCustomerDoc', noWa: noWaTujuan, kategori, namaFile, fileType, fileData: base64, uploadedBy: currentStaff.nama, keterangan: 'Disimpan dari bubble chat' });
     if (res.ok) {
       showToast('✅ Tersimpan ke Dokumen ' + (target === 'lain' ? noWaTujuan : 'Customer') + '!');
@@ -609,6 +622,26 @@ function renderBubble(m) {
     return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
   }
 
+  // Deteksi pesan dokumen dari customer (MEDIA_URL ada, message = [Dokumen/PDF] atau [Dokumen/...])
+  const isDocMsg = m.message && typeof m.message === 'string' && m.message.match(/^\[Dokumen\/?/i);
+  if (isDocMsg && m.mediaUrl) {
+    const fileName = m.mediaFilename || 'Dokumen';
+    const fileUrl = m.mediaUrl;
+    const ext = (m.mediaExtension || fileName.split('.').pop() || '').toLowerCase();
+    const ispdf = ext === 'pdf';
+    const isImg = ['jpg','jpeg','png','webp'].includes(ext);
+    const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
+    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
+    const mediaActions = !isStaff ? `<div style="display:flex;gap:4px;margin-top:4px;">
+      <button onclick="saveBubbleMedia('','${escH(fileName)}','${escH(fileUrl)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
+      <a href="${escH(fileUrl)}" target="_blank" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;text-decoration:none;color:inherit;">📥 Buka</a>
+    </div>` : '';
+    if (isImg) {
+      return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<img src="${escH(fileUrl)}" style="max-width:200px;max-height:160px;border-radius:8px;cursor:pointer;" onclick="openImgPreview('${escH(fileUrl)}','','${escH(fileName)}','${escH(fileUrl)}')"><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(fileName)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
+    }
+    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div>${mediaActions}</div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
+  }
+
   // Deteksi pesan gambar dengan fileId (format: [IMG:fileId:namaFile])
   const imgMatch = m.message && typeof m.message === 'string' && m.message.match(/^\[IMG:([^:]+):(.+)\]$/);
   if (imgMatch) {
@@ -651,8 +684,8 @@ async function deleteBubbleMsg(msgId) {
   }
 }
 
-function saveBubbleMedia(fileId, namaFile) {
-  _previewFileId = fileId; _previewFileName = namaFile; _previewMediaUrl = '';
+function saveBubbleMedia(fileId, namaFile, mediaUrl) {
+  _previewFileId = fileId || ''; _previewFileName = namaFile; _previewMediaUrl = mediaUrl || '';
   openSaveModal();
 }
 function forwardBubbleMedia(fileId, namaFile) {
