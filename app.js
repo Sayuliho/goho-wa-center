@@ -324,7 +324,8 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
       // Sudah di-cache? Langsung tampil, tidak perlu fetch
       if (imgCache[fileId]) {
         el.dataset.loaded = '1';
-        el.innerHTML = '<img src="' + imgCache[fileId] + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
+        const _fid = fileId; const _fna = el.dataset.nama || 'gambar';
+        el.innerHTML = '<img src="' + imgCache[fileId] + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview(\'' + imgCache[_fid] + '\',\'' + _fid + '\',\'' + _fna + '\',\'\')">';
         imgObserver.unobserve(el);
         return;
       }
@@ -342,7 +343,8 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
           if (data.base64) {
             const src = 'data:' + (data.mimeType || mimeType) + ';base64,' + data.base64;
             imgCache[fileId] = src; // simpan ke cache
-            el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
+            const _fid = fileId; const _fna = el.dataset.nama || 'gambar';
+            el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview(\'' + src + '\',\'' + _fid + '\',\'' + _fna + '\',\'\')">';
           } else {
             el.innerHTML = '<div style="padding:8px;font-size:11px;color:#aaa;">🖼️ Gambar tidak tersedia</div>';
           }
@@ -413,7 +415,8 @@ async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
       const fid = el.dataset.fileId;
       if (fid && imgCache[fid]) {
         el.dataset.loaded = '1';
-        el.innerHTML = '<img src="' + imgCache[fid] + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
+        const _fna = el.dataset.nama || 'gambar';
+        el.innerHTML = '<img src="' + imgCache[fid] + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview(\'' + imgCache[fid] + '\',\'' + fid + '\',\'' + _fna + '\',\'\')">';
       } else if (imgObserver) {
         imgObserver.observe(el);
       }
