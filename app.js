@@ -638,7 +638,7 @@ function renderBubble(m) {
       <button onclick="openDocBlob('${_fid}','${escH(fileName)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">📄 Buka</button>
     </div>` : '';
     if (isImg) {
-      return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<img src="${escH(fileUrl)}" style="max-width:200px;max-height:160px;border-radius:8px;cursor:pointer;" onclick="openImgPreview('${escH(fileUrl)}','','${escH(fileName)}','${escH(fileUrl)}')"><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(fileName)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
+      return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<div class="b-img-lazy" data-file-id="${escH(_fid)}" data-mime="image/jpeg" data-nama="${escH(fileName)}" style="width:200px;height:140px;border-radius:8px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="openDocBlob('${escH(_fid)}','${escH(fileName)}',true)">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(fileName)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
     }
     return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div>${mediaActions}</div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
   }
@@ -685,24 +685,48 @@ async function deleteBubbleMsg(msgId) {
   }
 }
 
-async function openDocBlob(fileId, fileName) {
+async function openDocBlob(fileId, fileName, isImage) {
   if (!fileId) { showToast('File ID tidak ditemukan'); return; }
   const btn = event && event.target ? event.target : null;
+  const origLabel = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
   try {
     const res = await apiGet({ action: 'getImageBase64', fileId });
     if (!res.ok) { showToast('Gagal ambil file: ' + (res.msg || '')); return; }
-    // getImageBase64 returns base64 — works for PDF too
-    const mimeType = fileName && fileName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : (res.mimeType || 'application/octet-stream');
-    const byteChars = atob(res.base64);
-    const byteArr = new Uint8Array(byteChars.length);
-    for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
-    const blob = new Blob([byteArr], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    const mimeType = res.mimeType || (fileName && fileName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+    const src = 'data:' + mimeType + ';base64,' + res.base64;
+    if (isImage || mimeType.startsWith('image/')) {
+      _previewFileId = fileId; _previewFileName = fileName || ''; _previewMediaUrl = '';
+      document.getElementById('img-preview-src').src = src;
+      document.getElementById('img-preview-name').textContent = fileName || '';
+      document.getElementById('modal-img-preview').style.display = 'flex';
+    } else {
+      openPdfModal(src, fileName);
+    }
   } catch(e) { showToast('Error: ' + e.toString()); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = '📄 Buka'; } }
+  finally { if (btn) { btn.disabled = false; btn.textContent = origLabel || '📄 Buka'; } }
+}
+
+function openPdfModal(src, fileName) {
+  let modal = document.getElementById('modal-pdf-viewer');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-pdf-viewer';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10000;flex-direction:column;align-items:center;justify-content:center;';
+    modal.innerHTML = `<div style="position:absolute;top:12px;right:12px;display:flex;gap:8px;"><button id="pdf-modal-dl" style="background:#25D366;border:none;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">⬇️ Download</button><button onclick="closePdfModal()" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:8px 14px;border-radius:8px;font-size:14px;cursor:pointer;">✕</button></div><iframe id="pdf-modal-frame" style="width:95vw;height:88vh;border:none;border-radius:8px;background:white;margin-top:44px;"></iframe><div id="pdf-modal-name" style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:8px;"></div>`;
+    document.body.appendChild(modal);
+  }
+  const frame = document.getElementById('pdf-modal-frame');
+  const dlBtn = document.getElementById('pdf-modal-dl');
+  document.getElementById('pdf-modal-name').textContent = fileName || '';
+  frame.src = src;
+  dlBtn.onclick = () => { const a = document.createElement('a'); a.href = src; a.download = fileName || 'dokumen.pdf'; document.body.appendChild(a); a.click(); document.body.removeChild(a); };
+  modal.style.display = 'flex';
+}
+
+function closePdfModal() {
+  const modal = document.getElementById('modal-pdf-viewer');
+  if (modal) { modal.style.display = 'none'; const f = document.getElementById('pdf-modal-frame'); if (f) f.src = ''; }
 }
 
 function saveBubbleMedia(fileId, namaFile, mediaUrl) {
