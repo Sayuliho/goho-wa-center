@@ -171,13 +171,8 @@ async function loadChats(showLoading = true) {
   try {
     let res;
     if (currentTab === 'aktif') {
-      if (currentStaff.role === 'OWNER') { res = await apiGet({action: 'getAllChats'}); }
-      else {
-        const [waitRes, myRes] = await Promise.all([apiGet({action: 'getWaitingQueue'}), apiGet({action: 'getMyChats', staffName: currentStaff.nama})]);
-        const combined = []; const seen = new Set();
-        [...(waitRes.data || []), ...(myRes.data || [])].forEach(c => { if (!seen.has(c.roomId)) { seen.add(c.roomId); combined.push(c); } });
-        res = { ok: true, data: combined };
-      }
+      // Semua staff dan owner lihat semua chat aktif
+      res = await apiGet({action: 'getAllChats'});
     } else { res = await apiGet({action: 'getClosedChats'}); }
     if (res.ok) {
       allChats = res.data || [];
@@ -300,10 +295,35 @@ function openContactFromChat() {
 function renderActionRow(chat) {
   const row = document.getElementById('action-row'); const reply = document.getElementById('reply-row'); const uploadBar = document.getElementById('upload-bar');
   const isMyChat = chat.assignedTo === currentStaff.nama; const isOwner = currentStaff.role === 'OWNER';
+  const isUnassigned = !chat.assignedTo || chat.status === 'WAITING';
+
   if (isMyChat || isOwner) {
+    // Chat milik sendiri atau owner — full action
     row.innerHTML = `<button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button><button class="abtn abtn-multipax" onclick="toggleMultiPax()"><i class="ti ti-users"></i> Multi Pax</button><button class="abtn abtn-booked" onclick="tandaiBooked()"><i class="ti ti-check"></i> Booked</button><button class="abtn abtn-lepas" onclick="lepasChat()"><i class="ti ti-logout"></i> Lepas</button><button class="abtn abtn-selesai" onclick="selesaiChat()"><i class="ti ti-circle-check"></i> Selesai</button>`;
     reply.style.display = 'flex';
-  } else { row.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px;">Di-handle oleh ${escH(chat.assignedTo)}</div>`; reply.style.display = 'none'; uploadBar.classList.remove('show'); }
+  } else if (isUnassigned) {
+    // Belum ada yang handle — tampilkan tombol Ambil Chat
+    row.innerHTML = `<button class="abtn abtn-booked" onclick="ambilChat()" style="background:#0F6E56;"><i class="ti ti-hand-finger"></i> Ambil Chat</button>`;
+    reply.style.display = 'none'; uploadBar.classList.remove('show');
+  } else {
+    // Di-handle staff lain — tampilkan info + tombol Ambil Chat
+    row.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;"><span style="font-size:11px;color:var(--text-muted);">Di-handle oleh <strong>${escH(chat.assignedTo)}</strong></span><button class="abtn abtn-lepas" onclick="ambilChat()" style="padding:4px 10px;font-size:11px;"><i class="ti ti-hand-finger"></i> Ambil</button></div>`;
+    reply.style.display = 'none'; uploadBar.classList.remove('show');
+  }
+}
+
+async function ambilChat() {
+  if (!currentRoom) return;
+  const res = await apiPost({action: 'assignChat', roomId: currentRoom.roomId, staffName: currentStaff.nama});
+  if (res.ok) {
+    currentRoom.assignedTo = currentStaff.nama;
+    currentRoom.status = 'ASSIGNED';
+    renderActionRow(currentRoom);
+    loadChats(false);
+    showToast('✅ Chat diambil oleh ' + currentStaff.nama);
+  } else {
+    showToast('Gagal ambil chat: ' + (res.msg || ''));
+  }
 }
 
 // ===================== MESSAGES =====================
