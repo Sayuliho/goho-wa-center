@@ -1045,13 +1045,39 @@ async function loadSmartContext(roomId, noWa) {
   block.style.display = 'block'; loading.textContent = 'scanning...'; list.innerHTML = '<div class="context-scanning"><span class="poll-dot"></span> Mendeteksi kode booking...</div>';
   try {
     const res = await apiGet({action:'getBookingContext', roomId, noWa});
-    if (!res.ok||!res.bookings||res.bookings.length===0) { loading.textContent = ''; list.innerHTML = '<div class="context-none">Belum ada kode booking terdeteksi</div>'; return; }
-    loading.textContent = res.bookings.length + ' booking'; list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
+    if (res.ok && res.bookings && res.bookings.length > 0) {
+      loading.textContent = res.bookings.length + ' booking';
+      list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
+      return;
+    }
+
+    // Fallback: belum ada kode PNR yang disebut di chat — coba cari booking aktif langsung by noWa
+    loading.textContent = 'cek booking aktif...';
+    const upRes = await apiGet({action:'getUpcomingBooking', noWa});
+    if (upRes.ok && upRes.bookings && upRes.bookings.length > 0) {
+      loading.textContent = upRes.bookings.length + ' booking (tanpa kode)';
+      list.innerHTML = upRes.bookings.map(b => renderUpcomingCard(b)).join('');
+      return;
+    }
+
+    loading.textContent = '';
+    list.innerHTML = '<div class="context-none">Belum ada kode booking terdeteksi</div>';
   } catch(e) { loading.textContent = ''; list.innerHTML = '<div class="context-none">Error loading konteks</div>'; }
 }
 function renderContextCard(b) {
   const emoji = getMaskapaiEmoji(b.maskapai); const allKodes = (b.allKodes||[b.kode]).join(' · ');
   return `<div class="context-booking-card"><div class="context-maskapai"><span>${emoji} ${escH(b.maskapai)}</span><span style="font-size:9px;color:var(--text-hint);">${escH(b.tglTerbang)}</span></div><div class="context-kode">${escH(allKodes)}</div><div class="context-rute">✈️ ${escH(b.jurusan)}</div><div class="context-detail">👤 ${escH(b.nama)}<br>🛒 Beli: ${escH(b.tglBeli)}${b.harga ? ' · ' + formatHarga(b.harga) : ''}${b.noInv&&b.noInv!=='-' ? '<br>📋 '+escH(b.noInv) : ''}</div><div class="context-action-row"><button class="ctx-btn ctx-btn-checkin" onclick="quickCheckin('${escH(b.kode)}','${escH(b.maskapai)}','${escH(b.jurusan)}')">🛫 Check-in</button><button class="ctx-btn ctx-btn-arrival" onclick="quickArrival('${escH(b.jurusan)}')">📋 Arrival Card</button><button class="ctx-btn ctx-btn-beacukai" onclick="quickBeaCukai()">🛃 Bea Cukai</button></div></div>`;
+}
+// v28: Card untuk hasil fallback getUpcomingBooking — TANPA kode PNR terverifikasi dari chat.
+// Sengaja dibedakan visual (border abu-abu, label "tanpa kode", warning) supaya staff tahu
+// data ini belum dicocokkan ke chat customer, beda dengan renderContextCard yang sudah verified.
+function renderUpcomingCard(b) {
+  return `<div class="context-booking-card" style="border-left:3px solid #999;">
+    <div class="context-maskapai"><span>📋 ${escH(b.tipe)}</span><span style="font-size:9px;color:var(--text-hint);">${escH(b.tglEventFmt)}</span></div>
+    <div class="context-rute">👤 ${escH(b.namaTamu)}</div>
+    <div class="context-detail">${escH(b.detail)}</div>
+    <div style="font-size:9px;color:#b8860b;margin-top:4px;">⚠️ Tanpa kode PNR dari chat — cocokkan manual sebelum dipakai</div>
+  </div>`;
 }
 function quickCheckin(kode, maskapai, jurusan) {
   const urls = {'LION':'https://checkin.lionair.co.id','AIRASIA':'https://www.airasia.com/check-in/v2/en/gb','CITILINK':'https://www.citilink.co.id/check-in','GARUDA':'https://www.garuda-indonesia.com/id/id/garuda-online/check-in','BATIK':'https://www.batikair.com/id/id/check-in'};
