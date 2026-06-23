@@ -44,7 +44,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ===================== UTILS =====================
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; resetDraggedModal(id); }
 function escH(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 async function apiGet(params) {
   params._t = Date.now();
@@ -477,6 +477,85 @@ async function getBase64FromFileId(fileId) {
 
 let _saveSearchTimer = null;
 
+// ============================================================
+// v32: DRAGGABLE MODAL
+// Membuat modal-box di dalam suatu modal overlay bisa digeser bebas
+// dengan klik-tahan-drag di mana saja di area modal-box, KECUALI di
+// atas elemen interaktif (input/select/textarea/button/label) supaya
+// staff tetap bisa mengetik/klik normal di dalamnya.
+// Hanya aktif untuk mouse (desktop) — di touch device (HP/tablet)
+// drag dimatikan supaya tidak mengganggu scroll/tap normal.
+// Posisi modal otomatis reset ke tengah setiap kali ditutup, karena
+// kita hanya menambah transform sementara lewat inline style yang
+// dibuang lagi saat modal disembunyikan (lihat resetDraggedModal()).
+// ============================================================
+const _draggableInitialized = {};
+
+function isInteractiveElement(el) {
+  if (!el) return false;
+  const tag = (el.tagName || '').toUpperCase();
+  return ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'LABEL', 'A'].includes(tag);
+}
+
+function resetDraggedModal(modalId) {
+  const box = document.querySelector('#' + modalId + ' .modal-box');
+  if (box) {
+    box.style.transform = '';
+    box.removeAttribute('data-drag-x');
+    box.removeAttribute('data-drag-y');
+  }
+}
+
+function makeModalDraggable(modalId) {
+  // Hanya pasang listener sekali per modal, supaya tidak dobel kalau
+  // openSaveModal() dipanggil berkali-kali dalam satu sesi.
+  if (_draggableInitialized[modalId]) {
+    resetDraggedModal(modalId); // tetap reset posisi setiap kali dibuka ulang
+    return;
+  }
+  _draggableInitialized[modalId] = true;
+
+  const overlay = document.getElementById(modalId);
+  const box = overlay ? overlay.querySelector('.modal-box') : null;
+  if (!overlay || !box) return;
+
+  let isDraggingModal = false;
+  let startX = 0, startY = 0;
+  let baseX = 0, baseY = 0;
+
+  box.style.cursor = 'grab';
+
+  box.addEventListener('mousedown', (e) => {
+    if (isInteractiveElement(e.target)) return; // jangan drag kalau klik input/button/dll
+    isDraggingModal = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    baseX = parseFloat(box.dataset.dragX || '0');
+    baseY = parseFloat(box.dataset.dragY || '0');
+    box.style.cursor = 'grabbing';
+    box.style.transition = 'none';
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDraggingModal) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const newX = baseX + dx;
+    const newY = baseY + dy;
+    box.style.transform = 'translate(' + newX + 'px, ' + newY + 'px)';
+    box.dataset.dragX = newX;
+    box.dataset.dragY = newY;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDraggingModal) {
+      isDraggingModal = false;
+      box.style.cursor = 'grab';
+    }
+  });
+}
+
 function openSaveModal() {
   if (!_previewFileId && !_previewMediaUrl) { showToast('Tidak ada file untuk disimpan'); return; }
   // Deteksi ekstensi dari file asli — simpan ke window._saveFileExt
@@ -491,6 +570,13 @@ function openSaveModal() {
   document.getElementById('save-contact-search').value = '';
   document.getElementById('save-contact-results').style.display = 'none';
   document.getElementById('modal-save-media').style.display = 'flex';
+  // v32: modal ini bisa digeser bebas, supaya tidak menutupi foto
+  // paspor di belakangnya saat staff mengetik nama sesuai paspor.
+  // Hanya aktif di desktop (mouse) — di mobile dilewati otomatis
+  // karena drag pakai mousedown/mousemove, bukan touch events.
+  if (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches) {
+    makeModalDraggable('modal-save-media');
+  }
 }
 
 function toggleSaveTarget(val) {
