@@ -1180,6 +1180,44 @@ function toggleMpxCard(idx) {
   renderMultiPaxList();
 }
 
+// Parse tanggal terbang dari berbagai format (DD/MM/YYYY atau ISO) jadi Date object
+function parseFlightDateForAge(val) {
+  if (!val) return null;
+  const str = String(val).trim();
+  if (str.includes('/')) {
+    const [d, m, y] = str.split('/');
+    const dt = new Date(Number(y), Number(m) - 1, Number(d));
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+  const dt = new Date(str);
+  return isNaN(dt.getTime()) ? null : dt;
+}
+
+// Hitung umur penumpang pada tanggal referensi (tanggal terbang kalau ada, fallback hari ini)
+function calcPaxAgeInfo(tglLahirStr) {
+  const lahir = parseFlightDateForAge(tglLahirStr);
+  if (!lahir) return null;
+  const ref = currentFlightDate || new Date();
+  const isEstimate = !currentFlightDate;
+  let age = ref.getFullYear() - lahir.getFullYear();
+  const m = ref.getMonth() - lahir.getMonth();
+  if (m < 0 || (m === 0 && ref.getDate() < lahir.getDate())) age -= 1;
+  let tipe = 'ADT';
+  if (age < 2) tipe = 'INF';
+  else if (age < 12) tipe = 'CHD';
+  return { age, tipe, isEstimate };
+}
+
+function paxTypeBadgeHtml(tglLahirStr) {
+  const info = calcPaxAgeInfo(tglLahirStr);
+  if (!info) return '';
+  const colorMap = { ADT: '#1a6b4a', CHD: '#a16207', INF: '#7e22ce' };
+  const bg = colorMap[info.tipe] || '#444';
+  const estimateMark = info.isEstimate ? ' title="Estimasi dari tanggal hari ini — tgl terbang belum terdeteksi"' : '';
+  const estimateText = info.isEstimate ? '~' : '';
+  return `<span${estimateMark} style="background:${bg};color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;white-space:nowrap;">${estimateText}${info.tipe} · ${info.age}th</span>`;
+}
+
 function renderMultiPaxList() {
   const list = document.getElementById('mpx-list');
   const count = document.getElementById('mpx-count');
