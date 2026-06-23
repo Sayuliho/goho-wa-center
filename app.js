@@ -1239,8 +1239,8 @@ function renderMultiPaxList() {
     // Collapsed row — klik untuk expand
     const collapsedRow = `<div class="mpx-collapsed-row" onclick="toggleMpxCard(${i})" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:${isExpanded?'#1a4a35':'#0d2b1f'};border-radius:${isExpanded?'10px 10px 0 0':'10px'};transition:background 0.15s;">
       <div style="width:22px;height:22px;border-radius:50%;background:#25D366;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
-      ${titleBadge}
-      <div style="flex:1;font-size:12px;font-weight:600;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(p.namaLengkap)}</div>
+      ${titleBadge}${paxTypeBadge}
+    <div style="flex:1;font-size:12px;font-weight:600;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(p.namaLengkap)}</div>
       ${paspor ? `<span style="font-size:10px;color:rgba(255,255,255,0.5);flex-shrink:0;">${escH(paspor)}</span>` : ''}
       <span style="font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0;margin-left:4px;">${isExpanded ? '▲' : '▼'}</span>
       <button onclick="event.stopPropagation();removePassenger(${i})" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.6);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
