@@ -3,6 +3,7 @@ let currentStaff = null, currentRoom = null, currentTab = 'aktif', currentMainTa
 let allChats = [], allRoomsCache = [], allContactsCache = [];
 let currentContactNoWa = '', currentContactNama = '';
 let pollInterval = null, lastMsgCount = 0, unreadCounts = {}, lastSeenAt = {};
+let currentFlightDate = null; // tanggal terbang aktif untuk hitung ADT/CHD/INF di Multi Pax — null = belum terdeteksi, fallback ke hari ini
 
 // ===================== SESSION MANAGEMENT =====================
 function saveSession(staff) {
