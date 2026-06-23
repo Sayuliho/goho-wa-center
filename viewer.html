@@ -284,6 +284,17 @@ body {
   from { opacity: 0; transform: translateX(-50%) translateY(16px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+
+/* ===== RENAME BUTTON (di dalam header-customer) ===== */
+.btn-rename-doc {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: rgba(255,255,255,0.1); border: none;
+  color: rgba(255,255,255,0.7); cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0; margin-left: 2px;
+  transition: background 0.15s;
+}
+.btn-rename-doc:hover { background: var(--green-mid); color: white; }
 </style>
 </head>
 <body>
@@ -300,6 +311,9 @@ body {
       <div class="header-customer-name" id="customer-name">-</div>
       <div class="header-customer-doc" id="doc-name">-</div>
     </div>
+    <button class="btn-rename-doc" id="btn-rename-doc" onclick="renameCurrentDoc()" title="Ganti Nama File">
+      <i class="ti ti-edit"></i>
+    </button>
   </div>
   <button class="btn-close" onclick="window.close()" title="Tutup"><i class="ti ti-x"></i></button>
 </div>
@@ -471,6 +485,8 @@ let fileId = '';
 let originalUrl = '';
 let noWaCustomer = '';
 let namaCustomer = '';
+let currentDocId = '';
+let currentDocName = '';
 
 // ===== INIT =====
 window.addEventListener('DOMContentLoaded', () => {
@@ -480,6 +496,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const docName = params.get('docName') || '';
   noWaCustomer = params.get('noWa') || '';
   namaCustomer = nama;
+  currentDocId = params.get('docId') || '';
+  currentDocName = docName;
 
   // Set customer info
   if (nama) {
@@ -487,6 +505,12 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('customer-name').textContent = nama;
     document.getElementById('doc-name').textContent = docName || 'Dokumen';
     document.title = 'GOHO Viewer — ' + nama;
+  }
+
+  // Tombol rename hanya muncul kalau docId tersedia (dikirim dari Document Hub)
+  if (currentDocId) {
+    document.getElementById('customer-info').style.display = 'flex';
+    document.getElementById('btn-rename-doc').style.display = 'flex';
   }
 
   if (fileId) {
@@ -545,6 +569,38 @@ function retryLoad() {
 
 function openOriginal() {
   if (originalUrl) window.open(originalUrl, '_blank');
+}
+
+// ===== RENAME DOKUMEN =====
+// Dipanggil dari tombol ✏️ di header-customer. Hanya aktif kalau viewer
+// dibuka dengan docId di URL (artinya dibuka dari Document Hub, bukan
+// dari bubble chat biasa). Update label NAMA_FILE di sheet CUSTOMER_DOCS
+// lewat action 'renameCustomerDoc' — tidak rename file fisik di Drive.
+async function renameCurrentDoc() {
+  if (!currentDocId) {
+    showToast('❌ Dokumen ini belum punya docId — tidak bisa di-rename', 'error');
+    return;
+  }
+  const namaBaru = prompt('Nama file baru (sesuai paspor):', currentDocName);
+  if (!namaBaru || !namaBaru.trim()) return;
+  const trimmed = namaBaru.trim();
+
+  try {
+    const resp = await fetch('/api/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'renameCustomerDoc', docId: currentDocId, namaFileBaru: trimmed })
+    });
+    const result = await resp.json();
+    if (!result.ok) throw new Error(result.msg || 'Gagal rename');
+
+    currentDocName = trimmed;
+    document.getElementById('doc-name').textContent = trimmed;
+    document.title = 'GOHO Viewer — ' + (namaCustomer || trimmed);
+    showToast('✅ Nama file diubah ke "' + trimmed + '"');
+  } catch (err) {
+    showToast('❌ ' + (err.message || 'Gagal rename'), 'error');
+  }
 }
 
 // ===== TRANSFORM =====
