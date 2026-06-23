@@ -929,7 +929,7 @@ function renderDocList(docs) {
     groups[kat].forEach(d => {
       const safeId = escH(d.docId); const safeFile = escH(d.fileId); const safeName = escH(d.namaFile);
       const isImg = isImageFile(d.namaFile);
-      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div></div><div class="doc-item-acts">${isImg ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}')" title="Buka Passport Viewer">🪟</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
+      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div></div><div class="doc-item-acts">${isImg ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}','${safeId}')" title="Buka Passport Viewer">🪟</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
     });
   });
   el.innerHTML = html;
@@ -1023,11 +1023,11 @@ async function deleteDoc(docId, fileId) {
 }
 
 // ===================== PiP FLOATING VIEWER =====================
-function openPiP(fileId, namaFile) {
+function openPiP(fileId, namaFile, docId) {
   if (!fileId) return;
   const nama = currentRoom ? currentRoom.nama : '';
   const noWa = currentRoom ? currentRoom.noWa : '';
-  const params = new URLSearchParams({ fileId, docName: namaFile || '', nama, noWa });
+  const params = new URLSearchParams({ fileId, docName: namaFile || '', nama, noWa, docId: docId || '' });
   const url = '/viewer.html?' + params.toString();
   const pw = Math.min(960, window.screen.width - 80);
   const ph = Math.min(720, window.screen.height - 80);
@@ -1047,22 +1047,24 @@ async function loadSmartContext(roomId, noWa) {
   block.style.display = 'block'; loading.textContent = 'scanning...'; list.innerHTML = '<div class="context-scanning"><span class="poll-dot"></span> Mendeteksi kode booking...</div>';
   try {
     const res = await apiGet({action:'getBookingContext', roomId, noWa});
-if (res.ok && res.bookings && res.bookings.length > 0) {
-  loading.textContent = res.bookings.length + ' booking';
-  list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
-  if (res.bookings[0].tglTerbang) currentFlightDate = parseFlightDateForAge(res.bookings[0].tglTerbang);
-  return;
-}
+    if (res.ok && res.bookings && res.bookings.length > 0) {
+      loading.textContent = res.bookings.length + ' booking';
+      list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
+      if (res.bookings[0].tglTerbang) currentFlightDate = parseFlightDateForAge(res.bookings[0].tglTerbang);
+      if (multiPaxOpen) renderMultiPaxList(); // refresh badge kalau panel Multi Pax sedang dibuka
+      return;
+    }
 
-// Fallback: belum ada kode PNR yang disebut di chat — coba cari booking aktif langsung by noWa
-loading.textContent = 'cek booking aktif...';
-const upRes = await apiGet({action:'getUpcomingBooking', noWa});
-if (upRes.ok && upRes.bookings && upRes.bookings.length > 0) {
-  loading.textContent = upRes.bookings.length + ' booking (tanpa kode)';
-  list.innerHTML = upRes.bookings.map(b => renderUpcomingCard(b)).join('');
-  if (upRes.bookings[0].tglEvent) currentFlightDate = parseFlightDateForAge(upRes.bookings[0].tglEvent);
-  return;
-}
+    // Fallback: belum ada kode PNR yang disebut di chat — coba cari booking aktif langsung by noWa
+    loading.textContent = 'cek booking aktif...';
+    const upRes = await apiGet({action:'getUpcomingBooking', noWa});
+    if (upRes.ok && upRes.bookings && upRes.bookings.length > 0) {
+      loading.textContent = upRes.bookings.length + ' booking (tanpa kode)';
+      list.innerHTML = upRes.bookings.map(b => renderUpcomingCard(b)).join('');
+      if (upRes.bookings[0].tglEvent) currentFlightDate = parseFlightDateForAge(upRes.bookings[0].tglEvent);
+      if (multiPaxOpen) renderMultiPaxList(); // refresh badge kalau panel Multi Pax sedang dibuka
+      return;
+    }
 
     loading.textContent = '';
     list.innerHTML = '<div class="context-none">Belum ada kode booking terdeteksi</div>';
