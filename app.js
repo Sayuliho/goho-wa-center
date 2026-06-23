@@ -1047,20 +1047,22 @@ async function loadSmartContext(roomId, noWa) {
   block.style.display = 'block'; loading.textContent = 'scanning...'; list.innerHTML = '<div class="context-scanning"><span class="poll-dot"></span> Mendeteksi kode booking...</div>';
   try {
     const res = await apiGet({action:'getBookingContext', roomId, noWa});
-    if (res.ok && res.bookings && res.bookings.length > 0) {
-      loading.textContent = res.bookings.length + ' booking';
-      list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
-      return;
-    }
+if (res.ok && res.bookings && res.bookings.length > 0) {
+  loading.textContent = res.bookings.length + ' booking';
+  list.innerHTML = res.bookings.map(b => renderContextCard(b)).join('');
+  if (res.bookings[0].tglTerbang) currentFlightDate = parseFlightDateForAge(res.bookings[0].tglTerbang);
+  return;
+}
 
-    // Fallback: belum ada kode PNR yang disebut di chat — coba cari booking aktif langsung by noWa
-    loading.textContent = 'cek booking aktif...';
-    const upRes = await apiGet({action:'getUpcomingBooking', noWa});
-    if (upRes.ok && upRes.bookings && upRes.bookings.length > 0) {
-      loading.textContent = upRes.bookings.length + ' booking (tanpa kode)';
-      list.innerHTML = upRes.bookings.map(b => renderUpcomingCard(b)).join('');
-      return;
-    }
+// Fallback: belum ada kode PNR yang disebut di chat — coba cari booking aktif langsung by noWa
+loading.textContent = 'cek booking aktif...';
+const upRes = await apiGet({action:'getUpcomingBooking', noWa});
+if (upRes.ok && upRes.bookings && upRes.bookings.length > 0) {
+  loading.textContent = upRes.bookings.length + ' booking (tanpa kode)';
+  list.innerHTML = upRes.bookings.map(b => renderUpcomingCard(b)).join('');
+  if (upRes.bookings[0].tglEvent) currentFlightDate = parseFlightDateForAge(upRes.bookings[0].tglEvent);
+  return;
+}
 
     loading.textContent = '';
     list.innerHTML = '<div class="context-none">Belum ada kode booking terdeteksi</div>';
