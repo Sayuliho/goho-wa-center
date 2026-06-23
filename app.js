@@ -1232,6 +1232,7 @@ function renderMultiPaxList() {
     const isPrmp = p.jenisKelamin === 'P' || p.jenisKelamin === 'Perempuan';
     const title  = isLaki ? 'MR' : isPrmp ? 'MRS' : '';
     const titleBadge = title ? `<span style="background:#1a6b4a;color:white;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-right:4px;">${title}</span>` : '';
+    const paxTypeBadge = paxTypeBadgeHtml(p.tglLahir);
     const isExpanded = mpxExpandedIdx === i;
     const paspor = p.noPaspor || '';
 
