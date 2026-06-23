@@ -246,6 +246,7 @@ async function openChat(roomId) {
     if (res.ok) { chat.status = 'ASSIGNED'; chat.assignedTo = currentStaff.nama; }
   }
   currentRoom = chat; lastMsgCount = 0; unreadCounts[roomId] = 0;
+  currentFlightDate = null; // reset setiap ganti chat — diisi ulang oleh loadSmartContext()
   updateGlobalBadge(Object.values(unreadCounts).reduce((s, v) => s + v, 0));
   if (docPanelOpen) { docPanelOpen = false; document.getElementById('doc-panel').classList.remove('active'); document.getElementById('doc-panel-btn').classList.remove('active-panel'); document.getElementById('info-panel-content').style.display = 'flex'; }
   document.getElementById('chat-empty').classList.add('hidden'); document.getElementById('chat-active').classList.remove('hidden');
