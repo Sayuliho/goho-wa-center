@@ -576,14 +576,34 @@ function openOriginal() {
 // dibuka dengan docId di URL (artinya dibuka dari Document Hub, bukan
 // dari bubble chat biasa). Update label NAMA_FILE di sheet CUSTOMER_DOCS
 // lewat action 'renameCustomerDoc' — tidak rename file fisik di Drive.
+//
+// v32: prompt sekarang hanya minta NAMA saja (tanpa ekstensi). Ekstensi
+// otomatis diambil dari nama file LAMA dan ditempel ke nama baru, supaya
+// staff tidak perlu ingat ketik ".jpeg"/".png" setiap kali. Kalau staff
+// kebetulan tetap mengetik ekstensi sendiri, itu dipakai apa adanya
+// (tidak ditempel dobel).
+function getFileExtension(namaFile) {
+  if (!namaFile) return '';
+  const dotIdx = namaFile.lastIndexOf('.');
+  if (dotIdx <= 0) return ''; // tidak ada titik, atau titik di posisi 0 (hidden file)
+  return namaFile.substring(dotIdx); // termasuk titiknya, misal ".jpeg"
+}
+
 async function renameCurrentDoc() {
   if (!currentDocId) {
     showToast('❌ Dokumen ini belum punya docId — tidak bisa di-rename', 'error');
     return;
   }
-  const namaBaru = prompt('Nama file baru (sesuai paspor):', currentDocName);
+  const namaBaru = prompt('Nama file baru (sesuai paspor, tanpa perlu ketik .jpeg/.png):', currentDocName);
   if (!namaBaru || !namaBaru.trim()) return;
-  const trimmed = namaBaru.trim();
+  let trimmed = namaBaru.trim();
+
+  // Auto-tempel ekstensi dari nama file lama kalau staff belum ketik sendiri
+  const sudahAdaEkstensi = /\.[a-zA-Z0-9]{2,5}$/.test(trimmed);
+  if (!sudahAdaEkstensi) {
+    const ext = getFileExtension(currentDocName);
+    if (ext) trimmed = trimmed + ext;
+  }
 
   try {
     const resp = await fetch('/api/proxy', {
