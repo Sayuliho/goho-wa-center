@@ -657,6 +657,10 @@ function openForwardModal() {
   document.getElementById('forward-contact-search').dataset.selectedNowa = '';
   document.getElementById('forward-contact-results').style.display = 'none';
   document.getElementById('modal-forward').style.display = 'flex';
+  // v32: drag support, sama seperti modal-save-media — hanya desktop
+  if (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches) {
+    makeModalDraggable('modal-forward');
+  }
 }
 
 function searchForwardContact(query) {
