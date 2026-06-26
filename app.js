@@ -1449,7 +1449,8 @@ function formatMpxDate(val) {
   return val;
 }
 function showFotoPopup(e, passengerId) {
-  const el = document.getElementById('foto-' + passengerId); const img = el ? el.querySelector('img') : null; if (!img) return;
+  var elId = passengerId.indexOf('foto-') === 0 || passengerId.indexOf('mdac-foto-') === 0 ? passengerId : 'foto-' + passengerId;
+  const el = document.getElementById(elId); const img = el ? el.querySelector('img') : null; if (!img) return;
   const popup = document.getElementById('mpx-foto-popup'); document.getElementById('mpx-foto-popup-img').src = img.src;
   const rect = e.target.getBoundingClientRect();
   popup.style.display = 'block'; popup.style.left = Math.min(rect.right + 8, window.innerWidth - 320) + 'px'; popup.style.top = Math.max(8, rect.top - 80) + 'px';
