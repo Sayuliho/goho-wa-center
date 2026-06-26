@@ -1575,3 +1575,142 @@ async function doneNote(noteId, noWa) {
     else { showToast('Gagal: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
+// ===================== MDAC =====================
+var mdacBookingInfo = null;
+var mdacPaxList = [];
+var mdacSearchTimer = null;
+
+function openMdacModal() {
+  mdacBookingInfo = null;
+  mdacPaxList = [];
+  document.getElementById('mdac-pnr').value = '';
+  document.getElementById('mdac-pnr-result').classList.remove('show');
+  document.getElementById('mdac-pnr-notfound').classList.remove('show');
+  document.getElementById('mdac-search-pax').value = '';
+  document.getElementById('mdac-search-results').classList.remove('show');
+  document.getElementById('mdac-pax-list').innerHTML = '';
+  document.getElementById('mdac-alamat').value = '';
+  document.getElementById('mdac-email').value = '';
+  document.getElementById('mdac-kontak').value = '';
+  document.getElementById('mdac-summary-box').style.display = 'none';
+  document.getElementById('modal-mdac').style.display = 'flex';
+  if (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches) {
+    makeModalDraggable('modal-mdac');
+  }
+}
+
+async function cariPnrMdac() {
+  var pnr = document.getElementById('mdac-pnr').value.trim().toUpperCase();
+  var notfoundBox = document.getElementById('mdac-pnr-notfound');
+  var resultBox   = document.getElementById('mdac-pnr-result');
+  notfoundBox.classList.remove('show');
+  resultBox.classList.remove('show');
+  mdacBookingInfo = null;
+  if (!pnr) return;
+
+  try {
+    var res = await apiGet({ action: 'cariBookingPnrMdac', kodePnr: pnr });
+    if (!res.found || !res.bookings || res.bookings.length === 0) {
+      notfoundBox.classList.add('show');
+      return;
+    }
+    var b = res.bookings[0];
+    mdacBookingInfo = b;
+    document.getElementById('mdac-result-nama').textContent     = b.namaTamu || '-';
+    document.getElementById('mdac-result-maskapai').textContent = b.maskapai || '-';
+    document.getElementById('mdac-result-flight').textContent   = b.kodeFlight || '-';
+    document.getElementById('mdac-result-rute').textContent     = b.rute || '-';
+    document.getElementById('mdac-result-tgl').textContent      = b.tglTerbang || '-';
+    resultBox.classList.add('show');
+  } catch(e) {
+    notfoundBox.classList.add('show');
+  }
+}
+
+function searchPaxMdac(query) {
+  clearTimeout(mdacSearchTimer);
+  var results = document.getElementById('mdac-search-results');
+  if (!query || query.trim().length < 2) { results.classList.remove('show'); return; }
+  mdacSearchTimer = setTimeout(async function() {
+    try {
+      var res = await apiGet({ action: 'getPassengersByName', query: query.trim() });
+      if (!res.ok || !res.passengers || res.passengers.length === 0) {
+        results.innerHTML = '<div style="padding:8px 10px;font-size:12px;color:var(--text-muted);">Tidak ditemukan</div>';
+        results.classList.add('show');
+        return;
+      }
+      results.innerHTML = res.passengers.map(function(p, idx) {
+        return '<div onclick="pilihPaxMdac(' + idx + ')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);"><b>' + escH(p.namaLengkap) + '</b><br><span style="font-size:10px;color:var(--text-muted);">' + (p.noPaspor||'-') + ' · ' + (p.tglLahir||'-') + '</span></div>';
+      }).join('');
+      window._mdacSearchOptions = res.passengers;
+      results.classList.add('show');
+    } catch(e) {
+      results.innerHTML = '<div style="padding:8px 10px;font-size:12px;color:var(--red);">Error mencari</div>';
+      results.classList.add('show');
+    }
+  }, 350);
+}
+
+function pilihPaxMdac(idx) {
+  var p = window._mdacSearchOptions[idx];
+  if (!p) return;
+  if (mdacPaxList.find(function(x) { return x.noPaspor === p.noPaspor && p.noPaspor; })) {
+    showToast('Peserta ini sudah ditambahkan');
+    return;
+  }
+  mdacPaxList.push(p);
+  document.getElementById('mdac-search-pax').value = '';
+  document.getElementById('mdac-search-results').classList.remove('show');
+  renderMdacPaxList();
+}
+
+function hapusPaxMdac(idx) {
+  mdacPaxList.splice(idx, 1);
+  renderMdacPaxList();
+}
+
+function renderMdacPaxList() {
+  var list = document.getElementById('mdac-pax-list');
+  if (mdacPaxList.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--text-hint);padding:8px 0;">Belum ada peserta ditambahkan</div>';
+    return;
+  }
+  list.innerHTML = mdacPaxList.map(function(p, i) {
+    return '<div class="mdac-pax-card"><b>' + (i+1) + '.</b> ' + escH(p.namaLengkap) +
+      ' <span style="color:var(--text-muted);font-size:11px;">(' + (p.noPaspor||'-') + ')</span>' +
+      '<button onclick="hapusPaxMdac(' + i + ')" title="Hapus">✕</button></div>';
+  }).join('');
+}
+
+function prosesMdac() {
+  if (!mdacBookingInfo) { showToast('Cari PNR yang valid dulu'); return; }
+  if (mdacPaxList.length === 0) { showToast('Tambahkan minimal 1 peserta'); return; }
+  var alamat = document.getElementById('mdac-alamat').value.trim();
+  var email  = document.getElementById('mdac-email').value.trim();
+  var kontak = document.getElementById('mdac-kontak').value.trim();
+  if (!alamat || !email || !kontak) { showToast('Lengkapi alamat, email, dan nomor kontak'); return; }
+
+  var lines = [];
+  lines.push('=== RINGKASAN DATA MDAC ===');
+  lines.push('Maskapai   : ' + mdacBookingInfo.maskapai);
+  lines.push('No Flight  : ' + mdacBookingInfo.kodeFlight);
+  lines.push('Rute       : ' + mdacBookingInfo.rute);
+  lines.push('Tgl Datang : ' + mdacBookingInfo.tglTerbang);
+  lines.push('Alamat/Hotel: ' + alamat);
+  lines.push('Email      : ' + email);
+  lines.push('Kontak     : ' + kontak);
+  lines.push('');
+  mdacPaxList.forEach(function(p, i) {
+    lines.push('--- Peserta ' + (i+1) + ' ---');
+    lines.push('Nama         : ' + p.namaLengkap);
+    lines.push('No Paspor    : ' + (p.noPaspor || '-'));
+    lines.push('Tgl Lahir    : ' + (p.tglLahir || '-'));
+    lines.push('Kewarganegaraan: ' + (p.kewarganegaraan || 'INDONESIA'));
+    lines.push('');
+  });
+
+  var summaryBox = document.getElementById('mdac-summary-box');
+  summaryBox.textContent = lines.join('\n');
+  summaryBox.style.display = 'block';
+  showToast('✅ Ringkasan siap — gunakan data ini untuk isi MDAC via Claude in Chrome');
+}
