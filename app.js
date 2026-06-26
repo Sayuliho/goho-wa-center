@@ -1009,6 +1009,34 @@ function truncateFileName(nama, maxLen) {
   if (ext > 0) { const base = nama.substring(0, ext); const extPart = nama.substring(ext); return base.substring(0, maxLen - extPart.length - 2) + '..' + extPart; }
   return nama.substring(0, maxLen) + '..';
 }
+async function downloadDoc(fileId, namaFile, btn) {
+  if (!fileId) { showToast('File ID tidak ditemukan'); return; }
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin" style="font-size:12px;"></i>'; }
+  try {
+    const res = await apiGet({ action: 'getImageBase64', fileId });
+    if (!res.ok) { showToast('Gagal ambil file: ' + (res.msg || '')); return; }
+    const mimeType = res.mimeType || (namaFile && namaFile.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+    const byteChars = atob(res.base64);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = namaFile || 'dokumen';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    showToast('⬇️ ' + (namaFile || 'File') + ' tersimpan ke Downloads');
+  } catch(e) {
+    showToast('Error download: ' + e.toString());
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+  }
+}
 function renderDocList(docs) {
   const el = document.getElementById('doc-list');
   if (!docs || docs.length === 0) { el.innerHTML = '<div class="doc-empty">Belum ada dokumen<br><span style="font-size:10px;">Klik Upload untuk tambah</span></div>'; return; }
