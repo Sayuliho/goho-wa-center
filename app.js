@@ -1273,7 +1273,13 @@ async function loadFotoPreview(passengerId, fotoFileId) {
     }
   } catch(e) {}
 }
-function setFotoEl(passengerId, src) { const el = document.getElementById('foto-' + passengerId); if (el) el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;">'; }
+function setFotoEl(passengerId, src) {
+  var elId = passengerId.indexOf('foto-') === 0 || passengerId.indexOf('mdac-foto-') === 0
+    ? passengerId
+    : 'foto-' + passengerId;
+  const el = document.getElementById(elId);
+  if (el) el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;">';
+}
 
 function addPassengerToList(p) {
   if (multiPaxList.find(x => x.passengerId === p.passengerId)) { showToast('Penumpang sudah ditambahkan'); return; }
