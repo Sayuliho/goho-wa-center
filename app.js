@@ -1640,17 +1640,25 @@ function searchPaxMdac(query) {
         return;
       }
       results.innerHTML = res.passengers.map(function(p, idx) {
-        return '<div onclick="pilihPaxMdac(' + idx + ')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);"><b>' + escH(p.namaLengkap) + '</b><br><span style="font-size:10px;color:var(--text-muted);">' + (p.noPaspor||'-') + ' · ' + (p.tglLahir||'-') + '</span></div>';
+        return '<div class="mpx-result-item" onclick="pilihPaxMdac(' + idx + ')">' +
+          '<div class="mpx-result-foto" id="mdac-foto-' + p.passengerId + '" onclick="event.stopPropagation();showFotoPopup(event,\'mdac-foto-' + p.passengerId + '\')" onmouseenter="showFotoPopup(event,\'mdac-foto-' + p.passengerId + '\')" onmouseleave="hideFotoPopup()">' + getInitials(p.namaLengkap) + '</div>' +
+          '<div class="mpx-result-info">' +
+            '<div class="mpx-result-nama">' + escH(p.namaLengkap) + '</div>' +
+            '<div class="mpx-result-paspor">' + (p.noPaspor || '-') + ' · ' + (p.tglLahir || '-') + '</div>' +
+          '</div>' +
+        '</div>';
       }).join('');
       window._mdacSearchOptions = res.passengers;
       results.classList.add('show');
+      res.passengers.forEach(function(p) {
+        if (p.fotoFileId) loadFotoPreview('mdac-foto-' + p.passengerId, p.fotoFileId);
+      });
     } catch(e) {
       results.innerHTML = '<div style="padding:8px 10px;font-size:12px;color:var(--red);">Error mencari</div>';
       results.classList.add('show');
     }
   }, 350);
 }
-
 function pilihPaxMdac(idx) {
   var p = window._mdacSearchOptions[idx];
   if (!p) return;
