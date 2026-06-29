@@ -1721,22 +1721,38 @@ function prosesMdac() {
   var kontak = document.getElementById('mdac-kontak').value.trim();
   if (!alamat || !email || !kontak) { showToast('Lengkapi alamat, email, dan nomor kontak'); return; }
 
+  // v33 MDAC: tanggal kembali (Date of Departure) — diisi staff di field
+  // mdac-tgl-pulang (lihat HTML baru), karena belum ada kolom one-way/PP
+  // di Form Responses 1. Field ini WAJIB untuk form MDAC asli.
+  var tglPulang = document.getElementById('mdac-tgl-pulang').value.trim();
+  if (!tglPulang) { showToast('Isi tanggal kembali / keluar dari Malaysia'); return; }
+
   var lines = [];
   lines.push('=== RINGKASAN DATA MDAC ===');
   lines.push('Maskapai   : ' + mdacBookingInfo.maskapai);
   lines.push('No Flight  : ' + mdacBookingInfo.kodeFlight);
   lines.push('Rute       : ' + mdacBookingInfo.rute);
   lines.push('Tgl Datang : ' + mdacBookingInfo.tglTerbang);
+  lines.push('Tgl Pulang : ' + tglPulang);
+  lines.push('Mode Travel: AIR');
+  lines.push('Last Port  : INDONESIA');
   lines.push('Alamat/Hotel: ' + alamat);
   lines.push('Email      : ' + email);
   lines.push('Kontak     : ' + kontak);
   lines.push('');
   mdacPaxList.forEach(function(p, i) {
+    var kelamin = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki' ? 'MALE'
+                : p.jenisKelamin === 'P' || p.jenisKelamin === 'Perempuan' ? 'FEMALE'
+                : '-';
+    var kewarganegaraan = p.kewarganegaraan || 'INDONESIA';
     lines.push('--- Peserta ' + (i+1) + ' ---');
     lines.push('Nama         : ' + p.namaLengkap);
     lines.push('No Paspor    : ' + (p.noPaspor || '-'));
     lines.push('Tgl Lahir    : ' + (p.tglLahir || '-'));
-    lines.push('Kewarganegaraan: ' + (p.kewarganegaraan || 'INDONESIA'));
+    lines.push('Sex          : ' + kelamin);
+    lines.push('Exp Paspor   : ' + (p.expiryPaspor || '-'));
+    lines.push('Kewarganegaraan: ' + kewarganegaraan);
+    lines.push('Tempat Lahir : ' + kewarganegaraan); // asumsi tempat lahir = kewarganegaraan
     lines.push('');
   });
 
@@ -1745,3 +1761,4 @@ function prosesMdac() {
   summaryBox.style.display = 'block';
   showToast('✅ Ringkasan siap — gunakan data ini untuk isi MDAC via Claude in Chrome');
 }
+
