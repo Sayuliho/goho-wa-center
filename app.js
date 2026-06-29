@@ -1630,10 +1630,25 @@ async function cariPnrMdac() {
     document.getElementById('mdac-result-rute').textContent     = b.rute || '-';
     document.getElementById('mdac-result-tgl').textContent      = b.tglTerbang || '-';
     resultBox.classList.add('show');
-  } catch(e) {
+
+    // v33: auto-fill tanggal pulang kalau tiket PP dan tgl pulang sudah ada di booking.
+    // Kalau one-way atau tgl pulang kosong, biarkan field kosong supaya staff isi manual
+    // (estimasi lama tinggal), JANGAN dipaksa isi supaya tidak salah data.
+    var tglPulangInput = document.getElementById('mdac-tgl-pulang');
+    if (b.jenisTiket && b.jenisTiket.indexOf('PP') !== -1 && b.tglPulang) {
+      // Konversi dd/MM/yyyy -> yyyy-MM-dd untuk input type="date"
+      var parts = b.tglPulang.split('/');
+      if (parts.length === 3) {
+        tglPulangInput.value = parts[2] + '-' + parts[1] + '-' + parts[0];
+      }
+    } else {
+      tglPulangInput.value = '';
+    }
+  } catch (e) {
     notfoundBox.classList.add('show');
   }
 }
+
 
 function searchPaxMdac(query) {
   clearTimeout(mdacSearchTimer);
