@@ -1599,6 +1599,7 @@ function openMdacModal() {
   document.getElementById('mdac-alamat').value = '';
   document.getElementById('mdac-email').value = '';
   document.getElementById('mdac-kontak').value = '';
+  document.getElementById('mdac-tgl-pulang').value = ''; // v33: reset field tanggal pulang
   document.getElementById('mdac-summary-box').style.display = 'none';
   document.getElementById('modal-mdac').style.display = 'flex';
   if (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches) {
