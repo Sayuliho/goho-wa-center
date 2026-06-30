@@ -142,29 +142,106 @@ function checkNewChats(waitingChats) {
   lastWaitingRooms = newWaitingIds;
 }
 
-// ===================== POLLING =====================
+// ===================== POLLING (PATCH v1 - hemat resource) =====================
+// Perubahan dari versi sebelumnya:
+// 1. Interval lebih longgar: 2s→5s (msg), 3s→10s (chatlist), 6s→15s (waiting)
+// 2. loadStats() tidak lagi jalan SETIAP siklus 10 detik —
+//    sekarang ikut siklus 10 detik tapi hanya kalau tab visible
+// 3. Page Visibility API: polling dihentikan kalau tab gak fokus,
+//    tapi polling notif (waiting queue) tetap jalan pelan (30s) supaya
+//    suara notif masih bunyi walau staff pindah tab
+// 4. Begitu tab aktif lagi, langsung 1x fetch supaya data instant segar
+
+let _pollMsg     = null;  // interval: fetch pesan aktif
+let _pollChat    = null;  // interval: reload chat list + stats
+let _pollWaiting = null;  // interval: waiting queue (notif)
+let _pollWaitingBg = null; // interval: waiting queue saat tab background (lebih pelan)
+
 function startPolling() {
-  if (pollInterval) clearInterval(pollInterval);
-  apiGet({action: 'getWaitingQueue'}).then(res => { if (res.ok) lastWaitingRooms = new Set(res.data.map(c => c.roomId)); });
+  // Ambil snapshot waiting rooms saat pertama login
+  apiGet({action: 'getWaitingQueue'}).then(res => {
+    if (res.ok) lastWaitingRooms = new Set(res.data.map(c => c.roomId));
+  });
 
-  // Poll messages setiap 2 detik (hanya saat ada chat terbuka)
-  setInterval(() => {
+  _startForegroundPolls();
+
+  // Page Visibility: hentikan/nyalakan poll saat tab focus berubah
+  document.addEventListener('visibilitychange', _onVisibilityChange);
+}
+
+function _startForegroundPolls() {
+  _stopForegroundPolls();
+
+  // Poll pesan setiap 5 detik (hanya kalau ada chat terbuka)
+  _pollMsg = setInterval(() => {
     if (currentRoom) fetchMessages(currentRoom.roomId, 0, false);
-  }, 2000);
+  }, 5000);
 
-  // Poll chat list setiap 3 detik
-  setInterval(() => {
+  // Poll chat list + stats setiap 10 detik
+  _pollChat = setInterval(() => {
     loadStats();
-    if (currentMainTab === 'chat') loadChats(false);
+    if (currentMainTab === 'chat')      loadChats(false);
     if (currentMainTab === 'dashboard') loadOwnerStats();
-  }, 3000);
+  }, 10000);
 
-  // Poll waiting queue setiap 6 detik
-  setInterval(async () => { try { const res = await apiGet({action: 'getWaitingQueue'}); if (res.ok) checkNewChats(res.data); } catch(e) {} }, 6000);
+  // Poll waiting queue setiap 15 detik (notif suara)
+  _pollWaiting = setInterval(async () => {
+    try {
+      const res = await apiGet({action: 'getWaitingQueue'});
+      if (res.ok) checkNewChats(res.data);
+    } catch(e) {}
+  }, 15000);
+
+  // Hentikan background poll kalau ada (tab baru aktif)
+  _stopBackgroundPolls();
 }
-async function loadStats() {
-  try { const res = await apiGet({action: 'getDashboardStats'}); if (res.ok) { document.getElementById('stat-bot').textContent = res.data.bot || 0; document.getElementById('stat-waiting').textContent = res.data.waiting || 0; document.getElementById('stat-active').textContent = res.data.active || 0; document.getElementById('stat-selesai').textContent = res.data.selesai || 0; } } catch(e) {}
+
+function _stopForegroundPolls() {
+  if (_pollMsg)     { clearInterval(_pollMsg);     _pollMsg     = null; }
+  if (_pollChat)    { clearInterval(_pollChat);    _pollChat    = null; }
+  if (_pollWaiting) { clearInterval(_pollWaiting); _pollWaiting = null; }
 }
+
+function _startBackgroundPolls() {
+  _stopBackgroundPolls();
+
+  // Tab background: hanya polling waiting queue setiap 30 detik
+  // supaya notif suara tetap bisa bunyi walau staff di tab lain
+  _pollWaitingBg = setInterval(async () => {
+    try {
+      const res = await apiGet({action: 'getWaitingQueue'});
+      if (res.ok) checkNewChats(res.data);
+    } catch(e) {}
+  }, 30000);
+}
+
+function _stopBackgroundPolls() {
+  if (_pollWaitingBg) { clearInterval(_pollWaitingBg); _pollWaitingBg = null; }
+}
+
+function _onVisibilityChange() {
+  if (document.hidden) {
+    // Tab tidak terlihat → hentikan poll berat, ganti ke poll ringan
+    _stopForegroundPolls();
+    _startBackgroundPolls();
+  } else {
+    // Tab aktif lagi → langsung refresh sekali, lalu nyalakan poll normal
+    _stopBackgroundPolls();
+    _startForegroundPolls();
+
+    // Langsung refresh sekali supaya data tidak stale saat staff balik
+    loadStats();
+    if (currentMainTab === 'chat')      loadChats(false);
+    if (currentMainTab === 'dashboard') loadOwnerStats();
+    if (currentRoom) fetchMessages(currentRoom.roomId, 0, false);
+
+    // Juga cek waiting queue sekali biar badge langsung update
+    apiGet({action: 'getWaitingQueue'}).then(res => {
+      if (res.ok) checkNewChats(res.data);
+    }).catch(() => {});
+  }
+}
+
 
 // ===================== CHAT LIST =====================
 async function loadChats(showLoading = true) {
