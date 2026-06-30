@@ -1833,9 +1833,29 @@ function prosesMdac() {
     lines.push('');
   });
 
-  var summaryBox = document.getElementById('mdac-summary-box');
-  summaryBox.textContent = lines.join('\n');
-  summaryBox.style.display = 'block';
-  showToast('✅ Ringkasan siap — gunakan data ini untuk isi MDAC via Claude in Chrome');
+  var ringkasanText = lines.join('\n');
+var summaryBox = document.getElementById('mdac-summary-box');
+summaryBox.textContent = ringkasanText;
+summaryBox.style.display = 'block';
+
+// Tombol copy
+var copyBtn = document.getElementById('mdac-copy-btn');
+if (!copyBtn) {
+  copyBtn = document.createElement('button');
+  copyBtn.id = 'mdac-copy-btn';
+  copyBtn.style.cssText = 'width:100%;margin-top:8px;padding:10px;background:#0F6E56;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);';
+  summaryBox.parentNode.insertBefore(copyBtn, summaryBox.nextSibling);
 }
+copyBtn.textContent = '📋 Copy Ringkasan';
+copyBtn.onclick = function() {
+  navigator.clipboard.writeText(ringkasanText).then(function() {
+    copyBtn.textContent = '✅ Tersalin!';
+    copyBtn.style.background = '#25D366';
+    setTimeout(function() {
+      copyBtn.textContent = '📋 Copy Ringkasan';
+      copyBtn.style.background = '#0F6E56';
+    }, 2000);
+  });
+};
+showToast('✅ Ringkasan siap — klik tombol Copy lalu paste ke extension');
 
