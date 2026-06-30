@@ -1833,7 +1833,7 @@ function prosesMdac() {
     lines.push('');
   });
 
-  var ringkasanText = lines.join('\n');
+var ringkasanText = lines.join('\n');
 var summaryBox = document.getElementById('mdac-summary-box');
 summaryBox.textContent = ringkasanText;
 summaryBox.style.display = 'block';
