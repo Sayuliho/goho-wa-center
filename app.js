@@ -1851,14 +1851,11 @@ function prosesMdac() {
   summaryBox.textContent = ringkasanText;
   summaryBox.style.display = 'block';
 
-  // Kirim ke extension via chrome.storage (lebih reliable dari postMessage)
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.set({ mdacPendingRingkasan: ringkasanText }, function() {
-      window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
-      showToast('✅ Data dikirim ke extension — form MDAC dibuka otomatis');
-    });
-  } else {
-    window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
-    showToast('✅ Form MDAC dibuka — extension akan baca data otomatis');
-  }
+  window.postMessage({
+    type: 'GOHO_MDAC_DATA',
+    ringkasan: ringkasanText
+  }, '*');
+
+  window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
+  showToast('✅ Data dikirim ke extension — form MDAC dibuka otomatis');
   }
