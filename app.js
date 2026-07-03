@@ -547,7 +547,7 @@ async function getBase64FromFileId(fileId) {
     const src = imgCache[fileId];
     return { base64: src.split(',')[1], fileType: src.match(/data:([^;]+)/)?.[1] || 'image/jpeg' };
   }
-  const res = await fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(fileId));
+  const res = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getImageBase64&fileId=' + encodeURIComponent(fileId));
   const data = await res.json();
   return { base64: data.base64, fileType: data.mimeType || 'image/jpeg' };
 }
