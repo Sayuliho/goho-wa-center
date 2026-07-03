@@ -1858,4 +1858,4 @@ copyBtn.onclick = function() {
   });
 };
 showToast('✅ Ringkasan siap — klik tombol Copy lalu paste ke extension');
-
+}
