@@ -1859,16 +1859,18 @@ if (!copyBtn) {
   copyBtn.style.cssText = 'width:100%;margin-top:8px;padding:10px;background:#0F6E56;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);';
   summaryBox.parentNode.insertBefore(copyBtn, summaryBox.nextSibling);
 }
-copyBtn.textContent = '📋 Copy Ringkasan';
-copyBtn.onclick = function() {
-  navigator.clipboard.writeText(ringkasanText).then(function() {
-    copyBtn.textContent = '✅ Tersalin!';
-    copyBtn.style.background = '#25D366';
-    setTimeout(function() {
-      copyBtn.textContent = '📋 Copy Ringkasan';
-      copyBtn.style.background = '#0F6E56';
-    }, 2000);
-  });
-};
-showToast('✅ Ringkasan siap — klik tombol Copy lalu paste ke extension');
+
+  var ringkasanText = lines.join('\n');
+  var summaryBox = document.getElementById('mdac-summary-box');
+  summaryBox.textContent = ringkasanText;
+  summaryBox.style.display = 'block';
+
+  // Opsi B: kirim data langsung ke extension, buka tab form MDAC otomatis
+  window.postMessage({
+    type: 'GOHO_MDAC_DATA',
+    ringkasan: ringkasanText
+  }, '*');
+
+  window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
+  showToast('✅ Data dikirim ke extension — form MDAC dibuka otomatis');
 }
