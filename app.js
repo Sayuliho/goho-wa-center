@@ -1,4 +1,4 @@
-const API = '/api/proxy';
+const API = 'https://goho-proxy.gohotravel.workers.dev';
 let currentStaff = null, currentRoom = null, currentTab = 'aktif', currentMainTab = 'chat';
 let allChats = [], allRoomsCache = [], allContactsCache = [];
 let currentContactNoWa = '', currentContactNama = '';
