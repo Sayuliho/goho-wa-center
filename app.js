@@ -49,7 +49,7 @@ function escH(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;
 async function apiGet(params) {
   params._t = Date.now();
   const query = new URLSearchParams(params).toString();
-  try { const r = await fetch('/api/proxy?' + query, { method: 'GET', cache: 'no-store' }); return JSON.parse(await r.text()); }
+  try { const r = await fetch('https://goho-proxy.gohotravel.workers.dev?' + query, { method: 'GET', cache: 'no-store' }); return JSON.parse(await r.text()); }
   catch(e) { return {ok: false, msg: e.toString()}; }
 }
 async function apiPost(body) { const r = await fetch(API, { method: 'POST', body: JSON.stringify(body) }); return r.json(); }
