@@ -436,7 +436,7 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
       // Tampil spinner saat loading
       el.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;">⏳</div>';
 
-      fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(fileId))
+      fetch('https://goho-proxy.gohotravel.workers.dev?action=getImageBase64&fileId=' + encodeURIComponent(fileId))
         .then(r => r.json())
         .then(data => {
           if (data.base64) {
@@ -1342,7 +1342,7 @@ async function loadFotoPreview(passengerId, fotoFileId) {
   if (!fotoFileId) return;
   if (fotoCache[fotoFileId]) { setFotoEl(passengerId, fotoCache[fotoFileId]); return; }
   try {
-    const res = await fetch('/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(fotoFileId));
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getImageBase64&fileId=' + encodeURIComponent(fotoFileId));
     const data = await res.json();
     if (data.base64) {
       const src = 'data:' + (data.mimeType || 'image/jpeg') + ';base64,' + data.base64;
