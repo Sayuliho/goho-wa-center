@@ -1846,20 +1846,6 @@ function prosesMdac() {
     lines.push('');
   });
 
-var ringkasanText = lines.join('\n');
-var summaryBox = document.getElementById('mdac-summary-box');
-summaryBox.textContent = ringkasanText;
-summaryBox.style.display = 'block';
-
-// Tombol copy
-var copyBtn = document.getElementById('mdac-copy-btn');
-if (!copyBtn) {
-  copyBtn = document.createElement('button');
-  copyBtn.id = 'mdac-copy-btn';
-  copyBtn.style.cssText = 'width:100%;margin-top:8px;padding:10px;background:#0F6E56;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);';
-  summaryBox.parentNode.insertBefore(copyBtn, summaryBox.nextSibling);
-}
-
   var ringkasanText = lines.join('\n');
   var summaryBox = document.getElementById('mdac-summary-box');
   summaryBox.textContent = ringkasanText;
@@ -1874,4 +1860,5 @@ if (!copyBtn) {
   } else {
     window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
     showToast('✅ Form MDAC dibuka — extension akan baca data otomatis');
+  }
   }
