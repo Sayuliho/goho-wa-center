@@ -1037,6 +1037,19 @@ async function submitPassenger() {
   const nama = document.getElementById('p-nama').value.trim(); if (!nama) { alert('Nama lengkap wajib diisi'); return; }
   try { const res = await apiPost({action: 'savePassenger', noWaCustomer: currentContactNoWa, namaLengkap: nama, jenisKelamin: document.getElementById('p-jk').value, tglLahir: document.getElementById('p-tgl').value, noKtp: document.getElementById('p-ktp').value.trim(), noPaspor: document.getElementById('p-paspor').value.trim(), expiryPaspor: document.getElementById('p-expiry').value, kewarganegaraan: document.getElementById('p-warga').value.trim()}); if (res.success) { closeModal('modal-passenger'); loadPassengers(); showToast('Penumpang disimpan!'); } } catch(e) { showToast('Error: ' + e); }
 }
+// ===================== STATS =====================
+async function loadStats() {
+  try {
+    const res = await apiGet({action: 'getStats'});
+    if (!res.ok) return;
+    const s = res.stats || {};
+    const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val || 0; };
+    el('badge-bot', s.bot);
+    el('badge-waiting', s.waiting);
+    el('badge-assigned', s.assigned);
+    el('badge-arsip', s.closed);
+  } catch(e) {}
+}
 
 // ===================== OWNER DASHBOARD =====================
 async function loadOwnerStats() {
