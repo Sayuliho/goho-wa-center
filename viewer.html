@@ -527,7 +527,7 @@ async function loadImage(id) {
 
   try {
     // Ambil gambar via proxy (Drive private → base64)
-    const proxyUrl = '/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(id);
+    const proxyUrl = 'https://goho-proxy.gohotravel.workers.dev?action=getImageBase64&fileId=' + encodeURIComponent(id);
     const resp = await fetch(proxyUrl);
     if (!resp.ok) throw new Error('Proxy error ' + resp.status);
     const data = await resp.json();
@@ -606,7 +606,7 @@ async function renameCurrentDoc() {
   }
 
   try {
-    const resp = await fetch('/api/proxy', {
+    const resp = await fetch('https://goho-proxy.gohotravel.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'renameCustomerDoc', docId: currentDocId, namaFileBaru: trimmed })
@@ -843,14 +843,14 @@ async function bacaPaspor() {
 
   try {
     // Step 1: Ambil gambar dari Drive → base64 via proxy
-    const proxyUrl = '/api/proxy?action=getImageBase64&fileId=' + encodeURIComponent(fileId);
+    const proxyUrl = 'https://goho-proxy.gohotravel.workers.dev?action=getImageBase64&fileId=' + encodeURIComponent(fileId);
     const imgResp = await fetch(proxyUrl);
     if (!imgResp.ok) throw new Error('Gagal ambil gambar dari Drive');
     const imgData = await imgResp.json();
     if (!imgData.base64) throw new Error('Data gambar kosong');
 
     // Step 2: Kirim ke Apps Script → handleOcrPaspor → Claude Vision
-    const ocrResp = await fetch('/api/proxy', {
+    const ocrResp = await fetch('https://goho-proxy.gohotravel.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -918,7 +918,7 @@ async function simpanPassenger() {
   saveBtn.textContent = 'Menyimpan...';
 
   try {
-    const resp = await fetch('/api/proxy', {
+    const resp = await fetch('https://goho-proxy.gohotravel.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
