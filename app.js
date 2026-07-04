@@ -1687,11 +1687,20 @@ function openMdacModal() {
   document.getElementById('mdac-search-results').classList.remove('show');
   document.getElementById('mdac-pax-list').innerHTML = '';
   document.getElementById('mdac-alamat').value = '';
+  document.getElementById('mdac-state').value = '';
+  document.getElementById('mdac-city').value = '';
+  document.getElementById('mdac-postcode').value = '';
+  document.getElementById('mdac-accommodation').value = 'Hotel';
   document.getElementById('mdac-email').value = '';
   document.getElementById('mdac-kontak').value = '';
-  document.getElementById('mdac-tgl-pulang').value = ''; // v33: reset field tanggal pulang
+  document.getElementById('mdac-tgl-pulang').value = '';
   document.getElementById('mdac-summary-box').style.display = 'none';
   document.getElementById('modal-mdac').style.display = 'flex';
+  // Auto-fill no kontak dari chat aktif
+  if (currentRoom && currentRoom.noWa) {
+    var noWaClean = currentRoom.noWa.toString().replace(/\D/g,'');
+    document.getElementById('mdac-kontak').value = noWaClean;
+  }
   if (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches) {
     makeModalDraggable('modal-mdac');
   }
