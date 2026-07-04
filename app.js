@@ -1882,3 +1882,4 @@ function prosesMdac() {
   window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
   showToast('✅ Data dikirim ke extension — form MDAC dibuka otomatis');
   }
+  }
