@@ -1337,7 +1337,7 @@ function searchPassenger(query) {
       }
       results.innerHTML = res.passengers.map(p => `
         <div class="mpx-result-item" onclick="addPassengerToList(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-          <div class="mpx-result-foto" id="foto-${p.passengerId}" onclick="showFotoPopup(event,'${p.passengerId}')" onmouseenter="showFotoPopup(event,'${p.passengerId}')" onmouseleave="hideFotoPopup()">${getInitials(p.namaLengkap)}</div>
+          <div class="mpx-result-foto" id="foto-${p.passengerId}" onclick="openPasporLightboxById('${p.passengerId}','${escH(p.namaLengkap)}')" style="cursor:zoom-in;"
           <div class="mpx-result-info">
             <div class="mpx-result-nama">${escH(p.namaLengkap)}</div>
             <div class="mpx-result-paspor">${p.noPaspor || '-'} · ${formatMpxDate(p.tglLahir) || '-'}</div>
