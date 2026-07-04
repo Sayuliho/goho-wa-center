@@ -1821,9 +1821,13 @@ function renderMdacPaxList() {
 function prosesMdac() {
   if (!mdacBookingInfo) { showToast('Cari PNR yang valid dulu'); return; }
   if (mdacPaxList.length === 0) { showToast('Tambahkan minimal 1 peserta'); return; }
-  var alamat = document.getElementById('mdac-alamat').value.trim();
-  var email  = document.getElementById('mdac-email').value.trim();
-  var kontak = document.getElementById('mdac-kontak').value.trim();
+  var alamat        = document.getElementById('mdac-alamat').value.trim();
+  var state         = document.getElementById('mdac-state').value.trim();
+  var city          = document.getElementById('mdac-city').value.trim();
+  var postcode      = document.getElementById('mdac-postcode').value.trim();
+  var accommodation = document.getElementById('mdac-accommodation').value.trim();
+  var email         = document.getElementById('mdac-email').value.trim();
+  var kontak        = document.getElementById('mdac-kontak').value.trim();
   if (!alamat || !email || !kontak) { showToast('Lengkapi alamat, email, dan nomor kontak'); return; }
 
   // v33 MDAC: tanggal kembali (Date of Departure) — diisi staff di field
@@ -1841,9 +1845,13 @@ function prosesMdac() {
   lines.push('Tgl Pulang : ' + tglPulang);
   lines.push('Mode Travel: AIR');
   lines.push('Last Port  : INDONESIA');
-  lines.push('Alamat/Hotel: ' + alamat);
-  lines.push('Email      : ' + email);
-  lines.push('Kontak     : ' + kontak);
+  lines.push('Accommodation : ' + accommodation);
+  lines.push('Alamat/Hotel  : ' + alamat);
+  if (state)    lines.push('State         : ' + state);
+  if (city)     lines.push('City          : ' + city);
+  if (postcode) lines.push('Postcode      : ' + postcode);
+  lines.push('Email         : ' + email);
+  lines.push('Kontak        : ' + kontak);
   lines.push('');
   mdacPaxList.forEach(function(p, i) {
     var kelamin = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki' ? 'MALE'
