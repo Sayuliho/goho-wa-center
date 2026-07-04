@@ -1368,7 +1368,14 @@ function setFotoEl(passengerId, src) {
     ? passengerId
     : 'foto-' + passengerId;
   const el = document.getElementById(elId);
-  if (el) el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;">';
+  if (el) el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in;" onclick="openPasporLightboxFromImg(this)">';
+}
+
+function openPasporLightboxFromImg(imgEl) {
+  const overlay = document.getElementById('mpx-foto-popup');
+  const popImg = document.getElementById('mpx-foto-popup-img');
+  popImg.src = imgEl.src;
+  overlay.style.display = 'flex';
 }
 
 function addPassengerToList(p) {
