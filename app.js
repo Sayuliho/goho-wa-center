@@ -1729,6 +1729,12 @@ async function cariPnrMdac() {
     document.getElementById('mdac-result-rute').textContent     = b.rute || '-';
     document.getElementById('mdac-result-tgl').textContent      = b.tglTerbang || '-';
     resultBox.classList.add('show');
+    
+    // Auto-fill kontak dari noWa customer di chat aktif (kalau belum diisi)
+    var kontakInput = document.getElementById('mdac-kontak');
+    if (!kontakInput.value && currentRoom && currentRoom.noWa) {
+      kontakInput.value = currentRoom.noWa.toString().replace(/\D/g,'');
+    }
 
     // v33: auto-fill tanggal pulang kalau tiket PP dan tgl pulang sudah ada di booking.
     // Kalau one-way atau tgl pulang kosong, biarkan field kosong supaya staff isi manual
