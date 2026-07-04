@@ -442,16 +442,76 @@
 
       <div style="height:1px;background:var(--border);margin:14px 0;"></div>
 
-      <div class="form-group"><label>Alamat / Hotel Tujuan di Malaysia</label><input type="text" id="mdac-alamat" placeholder="Nama hotel & alamat"></div>
-      <div class="form-group"><label>Email</label><input type="text" id="mdac-email" placeholder="email@example.com"></div>
-      <div class="form-group"><label>Nomor Kontak</label><input type="text" id="mdac-kontak" placeholder="628xxxxxxxxxx"></div>
       <div class="form-group">
-  <label>Tanggal Kembali / Keluar dari Malaysia <span style="color:#c00;">*</span></label>
-  <input type="date" id="mdac-tgl-pulang">
-  <div style="font-size:10px;color:var(--text-hint);margin-top:3px;">
-    Kalau tiket PP, isi sesuai tanggal pulang di booking. Kalau tiket one-way, isi estimasi tanggal keluar dari Malaysia (boleh kira-kira).
-  </div>
-</div>
+        <label>Alamat / Hotel Tujuan di Malaysia</label>
+        <input type="text" id="mdac-alamat" placeholder="Nama hotel & alamat lengkap">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label>State (Negeri)</label>
+          <select id="mdac-state">
+            <option value="">-- Pilih State --</option>
+            <option value="JOHOR">Johor</option>
+            <option value="KEDAH">Kedah</option>
+            <option value="KELANTAN">Kelantan</option>
+            <option value="MELAKA">Melaka</option>
+            <option value="NEGERI SEMBILAN">Negeri Sembilan</option>
+            <option value="PAHANG">Pahang</option>
+            <option value="PERAK">Perak</option>
+            <option value="PERLIS">Perlis</option>
+            <option value="PULAU PINANG">Pulau Pinang</option>
+            <option value="SABAH">Sabah</option>
+            <option value="SARAWAK">Sarawak</option>
+            <option value="SELANGOR">Selangor</option>
+            <option value="TERENGGANU">Terengganu</option>
+            <option value="KUALA LUMPUR">W.P. Kuala Lumpur</option>
+            <option value="LABUAN">W.P. Labuan</option>
+            <option value="PUTRAJAYA">W.P. Putrajaya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>City / Area</label>
+          <input type="text" id="mdac-city" placeholder="cth: Genting Highlands">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label>Postcode</label>
+          <input type="text" id="mdac-postcode" placeholder="cth: 69000" maxlength="10">
+        </div>
+        <div class="form-group">
+          <label>Jenis Accommodation</label>
+          <select id="mdac-accommodation">
+            <option value="Hotel">Hotel</option>
+            <option value="Hostel">Hostel</option>
+            <option value="Airbnb / Serviced Apt">Airbnb / Serviced Apt</option>
+            <option value="Rumah Keluarga / Teman">Rumah Keluarga / Teman</option>
+            <option value="Resort">Resort</option>
+            <option value="Others">Lainnya</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="text" id="mdac-email" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label>Nomor Kontak (WA)</label>
+          <input type="text" id="mdac-kontak" placeholder="628xxxxxxxxxx">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tanggal Kembali / Keluar dari Malaysia <span style="color:#c00;">*</span></label>
+        <input type="date" id="mdac-tgl-pulang">
+        <div style="font-size:10px;color:var(--text-hint);margin-top:3px;">
+          Kalau tiket PP, isi sesuai tanggal pulang di booking. Kalau tiket one-way, isi estimasi tanggal keluar dari Malaysia (boleh kira-kira).
+        </div>
+      </div>
 
       <div class="mdac-summary-box" id="mdac-summary-box" style="display:none;"></div>
 
@@ -461,7 +521,7 @@
       <button class="btn-primary" onclick="prosesMdac()"><i class="ti ti-flag"></i> Proses MDAC</button>
     </div>
   </div>
-</div>  
+</div> 
 <div class="modal" id="modal-smart-notes" style="display:none;">
   <div class="modal-box modal-sm">
     <div class="modal-header"><h3>📝 Smart Notes</h3><button onclick="closeModal('modal-smart-notes')">✕</button></div>
