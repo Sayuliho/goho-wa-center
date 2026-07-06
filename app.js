@@ -1044,10 +1044,10 @@ async function loadStats() {
     if (!res.ok) return;
     const s = res.stats || res.data || {};
     const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val || 0; };
-    el('badge-bot',      s.bot     || 0);
-    el('badge-waiting',  s.waiting || 0);
-    el('badge-assigned', s.assigned || s.active || 0);
-    el('badge-arsip',    s.closed  || s.selesai || 0);
+    el('stat-bot',     s.bot     || 0);
+    el('stat-waiting', s.waiting || 0);
+    el('stat-active',  s.assigned || s.active || 0);
+    el('stat-selesai', s.closed  || s.selesai || 0);
   } catch(e) {}
 }
 
