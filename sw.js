@@ -1,7 +1,7 @@
 // GOHO WA Center - Service Worker
 // Fase 1: PWA support, caching, background sync
 
-const CACHE_NAME = 'goho-wa-v1';
+const CACHE_NAME = 'goho-wa-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
