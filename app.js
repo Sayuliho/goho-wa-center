@@ -1042,12 +1042,12 @@ async function loadStats() {
   try {
     const res = await apiGet({action: 'getStats'});
     if (!res.ok) return;
-    const s = res.stats || {};
+    const s = res.stats || res.data || {};
     const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val || 0; };
-    el('badge-bot', s.bot);
-    el('badge-waiting', s.waiting);
-    el('badge-assigned', s.assigned);
-    el('badge-arsip', s.closed);
+    el('badge-bot',      s.bot     || 0);
+    el('badge-waiting',  s.waiting || 0);
+    el('badge-assigned', s.assigned || s.active || 0);
+    el('badge-arsip',    s.closed  || s.selesai || 0);
   } catch(e) {}
 }
 
