@@ -884,27 +884,79 @@ async function bacaPaspor() {
   }
 }
 
+// State drag untuk OCR modal
+let _ocrDragging = false;
+let _ocrDragStartX = 0, _ocrDragStartY = 0;
+let _ocrBaseX = 0, _ocrBaseY = 0;
+
+function _initOcrDrag() {
+  const modal = document.querySelector('.ocr-modal');
+  if (!modal) return;
+  if (modal.dataset.dragInit) return; // jangan pasang listener dobel
+  modal.dataset.dragInit = '1';
+
+  modal.addEventListener('mousedown', (e) => {
+    // Jangan drag kalau klik di input/button/label
+    const tag = (e.target.tagName || '').toUpperCase();
+    if (['INPUT', 'BUTTON', 'LABEL', 'SELECT', 'TEXTAREA', 'A'].includes(tag)) return;
+    _ocrDragging = true;
+    _ocrDragStartX = e.clientX;
+    _ocrDragStartY = e.clientY;
+    _ocrBaseX = parseFloat(modal.dataset.dx || '0');
+    _ocrBaseY = parseFloat(modal.dataset.dy || '0');
+    modal.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!_ocrDragging) return;
+    const dx = e.clientX - _ocrDragStartX + _ocrBaseX;
+    const dy = e.clientY - _ocrDragStartY + _ocrBaseY;
+    modal.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+    modal.dataset.dx = dx;
+    modal.dataset.dy = dy;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (_ocrDragging) {
+      _ocrDragging = false;
+      modal.classList.remove('dragging');
+    }
+  });
+}
+
+function _resetOcrDrag() {
+  const modal = document.querySelector('.ocr-modal');
+  if (!modal) return;
+  modal.style.transform = '';
+  modal.dataset.dx = '0';
+  modal.dataset.dy = '0';
+}
+
+// GANTI fungsi tampilkanHasilOcr yang lama dengan ini:
 function tampilkanHasilOcr(data) {
   // Mapping field Code.gs → form input
-  document.getElementById('ocr-nama').value = data.nama_lengkap || '';
-  document.getElementById('ocr-no-paspor').value = data.no_paspor || '';
-  document.getElementById('ocr-tgl-lahir').value = data.tgl_lahir || '';
-  document.getElementById('ocr-expired').value = data.tgl_expired || '';
-  document.getElementById('ocr-nationality').value = data.nationality || '';
-  document.getElementById('ocr-gender').value = data.jenis_kelamin || '';
+  document.getElementById('ocr-nama').value        = data.nama_lengkap || '';
+  document.getElementById('ocr-no-paspor').value   = data.no_paspor    || '';
+  document.getElementById('ocr-tgl-lahir').value   = data.tgl_lahir    || '';
+  document.getElementById('ocr-expired').value     = data.tgl_expired  || '';
+  document.getElementById('ocr-nationality').value = data.nationality   || '';
+  document.getElementById('ocr-gender').value      = data.jenis_kelamin || '';
 
-  // Sub info — tampilkan catatan dari Claude jika ada
+  // Sub info
   const sub = data.mrz_line1
     ? 'MRZ terdeteksi ✓ — periksa sebelum menyimpan'
     : (data.catatan || 'Verifikasi data sebelum menyimpan');
   document.getElementById('ocr-modal-sub').textContent = sub;
 
+  // Reset posisi drag sebelum tampil
+  _resetOcrDrag();
+
   // Tampilkan modal
   document.getElementById('ocr-overlay').style.display = 'flex';
-}
 
-function tutupOcrModal() {
-  document.getElementById('ocr-overlay').style.display = 'none';
+  // Pasang drag listener (hanya sekali)
+  _initOcrDrag();
 }
 
 async function simpanPassenger() {
