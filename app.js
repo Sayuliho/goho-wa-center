@@ -26,10 +26,14 @@ function initApp(staff) {
   document.getElementById('app').classList.add('visible');
   document.getElementById('nav-name').textContent = currentStaff.nama;
   document.getElementById('nav-av').textContent = currentStaff.nama.substring(0,2).toUpperCase();
+  // Tampilkan main-tabs untuk semua role (chat, contacts, layanan)
+  document.getElementById('main-tabs').classList.add('visible');
+
   if (currentStaff.role === 'OWNER') {
     document.getElementById('nav-badge').classList.remove('hidden');
     document.getElementById('nav-av').classList.add('owner');
-    document.getElementById('main-tabs').classList.add('visible');
+    // Owner: tampilkan tab Dashboard & Semua Chat
+    document.querySelectorAll('.owner-only').forEach(el => el.style.display = 'flex');
   }
   startPolling(); loadChats(); showSoundActivation();
 }
