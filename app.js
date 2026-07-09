@@ -587,6 +587,359 @@ function closeImgPreview() {
   document.getElementById('modal-img-preview').style.display = 'none';
   document.getElementById('img-preview-src').src = '';
 }
+// =====================================================
+// GOHO IMAGE EDITOR — tambahkan di app.js
+// Tempelkan SETELAH fungsi closeImgPreview() yang sudah ada
+// =====================================================
+
+// ---- State image editor ----
+let _imgRotation = 0;   // derajat (bisa desimal, bebas)
+let _imgZoom = 1.0;     // scale factor
+let _cropMode = false;
+let _cropDragging = false;
+let _cropStart = { x: 0, y: 0 };
+let _cropRect = null;   // {x,y,w,h} dalam piksel di layar (relatif ke crop-overlay)
+window._croppedBase64 = null;   // hasil crop — dibaca submitSaveMedia()
+window._croppedMimeType = null;
+
+// ---- Reset saat buka lightbox baru ----
+// Panggil ini di openImgPreview() — GANTI baris:
+//   document.getElementById('modal-img-preview').style.display = 'flex';
+// Jadi:
+//   imgEditorReset(); document.getElementById('modal-img-preview').style.display = 'flex';
+function imgEditorReset() {
+  _imgRotation = 0;
+  _imgZoom = 1.0;
+  _cropMode = false;
+  _cropRect = null;
+  _cropDragging = false;
+  window._croppedBase64 = null;
+  window._croppedMimeType = null;
+
+  const slider = document.getElementById('rotate-slider');
+  if (slider) { slider.value = 0; }
+  const sliderLabel = document.getElementById('rotate-slider-label');
+  if (sliderLabel) sliderLabel.textContent = '0°';
+  const zoomLabel = document.getElementById('zoom-label');
+  if (zoomLabel) zoomLabel.textContent = '100%';
+
+  _applyImgTransform();
+  _exitCropMode();
+}
+
+// ---- Apply transform ke <img> ----
+function _applyImgTransform() {
+  const img = document.getElementById('img-preview-src');
+  if (!img) return;
+  img.style.transform = `rotate(${_imgRotation}deg) scale(${_imgZoom})`;
+  const zoomLabel = document.getElementById('zoom-label');
+  if (zoomLabel) zoomLabel.textContent = Math.round(_imgZoom * 100) + '%';
+}
+
+// ---- Rotate ----
+function imgRotate(deg) {
+  _imgRotation = (_imgRotation + deg) % 360;
+  // Sync slider (clamp ke -180..180 supaya tidak out of range)
+  let sliderVal = _imgRotation % 360;
+  if (sliderVal > 180) sliderVal -= 360;
+  if (sliderVal < -180) sliderVal += 360;
+  const slider = document.getElementById('rotate-slider');
+  if (slider) slider.value = sliderVal;
+  const sliderLabel = document.getElementById('rotate-slider-label');
+  if (sliderLabel) sliderLabel.textContent = Math.round(_imgRotation) + '°';
+  _applyImgTransform();
+  _clearCropBox(); // crop lama tidak valid lagi setelah rotate
+}
+
+function imgRotateSlider(val) {
+  _imgRotation = parseFloat(val);
+  const sliderLabel = document.getElementById('rotate-slider-label');
+  if (sliderLabel) sliderLabel.textContent = Math.round(_imgRotation) + '°';
+  _applyImgTransform();
+  _clearCropBox();
+}
+
+// ---- Zoom ----
+function imgZoom(delta) {
+  _imgZoom = Math.min(5, Math.max(0.2, _imgZoom + delta));
+  _applyImgTransform();
+  _clearCropBox();
+}
+
+// Zoom dengan scroll mouse di area gambar
+document.addEventListener('wheel', function(e) {
+  const modal = document.getElementById('modal-img-preview');
+  if (!modal || modal.style.display === 'none') return;
+  if (_cropMode) return; // jangan zoom saat crop mode
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.12 : 0.12;
+  imgZoom(delta);
+}, { passive: false, capture: false });
+
+function imgResetTransform() {
+  _imgRotation = 0; _imgZoom = 1.0;
+  const slider = document.getElementById('rotate-slider');
+  if (slider) slider.value = 0;
+  const sliderLabel = document.getElementById('rotate-slider-label');
+  if (sliderLabel) sliderLabel.textContent = '0°';
+  _applyImgTransform();
+  _clearCropBox();
+}
+
+// ---- Crop Mode ----
+function toggleCropMode() {
+  _cropMode = !_cropMode;
+  const btn = document.getElementById('btn-crop-toggle');
+  const overlay = document.getElementById('crop-overlay');
+  if (_cropMode) {
+    btn.classList.add('crop-active');
+    btn.textContent = '✂️ Crop ON';
+    overlay.style.display = 'block';
+    _clearCropBox();
+  } else {
+    _exitCropMode();
+  }
+}
+
+function _exitCropMode() {
+  _cropMode = false;
+  const btn = document.getElementById('btn-crop-toggle');
+  const overlay = document.getElementById('crop-overlay');
+  if (btn) { btn.classList.remove('crop-active'); btn.textContent = '✂️ Crop'; }
+  if (overlay) overlay.style.display = 'none';
+  _clearCropBox();
+}
+
+function _clearCropBox() {
+  _cropRect = null;
+  const box = document.getElementById('crop-box');
+  if (box) box.style.display = 'none';
+}
+
+// ---- Crop drag (mouse) ----
+function cropStart(e) {
+  if (!_cropMode) return;
+  e.preventDefault();
+  _cropDragging = true;
+  const rect = e.currentTarget.getBoundingClientRect();
+  _cropStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  _clearCropBox();
+}
+function cropMove(e) {
+  if (!_cropDragging) return;
+  e.preventDefault();
+  const rect = e.currentTarget.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  _drawCropBox(_cropStart.x, _cropStart.y, cx, cy, rect.width, rect.height);
+}
+function cropEnd(e) {
+  if (!_cropDragging) return;
+  _cropDragging = false;
+  const box = document.getElementById('crop-box');
+  if (box && box.style.display !== 'none') {
+    const bRect = box.getBoundingClientRect();
+    const oRect = document.getElementById('crop-overlay').getBoundingClientRect();
+    _cropRect = {
+      x: parseFloat(box.style.left),
+      y: parseFloat(box.style.top),
+      w: parseFloat(box.style.width),
+      h: parseFloat(box.style.height),
+      overlayW: oRect.width,
+      overlayH: oRect.height
+    };
+  }
+}
+
+// ---- Crop drag (touch) ----
+function cropTouchStart(e) {
+  if (!_cropMode) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  const rect = e.currentTarget.getBoundingClientRect();
+  _cropDragging = true;
+  _cropStart = { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  _clearCropBox();
+}
+function cropTouchMove(e) {
+  if (!_cropDragging) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  const rect = e.currentTarget.getBoundingClientRect();
+  const cx = t.clientX - rect.left;
+  const cy = t.clientY - rect.top;
+  _drawCropBox(_cropStart.x, _cropStart.y, cx, cy, rect.width, rect.height);
+}
+function cropTouchEnd(e) { cropEnd(e); }
+
+function _drawCropBox(x1, y1, x2, y2, maxW, maxH) {
+  const box = document.getElementById('crop-box');
+  if (!box) return;
+  const left = Math.max(0, Math.min(x1, x2));
+  const top  = Math.max(0, Math.min(y1, y2));
+  const w    = Math.min(Math.abs(x2 - x1), maxW - left);
+  const h    = Math.min(Math.abs(y2 - y1), maxH - top);
+  if (w < 8 || h < 8) return;
+  box.style.display = 'block';
+  box.style.left   = left + 'px';
+  box.style.top    = top  + 'px';
+  box.style.width  = w    + 'px';
+  box.style.height = h    + 'px';
+}
+
+// ---- Simpan: crop (kalau ada) atau full (dengan rotate/zoom) ----
+async function saveCropOrFull() {
+  const img = document.getElementById('img-preview-src');
+  if (!img || !img.src) { showToast('Tidak ada gambar untuk disimpan'); return; }
+
+  // Tunggu gambar benar-benar loaded
+  await new Promise(resolve => { if (img.complete) resolve(); else img.onload = resolve; });
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const natW = img.naturalWidth;
+  const natH = img.naturalHeight;
+  const rad = _imgRotation * Math.PI / 180;
+  const absCos = Math.abs(Math.cos(rad));
+  const absSin = Math.abs(Math.sin(rad));
+
+  if (_cropRect && _cropRect.w > 8 && _cropRect.h > 8) {
+    // ---- MODE CROP ----
+    // 1. Render gambar ke canvas besar (full, dengan rotate + zoom)
+    const rotW = Math.round(natW * absCos + natH * absSin);
+    const rotH = Math.round(natW * absSin + natH * absCos);
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width  = rotW;
+    fullCanvas.height = rotH;
+    const fctx = fullCanvas.getContext('2d');
+    fctx.translate(rotW / 2, rotH / 2);
+    fctx.rotate(rad);
+    fctx.scale(_imgZoom, _imgZoom);
+    fctx.drawImage(img, -natW / 2, -natH / 2);
+
+    // 2. Hitung proporsi crop dari ukuran overlay ke ukuran canvas penuh
+    const scaleX = rotW / _cropRect.overlayW;
+    const scaleY = rotH / _cropRect.overlayH;
+
+    // 3. Temukan batas gambar di dalam overlay (gambar tidak selalu memenuhi overlay)
+    //    Kita perlu tahu offset gambar di overlay
+    const overlay = document.getElementById('crop-overlay');
+    const imgEl   = document.getElementById('img-preview-src');
+    const oRect   = overlay.getBoundingClientRect();
+    const iRect   = imgEl.getBoundingClientRect();
+    const imgOffX = iRect.left - oRect.left;
+    const imgOffY = iRect.top  - oRect.top;
+
+    // Koordinat crop relatif ke gambar (sudah dirotate dan di-zoom)
+    const cropX = Math.max(0, (_cropRect.x - imgOffX) * scaleX);
+    const cropY = Math.max(0, (_cropRect.y - imgOffY) * scaleY);
+    const cropW = Math.min(_cropRect.w * scaleX, rotW - cropX);
+    const cropH = Math.min(_cropRect.h * scaleY, rotH - cropY);
+
+    canvas.width  = Math.round(cropW);
+    canvas.height = Math.round(cropH);
+    ctx.drawImage(fullCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+  } else {
+    // ---- MODE FULL (hanya rotate + zoom, tanpa crop) ----
+    const rotW = Math.round(natW * absCos + natH * absSin);
+    const rotH = Math.round(natW * absSin + natH * absCos);
+    canvas.width  = rotW;
+    canvas.height = rotH;
+    ctx.translate(rotW / 2, rotH / 2);
+    ctx.rotate(rad);
+    ctx.scale(_imgZoom, _imgZoom);
+    ctx.drawImage(img, -natW / 2, -natH / 2);
+  }
+
+  // Konversi canvas ke base64
+  const mimeType = 'image/jpeg';
+  const b64 = canvas.toDataURL(mimeType, 0.92).split(',')[1];
+  window._croppedBase64    = b64;
+  window._croppedMimeType  = mimeType;
+
+  // Buka modal simpan seperti biasa
+  openSaveModal();
+}
+
+// =====================================================
+// PATCH submitSaveMedia — tambahkan 5 baris ini
+// TEPAT SETELAH baris: "let base64, fileType;"
+// di dalam fungsi submitSaveMedia() yang sudah ada
+// =====================================================
+//
+//   // Crop/edited result dari image editor?
+//   if (window._croppedBase64) {
+//     base64    = window._croppedBase64;
+//     fileType  = window._croppedMimeType || 'image/jpeg';
+//     window._croppedBase64   = null;
+//     window._croppedMimeType = null;
+//   } else if (_previewFileId) {
+//     ... kode lama if (_previewFileId) ...
+//
+// Lihat instruksi di PATCH_submitSaveMedia.txt
+
+// =====================================================
+// OCR BADGE — render di doc panel setelah file disimpan
+// =====================================================
+
+// Dipanggil dari submitSaveMedia() setelah res.ok, sebelum reload doc panel
+// Simpan docId terakhir yang disimpan supaya bisa langsung scan OCR
+let _lastSavedDocId = null;
+
+function markDocOcrPending(docId, namaFile) {
+  _lastSavedDocId = docId;
+  // Badge akan tampil di renderDocList() — data dari server sudah include ocrStatus
+  // Untuk feedback instan sebelum reload, kita simpan state lokal
+}
+
+// Render badge OCR — dipanggil dari renderDocList() per item
+// Tambahkan ini ke dalam loop renderDocList di app.js yang sudah ada,
+// tepat setelah variable safeId, safeFile, safeName:
+//
+//   const ocrStatus = d.ocrStatus || 'none'; // 'none' | 'pending' | 'done'
+//   const ocrBadge = ocrStatus === 'done'
+//     ? '<span class="doc-ocr-badge ocr-done" title="OCR sudah selesai">✓ OCR</span>'
+//     : ocrStatus === 'pending'
+//       ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${safeId}','${safeFile}','${safeName}')" title="Klik untuk scan OCR paspor">📷 Scan OCR</span>`
+//       : '';
+//
+// Dan ganti baris html += `<div class="doc-item">...` dengan:
+//   html += `<div class="doc-item"><div class="doc-item-icon">...</div>
+//            <div class="doc-item-info"><div class="doc-item-name" ...>
+//              ${escH(truncateFileName(d.namaFile, 22))}
+//            </div>${ocrBadge}</div>...`
+//
+// Lihat instruksi lengkap di PATCH_renderDocList.txt
+
+// ---- Trigger OCR dari badge ----
+async function runDocOcr(docId, fileId, namaFile) {
+  if (!confirm('Scan OCR paspor "' + namaFile + '"?\nData akan otomatis masuk ke PASSENGER_LIST.\nPastikan foto sudah jelas sebelum scan.')) return;
+  showToast('⏳ Sedang scan OCR...');
+  try {
+    const { base64, fileType } = await getBase64FromFileId(fileId);
+    const res = await apiPost({
+      action: 'ocrPassport',
+      docId,
+      fileId,
+      namaFile,
+      fileData: base64,
+      fileType,
+      noWa: currentDocNoWa || (currentRoom ? currentRoom.noWa : ''),
+      staffName: currentStaff ? currentStaff.nama : ''
+    });
+    if (res.ok) {
+      showToast('✅ OCR selesai! Data masuk ke Penumpang.');
+      // Reload doc panel supaya badge berubah dari pending → done
+      if (docPanelOpen && currentRoom) loadDocPanel(currentRoom.noWa);
+    } else {
+      showToast('❌ OCR gagal: ' + (res.msg || 'Error'));
+    }
+  } catch(e) {
+    showToast('Error OCR: ' + e.toString());
+  }
+}
+
 
 // Ambil base64 dari fileId (cache atau fetch)
 async function getBase64FromFileId(fileId) {
