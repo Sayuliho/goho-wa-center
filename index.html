@@ -53,9 +53,30 @@
   <div class="main-tabs" id="main-tabs">
     <div class="main-tab active" onclick="switchMainTab('chat')" id="mtab-chat"><i class="ti ti-message-circle"></i> Chat<span class="tab-badge hidden" id="mtab-chat-badge">0</span></div>
     <div class="main-tab" onclick="switchMainTab('contacts')" id="mtab-contacts"><i class="ti ti-users"></i> Contacts</div>
-    <div class="main-tab" onclick="switchMainTab('dashboard')" id="mtab-dashboard"><i class="ti ti-chart-bar"></i> Dashboard</div>
-    <div class="main-tab" onclick="switchMainTab('allchats')" id="mtab-allchats"><i class="ti ti-layout-list"></i> Semua Chat</div>
-    <div class="main-tab" onclick="openMdacModal()" id="mtab-mdac"><i class="ti ti-flag"></i> MDAC</div>
+    <div class="main-tab owner-only" onclick="switchMainTab('dashboard')" id="mtab-dashboard"><i class="ti ti-chart-bar"></i> Dashboard</div>
+    <div class="main-tab owner-only" onclick="switchMainTab('allchats')" id="mtab-allchats"><i class="ti ti-layout-list"></i> Semua Chat</div>
+    <div class="main-tab layanan-tab" id="mtab-layanan" onclick="toggleLayananDropdown(event)">
+      <i class="ti ti-grid-dots"></i> Layanan <i class="ti ti-chevron-down" id="layanan-chevron" style="font-size:10px;margin-left:1px;transition:transform 0.2s;"></i>
+    </div>
+  </div>
+  <!-- Dropdown Layanan -->
+  <div id="layanan-dropdown" class="layanan-dropdown">
+    <div class="layanan-item" onclick="pilihLayanan('mdac')">
+      <span class="layanan-flag">🇲🇾</span>
+      <div><div class="layanan-nama">MDAC Malaysia</div><div class="layanan-sub">Malaysia Digital Arrival Card</div></div>
+    </div>
+    <div class="layanan-item layanan-soon" onclick="pilihLayanan('twac')">
+      <span class="layanan-flag">🇹🇼</span>
+      <div><div class="layanan-nama">TWAC Taiwan</div><div class="layanan-sub coming">Coming soon</div></div>
+    </div>
+    <div class="layanan-item layanan-soon" onclick="pilihLayanan('sgcard')">
+      <span class="layanan-flag">🇸🇬</span>
+      <div><div class="layanan-nama">SG Card Singapore</div><div class="layanan-sub coming">Coming soon</div></div>
+    </div>
+    <div class="layanan-item layanan-soon" onclick="pilihLayanan('allin')">
+      <span class="layanan-flag">🇮🇩</span>
+      <div><div class="layanan-nama">All-in Indonesia</div><div class="layanan-sub coming">Coming soon</div></div>
+    </div>
   </div>
   <div class="main-area" id="page-chat" style="display:flex;">
     <div class="sidebar" id="sidebar">
