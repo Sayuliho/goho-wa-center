@@ -958,7 +958,10 @@ function tampilkanHasilOcr(data) {
   // Pasang drag listener (hanya sekali)
   _initOcrDrag();
 }
-
+function tutupOcrModal() {
+  document.getElementById('ocr-overlay').style.display = 'none';
+}
+  
 async function simpanPassenger() {
   const nama = document.getElementById('ocr-nama').value.trim();
   const noPaspor = document.getElementById('ocr-no-paspor').value.trim();
