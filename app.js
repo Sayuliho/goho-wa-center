@@ -581,6 +581,7 @@ function openImgPreview(src, fileId, namaFile, mediaUrl) {
   document.getElementById('img-preview-src').src  = src;
   document.getElementById('img-preview-name').textContent = namaFile || '';
   const modal = document.getElementById('modal-img-preview');
+  imgEditorReset();
   modal.style.display = 'flex';
 }
 function closeImgPreview() {
