@@ -793,45 +793,51 @@ async function saveCropOrFull() {
   const img = document.getElementById('img-preview-src');
   if (!img || !img.src) { showToast('Tidak ada gambar untuk disimpan'); return; }
 
-  // Tunggu gambar benar-benar loaded
   await new Promise(resolve => { if (img.complete) resolve(); else img.onload = resolve; });
 
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const natW = img.naturalWidth;
-  const natH = img.naturalHeight;
-  const rad = _imgRotation * Math.PI / 180;
-  const absCos = Math.abs(Math.cos(rad));
-  const absSin = Math.abs(Math.sin(rad));
+  const canvas  = document.createElement('canvas');
+  const ctx     = canvas.getContext('2d');
+  const natW    = img.naturalWidth;
+  const natH    = img.naturalHeight;
+  const rad     = _imgRotation * Math.PI / 180;
+  const absCos  = Math.abs(Math.cos(rad));
+  const absSin  = Math.abs(Math.sin(rad));
+
+  // Ukuran canvas setelah rotate (tanpa zoom — zoom hanya CSS display)
+  const rotW = Math.round(natW * absCos + natH * absSin);
+  const rotH = Math.round(natW * absSin + natH * absCos);
 
   if (_cropRect && _cropRect.w > 8 && _cropRect.h > 8) {
     // ---- MODE CROP ----
-    // 1. Render gambar ke canvas besar (full, dengan rotate + zoom)
-    const rotW = Math.round(natW * absCos + natH * absSin);
-    const rotH = Math.round(natW * absSin + natH * absCos);
+    // 1. Render gambar full ke canvas (dengan rotate, TANPA zoom — zoom hanya CSS)
     const fullCanvas = document.createElement('canvas');
     fullCanvas.width  = rotW;
     fullCanvas.height = rotH;
     const fctx = fullCanvas.getContext('2d');
     fctx.translate(rotW / 2, rotH / 2);
     fctx.rotate(rad);
-    fctx.scale(_imgZoom, _imgZoom);
-    fctx.drawImage(img, -natW / 2, -natH / 2);
+    fctx.drawImage(img, -natW / 2, -natH / 2); // tanpa scale zoom
 
-    // 2. Hitung proporsi crop dari ukuran overlay ke ukuran canvas penuh
-    const scaleX = rotW / _cropRect.overlayW;
-    const scaleY = rotH / _cropRect.overlayH;
-
-    // 3. Temukan batas gambar di dalam overlay (gambar tidak selalu memenuhi overlay)
-    //    Kita perlu tahu offset gambar di overlay
+    // 2. Ukuran gambar yang TAMPIL di layar (setelah CSS transform: rotate+scale)
+    //    getBoundingClientRect() sudah memperhitungkan CSS transform
+    const imgEl  = document.getElementById('img-preview-src');
     const overlay = document.getElementById('crop-overlay');
-    const imgEl   = document.getElementById('img-preview-src');
-    const oRect   = overlay.getBoundingClientRect();
-    const iRect   = imgEl.getBoundingClientRect();
+    const iRect  = imgEl.getBoundingClientRect();   // ukuran tampil di layar
+    const oRect  = overlay.getBoundingClientRect();
+
+    // Ukuran gambar yang ditampilkan di layar (sudah kena zoom CSS)
+    const dispW = iRect.width;
+    const dispH = iRect.height;
+
+    // Skala dari layar ke canvas (rotated, tanpa zoom)
+    const scaleX = rotW / dispW;
+    const scaleY = rotH / dispH;
+
+    // Offset gambar di dalam overlay
     const imgOffX = iRect.left - oRect.left;
     const imgOffY = iRect.top  - oRect.top;
 
-    // Koordinat crop relatif ke gambar (sudah dirotate dan di-zoom)
+    // Koordinat crop di canvas
     const cropX = Math.max(0, (_cropRect.x - imgOffX) * scaleX);
     const cropY = Math.max(0, (_cropRect.y - imgOffY) * scaleY);
     const cropW = Math.min(_cropRect.w * scaleX, rotW - cropX);
@@ -842,24 +848,19 @@ async function saveCropOrFull() {
     ctx.drawImage(fullCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
   } else {
-    // ---- MODE FULL (hanya rotate + zoom, tanpa crop) ----
-    const rotW = Math.round(natW * absCos + natH * absSin);
-    const rotH = Math.round(natW * absSin + natH * absCos);
+    // ---- MODE FULL (rotate saja, tanpa crop, tanpa zoom) ----
     canvas.width  = rotW;
     canvas.height = rotH;
     ctx.translate(rotW / 2, rotH / 2);
     ctx.rotate(rad);
-    ctx.scale(_imgZoom, _imgZoom);
     ctx.drawImage(img, -natW / 2, -natH / 2);
   }
 
-  // Konversi canvas ke base64
   const mimeType = 'image/jpeg';
   const b64 = canvas.toDataURL(mimeType, 0.92).split(',')[1];
-  window._croppedBase64    = b64;
-  window._croppedMimeType  = mimeType;
+  window._croppedBase64   = b64;
+  window._croppedMimeType = mimeType;
 
-  // Buka modal simpan seperti biasa
   openSaveModal();
 }
 
