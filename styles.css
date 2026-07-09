@@ -411,3 +411,189 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 }
 @media (min-width: 769px) and (max-width: 1100px) { .sidebar { width: 260px; } .notes-panel { display: none; } }
 @media (min-width: 1100px) { .notes-panel { display: flex; } }
+
+/* =====================================================
+   GOHO IMAGE EDITOR LIGHTBOX
+   Tambahkan ke styles.css (setelah baris terakhir)
+   ===================================================== */
+
+/* --- Toolbar atas (rotate + zoom) --- */
+.img-editor-toolbar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.55);
+  border-radius: 24px;
+  padding: 6px 12px;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+.img-editor-toolbar button {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  line-height: 1;
+  font-family: var(--font);
+}
+.img-editor-toolbar button:hover { background: rgba(255,255,255,0.25); }
+.img-editor-toolbar button:active { background: rgba(255,255,255,0.35); }
+.img-editor-toolbar .tb-sep {
+  width: 1px; height: 20px;
+  background: rgba(255,255,255,0.2);
+  margin: 0 4px;
+}
+.img-editor-toolbar .tb-zoom-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  min-width: 36px;
+  text-align: center;
+}
+
+/* --- Toolbar bawah (crop toggle + rotation slider) --- */
+.img-editor-bottom {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.55);
+  border-radius: 24px;
+  padding: 8px 16px;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+.img-editor-bottom button {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: var(--font);
+}
+.img-editor-bottom button:hover { background: rgba(255,255,255,0.22); }
+.img-editor-bottom button.crop-active {
+  background: #25D366;
+  border-color: #25D366;
+  color: white;
+}
+.img-editor-bottom label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  white-space: nowrap;
+}
+.img-editor-bottom input[type=range] {
+  width: 110px;
+  accent-color: #25D366;
+  cursor: pointer;
+}
+
+/* --- Kontainer gambar + crop overlay --- */
+#img-editor-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: default;
+}
+#img-editor-canvas-bg {
+  /* Canvas tersembunyi untuk operasi crop */
+  display: none;
+}
+#img-preview-src {
+  /* Gambar utama — transform dikendalikan JS */
+  max-width: 88vw;
+  max-height: 78vh;
+  object-fit: contain;
+  border-radius: 6px;
+  transform-origin: center center;
+  transition: transform 0.05s linear;
+  user-select: none;
+  pointer-events: none; /* biar tidak ganggu crop drag */
+}
+
+/* --- Crop overlay --- */
+#crop-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  display: none; /* tampil saat crop mode aktif */
+  z-index: 5;
+}
+#crop-box {
+  position: absolute;
+  border: 2px solid #25D366;
+  background: rgba(37, 211, 102, 0.08);
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+  pointer-events: none;
+  display: none;
+}
+
+/* --- Tombol kanan atas (Simpan Crop, Forward, Tutup) --- */
+#img-preview-actions {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+}
+#img-preview-actions button {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: opacity 0.15s;
+}
+#img-preview-actions button:hover { opacity: 0.85; }
+#btn-save-crop  { background: #25D366; color: white; }
+#btn-forward-img { background: #0F6E56; color: white; }
+#btn-close-preview { background: rgba(255,255,255,0.15); color: white; }
+
+/* --- Badge OCR di doc panel --- */
+.doc-ocr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.doc-ocr-badge.ocr-pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+.doc-ocr-badge.ocr-done {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+.doc-ocr-badge.ocr-pending:hover { background: #fde68a; }
+
