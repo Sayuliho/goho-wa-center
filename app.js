@@ -79,7 +79,7 @@ document.getElementById('password').addEventListener('keydown', e => { if (e.key
 // ===================== MAIN TABS =====================
 function switchMainTab(tab) {
   currentMainTab = tab;
-  ['chat','contacts','dashboard','allchats'].forEach(t => {
+  ['chat','contacts','dashboard','allchats','layanan'].forEach(t => {
     document.getElementById('mtab-' + t)?.classList.toggle('active', t === tab);
     const page = document.getElementById('page-' + t);
     if (page) { page.style.display = t === tab ? 'flex' : 'none'; page.classList.toggle('active', t === tab); }
