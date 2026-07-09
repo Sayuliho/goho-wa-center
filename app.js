@@ -91,6 +91,49 @@ function switchMainTab(tab) {
   if (tab === 'allchats') loadAllChats();
 }
 
+// ===================== LAYANAN DROPDOWN =====================
+function toggleLayananDropdown(e) {
+  e && e.stopPropagation();
+  const dd = document.getElementById('layanan-dropdown');
+  const chev = document.getElementById('layanan-chevron');
+  const isOpen = dd.classList.contains('open');
+  closeLayananDropdown();
+  if (!isOpen) {
+    const btn = document.getElementById('mtab-layanan');
+    const rect = btn.getBoundingClientRect();
+    dd.style.left = rect.left + 'px';
+    dd.style.top  = (rect.bottom + 2) + 'px';
+    dd.classList.add('open');
+    if (chev) chev.style.transform = 'rotate(180deg)';
+  }
+}
+
+function closeLayananDropdown() {
+  const dd = document.getElementById('layanan-dropdown');
+  const chev = document.getElementById('layanan-chevron');
+  if (dd) dd.classList.remove('open');
+  if (chev) chev.style.transform = 'rotate(0deg)';
+}
+
+function pilihLayanan(type) {
+  closeLayananDropdown();
+  const labels = { twac: 'TWAC Taiwan', sgcard: 'SG Card Singapore', allin: 'All-in Indonesia' };
+  if (type === 'mdac') {
+    openMdacModal();
+  } else {
+    showToast('🚧 ' + (labels[type] || type) + ' — coming soon');
+  }
+}
+
+// Tutup dropdown kalau klik di luar area tombol & dropdown
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('layanan-dropdown');
+  const btn = document.getElementById('mtab-layanan');
+  if (dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+    closeLayananDropdown();
+  }
+});
+
 // ===================== SOUND & NOTIFICATION =====================
 let lastWaitingRooms = new Set();
 function playNotifSound() {
