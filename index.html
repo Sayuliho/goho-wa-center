@@ -259,16 +259,67 @@
   <div style="color:rgba(255,255,255,0.5);font-size:11px;">Klik mana saja untuk tutup</div>
 </div>
 
-<!-- MODAL PREVIEW FOTO FULLSCREEN -->
+<!-- =====================================================
+   GANTI SELURUH BLOK ini di index.html:
+   dari:  <!-- MODAL PREVIEW FOTO FULLSCREEN -->
+   sampai: </div>  (penutup modal-img-preview)
+   ===================================================== -->
+
+<!-- MODAL PREVIEW FOTO FULLSCREEN + IMAGE EDITOR -->
 <div id="modal-img-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10000;flex-direction:column;align-items:center;justify-content:center;">
-  <div style="position:absolute;top:16px;right:16px;display:flex;gap:8px;">
-    <button id="img-preview-save-btn" onclick="openSaveModal()" style="background:#25D366;border:none;color:white;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">💾 Simpan ke Dokumen</button>
-    <button onclick="openForwardModal()" style="background:#0F6E56;border:none;color:white;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">📤 Forward</button>
-    <button onclick="closeImgPreview()" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:8px 14px;border-radius:8px;font-size:14px;cursor:pointer;">✕</button>
+
+  <!-- Toolbar Atas: Rotate + Zoom -->
+  <div class="img-editor-toolbar">
+    <button onclick="imgRotate(-15)" title="Putar kiri">↺</button>
+    <button onclick="imgRotate(-90)" title="Putar kiri 90°" style="font-size:11px;">◀90°</button>
+    <button onclick="imgRotate(90)"  title="Putar kanan 90°" style="font-size:11px;">90°▶</button>
+    <button onclick="imgRotate(15)"  title="Putar kanan">↻</button>
+    <div class="tb-sep"></div>
+    <button onclick="imgZoom(-0.15)" title="Zoom out">−</button>
+    <span class="tb-zoom-label" id="zoom-label">100%</span>
+    <button onclick="imgZoom(0.15)"  title="Zoom in">+</button>
+    <div class="tb-sep"></div>
+    <button onclick="imgResetTransform()" title="Reset posisi" style="font-size:11px;">Reset</button>
   </div>
-  <img id="img-preview-src" src="" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px;">
-  <div id="img-preview-name" style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:10px;"></div>
+
+  <!-- Kontainer Gambar + Crop Overlay -->
+  <div id="img-editor-wrap">
+    <img id="img-preview-src" src="" alt="">
+    <canvas id="img-editor-canvas-bg"></canvas>
+
+    <!-- Crop overlay — aktif saat crop mode -->
+    <div id="crop-overlay"
+      onmousedown="cropStart(event)"
+      onmousemove="cropMove(event)"
+      onmouseup="cropEnd(event)"
+      ontouchstart="cropTouchStart(event)"
+      ontouchmove="cropTouchMove(event)"
+      ontouchend="cropTouchEnd(event)">
+      <div id="crop-box"></div>
+    </div>
+  </div>
+
+  <!-- Toolbar Bawah: Crop + Rotation Slider -->
+  <div class="img-editor-bottom">
+    <button id="btn-crop-toggle" onclick="toggleCropMode()" title="Aktifkan crop">✂️ Crop</button>
+    <div class="tb-sep" style="height:18px;"></div>
+    <label>Rotasi bebas:</label>
+    <input type="range" id="rotate-slider" min="-180" max="180" value="0"
+      oninput="imgRotateSlider(this.value)" title="Geser untuk rotasi halus">
+    <span id="rotate-slider-label" style="font-size:11px;color:rgba(255,255,255,0.6);min-width:32px;">0°</span>
+  </div>
+
+  <!-- Tombol Kanan Atas -->
+  <div id="img-preview-actions">
+    <button id="btn-save-crop" onclick="saveCropOrFull()">💾 Simpan</button>
+    <button id="btn-forward-img" onclick="openForwardModal()">📤 Forward</button>
+    <button id="btn-close-preview" onclick="closeImgPreview()">✕</button>
+  </div>
+
+  <!-- Nama file -->
+  <div id="img-preview-name" style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:6px;position:absolute;bottom:60px;left:50%;transform:translateX(-50%);pointer-events:none;"></div>
 </div>
+
 
 <!-- MODAL KIRIM DOKUMEN -->
 <div class="modal" id="modal-send-doc" style="display:none;">
