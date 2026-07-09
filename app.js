@@ -1103,7 +1103,12 @@ async function submitSaveMedia() {
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Menyimpan...';
   try {
     let base64, fileType;
-    if (_previewFileId) {
+    if (window._croppedBase64) {
+      base64    = window._croppedBase64;
+      fileType  = window._croppedMimeType || 'image/jpeg';
+      window._croppedBase64   = null;
+      window._croppedMimeType = null;
+    } else if (_previewFileId) {
       ({ base64, fileType } = await getBase64FromFileId(_previewFileId));
     } else if (_previewMediaUrl) {
       // PDF/dokumen dari customer — ambil via proxy menggunakan Drive URL
