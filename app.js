@@ -1549,7 +1549,7 @@ function renderDocList(docs) {
         : (isImg && ocrStatus === 'pending')
           ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${safeId}','${safeFile}','${safeName}')" title="Klik untuk scan OCR">📷 Scan OCR</span>`
           : '';
-      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 26))}</div></div><div class="doc-item-acts">${isImg ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}','${safeId}')" title="Buka Passport Viewer">🪟</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
+      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 22))}${ocrBadge}</div></div><div class="doc-item-acts">${isImg ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}','${safeId}')" title="Buka Passport Viewer">🪟</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
     });
   });
   el.innerHTML = html;
