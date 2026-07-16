@@ -2294,10 +2294,13 @@ function prosesMdac() {
   summaryBox.textContent = ringkasanText;
   summaryBox.style.display = 'block';
 
-  window.postMessage({
-    type: 'GOHO_MDAC_DATA',
-    ringkasan: ringkasanText
-  }, '*');
+  var _mdacMsg = { type: 'GOHO_MDAC_DATA', ringkasan: ringkasanText };
+  var _mdacRetry = 0;
+  var _mdacSend = function() {
+  window.postMessage(_mdacMsg, '*');
+  if (_mdacRetry++ < 3) setTimeout(_mdacSend, 300);
+  };
+  _mdacSend();
 
   window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
   showToast('✅ Data dikirim ke extension — form MDAC dibuka otomatis');
