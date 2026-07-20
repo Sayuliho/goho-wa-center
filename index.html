@@ -648,25 +648,25 @@
     </div>
     <div class="modal-body">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
-        <div class="form-group" style="margin:0;">
-          <label>Negara / Region</label>
-          <select id="h-country" onchange="hargaUpdatePkg()" style="width:100%;">
-            <option value="">— Pilih negara —</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin:0;">
-          <label>Paket data</label>
-          <select id="h-pkg" onchange="hargaUpdateDay()" disabled style="width:100%;">
-            <option value="">— Pilih paket —</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin:0;">
-          <label>Durasi (hari)</label>
-          <select id="h-day" onchange="hargaShowResult()" disabled style="width:100%;">
-            <option value="">— Pilih durasi —</option>
-          </select>
-        </div>
-      </div>
+  <div class="form-group" style="margin:0;">
+    <label>Negara / Region</label>
+    <select id="h-country" onchange="hargaUpdateDay()" style="width:100%;">
+      <option value="">— Pilih negara —</option>
+    </select>
+  </div>
+  <div class="form-group" style="margin:0;">
+    <label>Durasi (hari)</label>
+    <select id="h-day" onchange="hargaUpdatePkg()" disabled style="width:100%;">
+      <option value="">— Pilih durasi —</option>
+    </select>
+  </div>
+  <div class="form-group" style="margin:0;">
+    <label>Paket data</label>
+    <select id="h-pkg" onchange="hargaShowResult()" disabled style="width:100%;">
+      <option value="">— Pilih paket —</option>
+    </select>
+  </div>
+</div>
       <div id="h-loading" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text-muted);">
         <i class="ti ti-loader spin"></i> Memuat data harga...
       </div>
