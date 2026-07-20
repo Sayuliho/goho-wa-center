@@ -2092,6 +2092,103 @@ async function doneNote(noteId, noWa) {
     else { showToast('Gagal: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
+// ===================== HARGA SIM/ESIM =====================
+let hargaData = [];
+let hargaLoaded = false;
+
+function openHargaModal() {
+  document.getElementById('modal-harga').style.display = 'flex';
+  if (!hargaLoaded) loadHargaData();
+}
+
+async function loadHargaData() {
+  const loading = document.getElementById('h-loading');
+  const result  = document.getElementById('h-result');
+  loading.style.display = 'block';
+  result.innerHTML = '';
+  try {
+    const res = await apiGet({ action: 'getHargaSim' });
+    if (!res.ok || !res.data || res.data.length === 0) {
+      loading.style.display = 'none';
+      result.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">Data harga belum tersedia. Jalankan Sync Harga di Apps Script dulu.</div>';
+      return;
+    }
+    hargaData = res.data;
+    hargaLoaded = true;
+    loading.style.display = 'none';
+    const sel = document.getElementById('h-country');
+    const countries = [...new Set(hargaData.map(r => r[0]))].sort();
+    sel.innerHTML = '<option value="">— Pilih negara —</option>';
+    countries.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+    result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, paket, dan durasi</div>';
+  } catch(e) {
+    loading.style.display = 'none';
+    result.innerHTML = '<div style="color:var(--red);font-size:12px;">Gagal memuat: ' + e.toString() + '</div>';
+  }
+}
+
+function hargaUpdatePkg() {
+  const c = document.getElementById('h-country').value;
+  const selP = document.getElementById('h-pkg');
+  const selD = document.getElementById('h-day');
+  selP.innerHTML = '<option value="">— Pilih paket —</option>';
+  selD.innerHTML = '<option value="">— Pilih durasi —</option>';
+  selP.disabled = !c; selD.disabled = true;
+  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih paket dan durasi</div>';
+  if (!c) return;
+  const pkgs = [...new Set(hargaData.filter(r => r[0] === c).map(r => r[1]))];
+  pkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
+}
+
+function hargaUpdateDay() {
+  const c = document.getElementById('h-country').value;
+  const p = document.getElementById('h-pkg').value;
+  const selD = document.getElementById('h-day');
+  selD.innerHTML = '<option value="">— Pilih durasi —</option>';
+  selD.disabled = !p;
+  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi</div>';
+  if (!p) return;
+  const days = [...new Set(hargaData.filter(r => r[0] === c && r[1] === p).map(r => r[2]))].sort((a,b) => a-b);
+  days.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d + ' hari'; selD.appendChild(o); });
+}
+
+function hargaShowResult() {
+  const c = document.getElementById('h-country').value;
+  const p = document.getElementById('h-pkg').value;
+  const d = parseInt(document.getElementById('h-day').value);
+  const resultEl = document.getElementById('h-result');
+  if (!c || !p || !d) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih semua filter</div>'; return; }
+  const row = hargaData.find(r => r[0] === c && r[1] === p && r[2] === d);
+  if (!row) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Data tidak tersedia untuk kombinasi ini</div>'; return; }
+  const [,, day, simPub, simPar, esimPub, esimPar] = row;
+  const fmt = v => v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—';
+  resultEl.innerHTML = `
+    <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${d} hari &bull; ${escH(p)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">💳 SIM Card</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;color:var(--text-muted);">Publish <span style="background:#dbeafe;color:#1d4ed8;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Customer</span></span>
+          <span style="font-size:15px;font-weight:600;color:#1d4ed8;">${fmt(simPub)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+          <span style="font-size:12px;color:var(--text-muted);">Partner <span style="background:#dcfce7;color:#166534;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Agen</span></span>
+          <span style="font-size:15px;font-weight:600;color:var(--text);">${fmt(simPar)}</span>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">📱 eSIM</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;color:var(--text-muted);">Publish <span style="background:#dbeafe;color:#1d4ed8;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Customer</span></span>
+          <span style="font-size:15px;font-weight:600;color:#1d4ed8;">${fmt(esimPub)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+          <span style="font-size:12px;color:var(--text-muted);">Partner <span style="background:#dcfce7;color:#166534;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Agen</span></span>
+          <span style="font-size:15px;font-weight:600;color:var(--text);">${fmt(esimPar)}</span>
+        </div>
+      </div>
+    </div>`;
+}
 // ===================== MDAC =====================
 var mdacBookingInfo = null;
 var mdacPaxList = [];
