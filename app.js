@@ -120,6 +120,8 @@ function pilihLayanan(type) {
   const labels = { twac: 'TWAC Taiwan', sgcard: 'SG Card Singapore', allin: 'All-in Indonesia' };
   if (type === 'mdac') {
     openMdacModal();
+  } else if (type === 'harga') {
+    openHargaModal();
   } else {
     showToast('🚧 ' + (labels[type] || type) + ' — coming soon');
   }
