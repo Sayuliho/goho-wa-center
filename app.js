@@ -2162,7 +2162,7 @@ function hargaShowResult() {
   if (!c || !p || !d) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih semua filter</div>'; return; }
   const row = hargaData.find(r => r[0] === c && r[1] === p && r[2] === d);
   if (!row) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Data tidak tersedia untuk kombinasi ini</div>'; return; }
-  const [,, day, simPub, simPar, esimPub, esimPar] = row;
+  const [,, day, simPub, esimPub, simPar, esimPar] = row;
   const fmt = v => v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—';
   resultEl.innerHTML = `
     <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${d} hari &bull; ${escH(p)}</div>
