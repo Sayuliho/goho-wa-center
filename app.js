@@ -2129,29 +2129,29 @@ async function loadHargaData() {
   }
 }
 
-function hargaUpdatePkg() {
-  const c = document.getElementById('h-country').value;
-  const selP = document.getElementById('h-pkg');
-  const selD = document.getElementById('h-day');
-  selP.innerHTML = '<option value="">— Pilih paket —</option>';
-  selD.innerHTML = '<option value="">— Pilih durasi —</option>';
-  selP.disabled = !c; selD.disabled = true;
-  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih paket dan durasi</div>';
-  if (!c) return;
-  const pkgs = [...new Set(hargaData.filter(r => r[0] === c).map(r => r[1]))];
-  pkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
-}
-
 function hargaUpdateDay() {
   const c = document.getElementById('h-country').value;
-  const p = document.getElementById('h-pkg').value;
   const selD = document.getElementById('h-day');
+  const selP = document.getElementById('h-pkg');
   selD.innerHTML = '<option value="">— Pilih durasi —</option>';
-  selD.disabled = !p;
-  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi</div>';
-  if (!p) return;
-  const days = [...new Set(hargaData.filter(r => r[0] === c && r[1] === p).map(r => r[2]))].sort((a,b) => a-b);
+  selP.innerHTML = '<option value="">— Pilih paket —</option>';
+  selD.disabled = !c; selP.disabled = true;
+  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi dan paket</div>';
+  if (!c) return;
+  const days = [...new Set(hargaData.filter(r => r[0] === c).map(r => r[2]))].sort((a,b) => a-b);
   days.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d + ' hari'; selD.appendChild(o); });
+}
+
+function hargaUpdatePkg() {
+  const c = document.getElementById('h-country').value;
+  const d = parseInt(document.getElementById('h-day').value);
+  const selP = document.getElementById('h-pkg');
+  selP.innerHTML = '<option value="">— Pilih paket —</option>';
+  selP.disabled = !d;
+  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih paket</div>';
+  if (!d) return;
+  const pkgs = [...new Set(hargaData.filter(r => r[0] === c && r[2] === d).map(r => r[1]))];
+  pkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
 }
 
 function hargaShowResult() {
