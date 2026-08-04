@@ -384,12 +384,17 @@ async function openChat(roomId) {
   document.getElementById('np-status') && (document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`);
   document.getElementById('chat-area').innerHTML = '<div class="loading">Memuat pesan...</div>';
   renderActionRow(chat);
-  // Jalankan semua paralel — tidak saling tunggu
-  Promise.all([
-    loadMessages(roomId, true),
-    loadCustomerInfoPanel(chat.noWa),
-    loadSmartContext(chat.roomId, chat.noWa)
-  ]);
+// Pesan dan info customer langsung — SmartContext delay 2 detik
+// supaya chat terbuka cepat dulu, baru context di-load background
+Promise.all([
+  loadMessages(roomId, true),
+  loadCustomerInfoPanel(chat.noWa)
+]);
+setTimeout(() => {
+  if (currentRoom && currentRoom.roomId === roomId) {
+    loadSmartContext(roomId, chat.noWa);
+  }
+}, 2000);
   if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('slide-out');
   renderChatList(allChats);
 }
