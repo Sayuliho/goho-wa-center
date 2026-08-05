@@ -36,6 +36,7 @@ function initApp(staff) {
     document.querySelectorAll('.owner-only').forEach(el => el.style.display = 'flex');
   }
   startPolling(); loadChats(); showSoundActivation();
+  initClipboardPaste();
 }
 function doLogout() {
   if (!confirm('Logout dari GOHO WA Center?')) return;
