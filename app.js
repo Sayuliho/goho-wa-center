@@ -1383,6 +1383,105 @@ async function handleFileUpload(input) {
   finally { input.value = ''; }
 }
 function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = () => reject(new Error('Gagal membaca file')); reader.readAsDataURL(file); }); }
+// ===================== CLIPBOARD PASTE (Ctrl+V gambar) =====================
+function initClipboardPaste() {
+  const input = document.getElementById('reply-input');
+  if (!input) return;
+
+  input.addEventListener('paste', async function(e) {
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault(); // jangan paste sebagai teks
+        if (!currentRoom) { showToast('Pilih chat dulu'); return; }
+
+        const file = item.getAsFile();
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) { showToast('Gambar terlalu besar, maksimal 10MB'); return; }
+
+        // Tampilkan preview di atas input
+        showPastePreview(file);
+        return;
+      }
+    }
+  });
+}
+
+let _pasteFile = null;
+
+function showPastePreview(file) {
+  _pasteFile = file;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const existing = document.getElementById('paste-preview-bar');
+    if (existing) existing.remove();
+
+    const bar = document.createElement('div');
+    bar.id = 'paste-preview-bar';
+    bar.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f0fdf4;border-top:1px solid #bbf7d0;';
+    bar.innerHTML = `
+      <img src="${e.target.result}" style="height:48px;width:48px;object-fit:cover;border-radius:6px;border:1px solid #ccc;">
+      <span style="font-size:12px;color:#555;flex:1;">Screenshot siap dikirim</span>
+      <button onclick="sendPasteImage()" style="background:#0F6E56;color:white;border:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">Kirim</button>
+      <button onclick="cancelPaste()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;">✕</button>
+    `;
+
+    const replyRow = document.getElementById('reply-row');
+    replyRow.insertBefore(bar, replyRow.firstChild);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function sendPasteImage() {
+  if (!_pasteFile || !currentRoom) return;
+  cancelPaste();
+
+  const bar = document.getElementById('upload-bar');
+  const status = document.getElementById('upload-status');
+  bar.classList.add('show');
+  status.textContent = 'Mengirim screenshot...';
+
+  try {
+    const base64 = await fileToBase64(_pasteFile);
+    const ext = _pasteFile.type.split('/')[1] || 'png';
+    const fileName = 'screenshot-' + Date.now() + '.' + ext;
+
+    const res = await apiPost({
+      action: 'sendFile',
+      roomId: currentRoom.roomId,
+      staffName: currentStaff.nama,
+      noWa: currentRoom.noWa,
+      fileName,
+      fileType: _pasteFile.type,
+      fileData: base64
+    });
+
+    if (res.ok) {
+      status.textContent = '✅ Screenshot berhasil dikirim!';
+      setTimeout(() => bar.classList.remove('show'), 3000);
+      lastMsgCount = 0;
+      await loadMessages(currentRoom.roomId, true);
+      loadChats(false);
+    } else {
+      status.textContent = '❌ Gagal: ' + (res.msg || 'Error');
+      setTimeout(() => bar.classList.remove('show'), 4000);
+      showToast('Gagal kirim screenshot');
+    }
+  } catch(e) {
+    status.textContent = '❌ Error: ' + e.toString();
+    setTimeout(() => bar.classList.remove('show'), 4000);
+  } finally {
+    _pasteFile = null;
+  }
+}
+
+function cancelPaste() {
+  _pasteFile = null;
+  const bar = document.getElementById('paste-preview-bar');
+  if (bar) bar.remove();
+}
 
 // ===================== NEW CHAT =====================
 let newChatTarget = { noWa: '', nama: '' };
