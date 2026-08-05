@@ -1438,7 +1438,9 @@ function showPastePreview(file) {
 
 async function sendPasteImage() {
   if (!_pasteFile || !currentRoom) return;
-  cancelPaste();
+
+  const fileToSend = _pasteFile; // simpan dulu sebelum di-clear
+  cancelPaste(); // baru clear preview
 
   const bar = document.getElementById('upload-bar');
   const status = document.getElementById('upload-status');
@@ -1446,8 +1448,8 @@ async function sendPasteImage() {
   status.textContent = 'Mengirim screenshot...';
 
   try {
-    const base64 = await fileToBase64(_pasteFile);
-    const ext = _pasteFile.type.split('/')[1] || 'png';
+    const base64 = await fileToBase64(fileToSend);
+    const ext = fileToSend.type.split('/')[1] || 'png';
     const fileName = 'screenshot-' + Date.now() + '.' + ext;
 
     const res = await apiPost({
@@ -1456,7 +1458,7 @@ async function sendPasteImage() {
       staffName: currentStaff.nama,
       noWa: currentRoom.noWa,
       fileName,
-      fileType: _pasteFile.type,
+      fileType: fileToSend.type,
       fileData: base64
     });
 
@@ -1474,8 +1476,6 @@ async function sendPasteImage() {
   } catch(e) {
     status.textContent = '❌ Error: ' + e.toString();
     setTimeout(() => bar.classList.remove('show'), 4000);
-  } finally {
-    _pasteFile = null;
   }
 }
 
