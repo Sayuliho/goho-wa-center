@@ -398,6 +398,7 @@ setTimeout(() => {
 }, 2000);
   if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('slide-out');
   renderChatList(allChats);
+  initClipboardPaste();
 }
 async function loadCustomerInfoPanel(noWa) {
   try {
