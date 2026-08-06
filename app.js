@@ -356,11 +356,12 @@ function renderChatItem(c) {
       <div class="ci-row1"><span class="ci-name">${escH(c.nama)}</span><span class="ci-time">${formatTime(c.lastMsgAt)}</span></div>
       <div class="ci-row2"><span class="ci-prev">${escH(c.lastMsg || '...')}</span>${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}</div>
       <div class="ci-row3">
-        <span class="pill ${getStatusClass(c.status)}">${statusLabel}</span>
-        ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
-        ${c.assignedTo ? `<span class="ci-handler">👤 ${escH(c.assignedTo)}</span>` : ''}
-        ${c.menitTunggu > 10 ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
-      </div>
+  <span class="pill ${getStatusClass(c.status)}">${statusLabel}</span>
+  ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
+  ${c.assignedTo ? `<span class="ci-handler">👤 ${escH(c.assignedTo)}</span>` : ''}
+  ${c.menitTunggu > 10 ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
+  ${c.deviceLabel && c.deviceLabel === 'WA2' ? `<span class="pill" style="background:#1d4ed8;color:white;font-size:9px;">📱 WA2</span>` : ''}
+</div>
     </div>
   </div>`;
 }
