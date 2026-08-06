@@ -360,7 +360,7 @@ function renderChatItem(c) {
   ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
   ${c.assignedTo ? `<span class="ci-handler">👤 ${escH(c.assignedTo)}</span>` : ''}
   ${c.menitTunggu > 10 ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
-  ${c.deviceLabel && c.deviceLabel === 'WA2' ? `<span class="pill" style="background:#1d4ed8;color:white;font-size:9px;">📱 WA2</span>` : ''}
+  ${c.deviceLabel === 'WA2' ? `<span class="pill" style="background:#1d4ed8;color:white;font-size:9px;">📱 WA2</span>` : `<span class="pill" style="background:#0F6E56;color:white;font-size:9px;">📱 WA1</span>`}
 </div>
     </div>
   </div>`;
