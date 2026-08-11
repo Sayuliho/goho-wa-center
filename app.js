@@ -1370,7 +1370,7 @@ async function kirimPesan() {
   }
 }
 function handleReplyKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kirimPesan(); } }
-async function showNoteInput() { const note = prompt('Catatan internal:'); if (!note || !note.trim()) return; const res = await apiPost({action: 'addNote', roomId: currentRoom.roomId, staffName: currentStaff.nama, note: note.trim()}); if (res.ok) showToast('Catatan disimpan'); }
+function showNoteInput() { if (!currentRoom) return; showNoteModal(currentRoom.noWa); }
 function backToList() { document.getElementById('sidebar').classList.remove('slide-out'); currentRoom = null; lastMsgCount = 0; }
 function refreshAll() { loadChats(); showToast('Diperbarui'); }
 
