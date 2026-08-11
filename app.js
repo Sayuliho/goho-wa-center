@@ -1374,16 +1374,30 @@ function refreshAll() { loadChats(); showToast('Diperbarui'); }
 
 // ===================== FILE UPLOAD =====================
 async function handleFileUpload(input) {
-  if (!input.files || !input.files[0]) return; if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
-  const file = input.files[0]; if (file.size > 10 * 1024 * 1024) { showToast('File terlalu besar, maksimal 10MB'); input.value = ''; return; }
-  const bar = document.getElementById('upload-bar'); const status = document.getElementById('upload-status'); bar.classList.add('show'); status.textContent = 'Mengupload ' + file.name + '...';
-  try {
-    const base64 = await fileToBase64(file);
-    const res = await apiPost({action: 'sendFile', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, fileName: file.name, fileType: file.type || 'application/octet-stream', fileData: base64});
-    if (res.ok) { status.textContent = '✅ ' + file.name + ' berhasil dikirim!'; setTimeout(() => bar.classList.remove('show'), 3000); lastMsgCount = 0; await loadMessages(currentRoom.roomId, true); loadChats(false); showToast('File berhasil dikirim ke customer'); }
-    else { status.textContent = '❌ Gagal: ' + (res.msg || 'Error'); setTimeout(() => bar.classList.remove('show'), 4000); showToast('Gagal kirim file: ' + (res.msg || '')); }
-  } catch(e) { status.textContent = '❌ Error: ' + e.toString(); setTimeout(() => bar.classList.remove('show'), 4000); }
-  finally { input.value = ''; }
+  if (!input.files || !input.files.length) return;
+  if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
+  const files = Array.from(input.files);
+  const bar = document.getElementById('upload-bar');
+  const status = document.getElementById('upload-status');
+  bar.classList.add('show');
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.size > 10 * 1024 * 1024) { showToast(file.name + ' terlalu besar, skip'); continue; }
+    status.textContent = `Mengupload ${i+1}/${files.length}: ${file.name}...`;
+    try {
+      const base64 = await fileToBase64(file);
+      const res = await apiPost({action: 'sendFile', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, fileName: file.name, fileType: file.type || 'application/octet-stream', fileData: base64});
+      if (!res.ok) showToast('Gagal kirim: ' + file.name);
+    } catch(e) { showToast('Error: ' + file.name); }
+  }
+
+  status.textContent = `✅ ${files.length} file berhasil dikirim!`;
+  setTimeout(() => bar.classList.remove('show'), 3000);
+  lastMsgCount = 0;
+  await loadMessages(currentRoom.roomId, true);
+  loadChats(false);
+  input.value = '';
 }
 function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = () => reject(new Error('Gagal membaca file')); reader.readAsDataURL(file); }); }
 // ===================== CLIPBOARD PASTE (Ctrl+V gambar) =====================
