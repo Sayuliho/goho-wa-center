@@ -2547,7 +2547,12 @@ async function loadTicker() {
       return emoji + ' ' + escH(r.namaCustomer) + ': ' + escH(r.text) + tgl;
     });
     document.getElementById('ticker-text').textContent = parts.join('     ★     ');
-    document.getElementById('ticker-bar').style.display = 'block';
+    const bar = document.getElementById('ticker-bar');
+const track = document.getElementById('ticker-track');
+bar.style.display = 'block';
+track.style.animation = 'none';
+track.offsetHeight;
+track.style.animation = '';
   } catch(e) {}
 }
 
