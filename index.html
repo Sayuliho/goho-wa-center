@@ -163,7 +163,7 @@
           <i class="ti ti-mood-smile" style="margin-bottom:6px;"></i>
           <label class="file-upload-label" title="Kirim file / PDF ke customer">
             <i class="ti ti-paperclip"></i>
-            <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFileUpload(this)">
+            <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple onchange="handleFileUpload(this)">
           </label>
           <textarea id="reply-input" rows="1" placeholder="Ketik pesan..." oninput="autoExpandTextarea(this)" onkeydown="handleReplyKey(event)"></textarea>
           <button class="reply-send" onclick="kirimPesan()"><i class="ti ti-send"></i></button>
