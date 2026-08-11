@@ -2526,3 +2526,67 @@ function prosesMdac() {
   window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
   showToast('✅ Data dikirim ke extension — form MDAC dibuka otomatis');
   }
+
+// ===================== TICKER REMINDER =====================
+let _tickerReminders = [];
+
+async function loadTicker() {
+  try {
+    const res = await apiGet({ action: 'getReminders' });
+    if (!res.ok || !res.reminders || res.reminders.length === 0) {
+      document.getElementById('ticker-bar').style.display = 'none';
+      return;
+    }
+    _tickerReminders = res.reminders;
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
+    const parts = res.reminders.map(r => {
+      const emoji = tagEmoji[r.tag] || '📌';
+      const tgl = r.deadline ? ' · ' + formatDeadline(r.deadline) : '';
+      return emoji + ' ' + escH(r.namaCustomer) + ': ' + escH(r.text) + tgl;
+    });
+    document.getElementById('ticker-text').textContent = parts.join('     ★     ');
+    document.getElementById('ticker-bar').style.display = 'block';
+  } catch(e) {}
+}
+
+function formatDeadline(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diff = Math.round((d - today) / 86400000);
+    if (diff === 0) return '⚡ HARI INI';
+    if (diff === 1) return '⏰ Besok';
+    if (diff <= 3) return '⏳ ' + diff + ' hari lagi';
+    return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short' });
+  } catch(e) { return dateStr; }
+}
+
+function openReminderModal() {
+  if (!_tickerReminders.length) return;
+  const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
+  const tagColor = { TODO: '#854d0e', INFO: '#1e3a5f', PENTING: '#7f1d1d', DONE: '#14532d' };
+  const html = _tickerReminders.map(r => `
+    <div style="padding:10px 12px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="background:${tagColor[r.tag]||'#333'};color:white;font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;">${tagEmoji[r.tag]||'📌'} ${r.tag}</span>
+        <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(r.namaCustomer)}</span>
+        <span style="margin-left:auto;font-size:10px;color:${r.deadline?'#c05c00':'var(--text-muted)'};">${formatDeadline(r.deadline)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text);">${escH(r.text)}</div>
+    </div>`).join('');
+  let modal = document.getElementById('modal-reminders');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-reminders';
+    modal.className = 'modal';
+    modal.style.display = 'none';
+    modal.innerHTML = `<div class="modal-box modal-sm">
+      <div class="modal-header"><h3>🔔 Reminder Aktif</h3><button onclick="closeModal('modal-reminders')">✕</button></div>
+      <div class="modal-body" id="modal-reminders-body" style="max-height:400px;overflow-y:auto;"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('modal-reminders-body').innerHTML = html;
+  modal.style.display = 'flex';
+}
