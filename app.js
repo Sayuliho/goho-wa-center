@@ -36,6 +36,8 @@ function initApp(staff) {
     document.querySelectorAll('.owner-only').forEach(el => el.style.display = 'flex');
   }
   startPolling(); loadChats(); showSoundActivation();
+loadTicker();
+setInterval(loadTicker, 5 * 60 * 1000);
   initClipboardPaste();
 }
 function doLogout() {
