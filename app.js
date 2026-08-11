@@ -1514,7 +1514,7 @@ function searchContacts() { loadContacts(document.getElementById('contact-search
 function showAddContact() { allContactsCache = []; document.getElementById('modal-contact-title').textContent = 'Tambah Contact'; ['c-nama','c-nowa','c-email','c-kota','c-catatan','c-original-nowa'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); document.getElementById('modal-contact').style.display = 'flex'; }
 async function submitContact() {
   const nama = document.getElementById('c-nama').value.trim(); const noWa = document.getElementById('c-nowa').value.trim(); if (!nama || !noWa) { alert('Nama dan No WA wajib diisi'); return; }
-  try { const res = await apiPost({action: 'saveCustomer', nama, noWa, email: document.getElementById('c-email').value.trim(), kota: document.getElementById('c-kota').value.trim(), catatan: document.getElementById('c-catatan').value.trim(), source: 'MANUAL'}); if (res.success) { allContactsCache = []; closeModal('modal-contact'); loadContacts(); showToast('Contact disimpan!'); } else showToast('Gagal menyimpan'); } catch(e) { showToast('Error: ' + e); }
+  try { const res = await apiPost({action: 'saveCustomer', nama, noWa, email: document.getElementById('c-email').value.trim(), kota: document.getElementById('c-kota').value.trim(), catatan: document.getElementById('c-catatan').value.trim()}); if (res.ok || res.success) { allContactsCache = []; closeModal('modal-contact'); loadContacts(); showToast('Contact disimpan!'); } else showToast('Gagal menyimpan'); } catch(e) { showToast('Error: ' + e); }
 }
 async function openContactDetail(noWa, nama) {
   currentContactNoWa = noWa; currentContactNama = nama || noWa;
