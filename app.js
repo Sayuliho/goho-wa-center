@@ -2240,6 +2240,28 @@ async function doneNote(noteId, noWa) {
     else { showToast('Gagal: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
+async function editSmartNote(noteId, noWa) {
+  const item = document.getElementById('sn-note-' + noteId);
+  if (!item) return;
+  const currentText = item.querySelector('.sn-note-text')?.textContent || '';
+  const newText = prompt('Edit catatan:', currentText);
+  if (!newText || !newText.trim()) return;
+  const newDeadline = prompt('Tanggal expired (YYYY-MM-DD, kosongkan kalau tidak ada):', '');
+  try {
+    const res = await apiPost({ action: 'editSmartNote', noteId, text: newText.trim(), deadline: newDeadline || null });
+    if (res.ok || res.success) { showToast('✅ Catatan diupdate!'); loadNotes(noWa); loadTicker(); }
+    else showToast('Gagal: ' + (res.msg || ''));
+  } catch(e) { showToast('Error: ' + e.toString()); }
+}
+
+async function deleteSmartNote(noteId, noWa) {
+  if (!confirm('Hapus catatan ini permanen?')) return;
+  try {
+    const res = await apiPost({ action: 'deleteSmartNote', noteId });
+    if (res.ok || res.success) { showToast('🗑️ Catatan dihapus!'); loadNotes(noWa); loadTicker(); }
+    else showToast('Gagal: ' + (res.msg || ''));
+  } catch(e) { showToast('Error: ' + e.toString()); }
+}
 // ===================== HARGA SIM/ESIM =====================
 let hargaData = [];
 let hargaLoaded = false;
