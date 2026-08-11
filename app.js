@@ -305,7 +305,7 @@ async function loadChats(showLoading = true) {
     if (res.ok) {
       allChats = res.data || [];
       if (allContactsCache.length === 0 && currentTab === 'aktif') { try { const cRes = await apiGet({action: 'getAllCustomers', query: ''}); allContactsCache = cRes.customers || []; } catch(e) {} }
-      allChats = allChats.map(c => { const contact = allContactsCache.find(ct => ct.noWa === c.noWa); if (contact && contact.nama) c.nama = contact.nama; return c; });
+      allChats = allChats.map(c => { const contact = allContactsCache.find(ct => (ct.noWa || ct.no_wa) === c.noWa); if (contact && contact.nama) c.nama = contact.nama; return c; });
       allChats.sort((a, b) => { const ta = a.lastMsgAt ? new Date(a.lastMsgAt).getTime() : 0; const tb = b.lastMsgAt ? new Date(b.lastMsgAt).getTime() : 0; return tb - ta; });
       allChats.forEach(c => { if (c.unreadCount !== undefined) unreadCounts[c.roomId] = c.unreadCount; });
       renderChatList(allChats);
