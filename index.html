@@ -41,7 +41,13 @@
 }
 @keyframes tickerScroll {
   0%   { transform: translateX(100vw); }
-  100% { transform: translateX(-150%); }
+  100% { transform: translateX(-100%); }
+}
+#ticker-track {
+  animation: tickerScroll 25s linear infinite !important;
+  display: inline-flex !important;
+  align-items: center;
+  min-width: max-content;
 }
 #ticker-bar:hover #ticker-track { animation-play-state: paused; }
 .layanan-item {
