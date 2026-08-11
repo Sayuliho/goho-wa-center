@@ -2664,3 +2664,126 @@ function openReminderModal() {
   document.getElementById('modal-reminders-body').innerHTML = html;
   modal.style.display = 'flex';
 }
+
+// ===================== GLOBAL REMINDER MODAL =====================
+let _grType = 'global';
+let _grTag = 'TODO';
+let _grSelectedNoWa = '';
+let _grSearchTimer = null;
+
+function openGlobalReminderModal() {
+  _grType = 'global'; _grTag = 'TODO'; _grSelectedNoWa = '';
+  document.getElementById('gr-text').value = '';
+  document.getElementById('gr-deadline').value = '';
+  document.getElementById('gr-customer-search').value = '';
+  document.getElementById('gr-customer-selected').style.display = 'none';
+  document.getElementById('gr-customer-row').style.display = 'none';
+  document.getElementById('gr-customer-results').style.display = 'none';
+  setGrType('global');
+  document.getElementById('modal-global-reminder').style.display = 'flex';
+  loadGrList();
+}
+
+function setGrType(type) {
+  _grType = type;
+  const btnGlobal = document.getElementById('gr-type-global');
+  const btnCustomer = document.getElementById('gr-type-customer');
+  const customerRow = document.getElementById('gr-customer-row');
+  if (type === 'global') {
+    btnGlobal.style.background = 'var(--green-mid)'; btnGlobal.style.color = 'white'; btnGlobal.style.borderColor = 'var(--green-mid)';
+    btnCustomer.style.background = 'white'; btnCustomer.style.color = 'var(--text)'; btnCustomer.style.borderColor = 'var(--border)';
+    customerRow.style.display = 'none';
+  } else {
+    btnCustomer.style.background = 'var(--green-mid)'; btnCustomer.style.color = 'white'; btnCustomer.style.borderColor = 'var(--green-mid)';
+    btnGlobal.style.background = 'white'; btnGlobal.style.color = 'var(--text)'; btnGlobal.style.borderColor = 'var(--border)';
+    customerRow.style.display = 'block';
+  }
+}
+
+function setGrTag(el, tag) {
+  _grTag = tag;
+  document.querySelectorAll('#modal-global-reminder .sn-tag').forEach(t => { t.style.opacity = '0.5'; t.style.fontWeight = '500'; });
+  el.style.opacity = '1'; el.style.fontWeight = '700';
+}
+
+function searchGrContact(query) {
+  clearTimeout(_grSearchTimer);
+  const results = document.getElementById('gr-customer-results');
+  if (!query || query.trim().length < 2) { results.style.display = 'none'; return; }
+  _grSearchTimer = setTimeout(() => {
+    const q = query.toLowerCase();
+    const matches = allContactsCache.filter(c =>
+      String(c.nama||'').toLowerCase().includes(q) ||
+      String(c.noWa||'').toLowerCase().includes(q)
+    ).slice(0, 6);
+    if (!matches.length) { results.innerHTML = '<div style="padding:8px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div>'; results.style.display = 'block'; return; }
+    results.innerHTML = matches.map(c => `<div onclick="selectGrContact('${escH(c.noWa)}','${escH(c.nama||c.noWa)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'"><div style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">${getInitials(c.nama||c.noWa)}</div><div><div style="font-weight:600;">${escH(c.nama||c.noWa)}</div><div style="font-size:10px;color:var(--text-muted);">${c.noWa}</div></div></div>`).join('');
+    results.style.display = 'block';
+  }, 300);
+}
+
+function selectGrContact(noWa, nama) {
+  _grSelectedNoWa = noWa;
+  document.getElementById('gr-customer-search').value = nama + ' (' + noWa + ')';
+  document.getElementById('gr-customer-results').style.display = 'none';
+  const sel = document.getElementById('gr-customer-selected');
+  sel.textContent = '✅ ' + nama + ' · ' + noWa;
+  sel.style.display = 'block';
+}
+
+async function submitGlobalReminder() {
+  const text = document.getElementById('gr-text').value.trim();
+  if (!text) { showToast('Isi reminder tidak boleh kosong'); return; }
+  const noWa = _grType === 'customer' ? _grSelectedNoWa : 'GLOBAL';
+  if (_grType === 'customer' && !noWa) { showToast('Pilih customer dulu'); return; }
+  const deadline = document.getElementById('gr-deadline').value || null;
+  try {
+    const res = await apiPost({ action: 'saveSmartNote', noWa, text, tag: _grTag, staffName: currentStaff?.nama || 'STAFF', deadline });
+    if (res.ok || res.success) {
+      showToast('✅ Reminder disimpan!');
+      document.getElementById('gr-text').value = '';
+      document.getElementById('gr-deadline').value = '';
+      _grSelectedNoWa = '';
+      document.getElementById('gr-customer-selected').style.display = 'none';
+      document.getElementById('gr-customer-search').value = '';
+      loadGrList();
+      loadTicker();
+    } else showToast('Gagal: ' + (res.msg || ''));
+  } catch(e) { showToast('Error: ' + e.toString()); }
+}
+
+async function loadGrList() {
+  const el = document.getElementById('gr-list');
+  const countEl = document.getElementById('gr-count');
+  if (!el) return;
+  el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:8px;">Memuat...</div>';
+  try {
+    const res = await apiGet({ action: 'getReminders' });
+    const all = res.reminders || [];
+    countEl.textContent = all.length + ' aktif';
+    if (!all.length) { el.innerHTML = '<div style="font-size:11px;color:var(--text-hint);text-align:center;padding:16px;">Belum ada reminder aktif</div>'; return; }
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️' };
+    const tagColor = { TODO: '#854d0e', INFO: '#1e3a5f', PENTING: '#7f1d1d' };
+    el.innerHTML = all.map(r => `
+      <div style="padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <span style="background:${tagColor[r.tag]||'#333'};color:white;font-size:9px;padding:1px 6px;border-radius:4px;font-weight:700;">${tagEmoji[r.tag]||'📌'} ${r.tag}</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text);">${escH(r.namaCustomer === 'GLOBAL' ? '🌐 Internal' : r.namaCustomer)}</span>
+          ${r.deadline ? `<span style="margin-left:auto;font-size:10px;color:#c05c00;">${formatDeadline(r.deadline)}</span>` : ''}
+        </div>
+        <div style="font-size:11px;color:var(--text);margin-bottom:4px;">${escH(r.text)}</div>
+        <div style="display:flex;gap:4px;justify-content:flex-end;">
+          <button onclick="deleteGrReminder(${r.noteId})" style="background:none;border:1px solid #fca5a5;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#dc2626;">🗑️ Hapus</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div style="font-size:11px;color:var(--red);padding:8px;">Gagal memuat</div>'; }
+}
+
+async function deleteGrReminder(noteId) {
+  if (!confirm('Hapus reminder ini?')) return;
+  try {
+    const res = await apiPost({ action: 'deleteSmartNote', noteId: String(noteId) });
+    if (res.ok || res.success) { showToast('🗑️ Reminder dihapus!'); loadGrList(); loadTicker(); }
+    else showToast('Gagal: ' + (res.msg || ''));
+  } catch(e) { showToast('Error: ' + e.toString()); }
+}
