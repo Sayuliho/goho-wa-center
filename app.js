@@ -1547,7 +1547,7 @@ async function loadPassengers() {
 }
 function showInnerTab(tab, e) { if (e) { document.querySelectorAll('.inner-tab').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); } showInnerTabById(tab); }
 function waFromContact() { window.open('https://wa.me/' + currentContactNoWa, '_blank'); }
-function editContact() { allContactsCache = []; closeModal('modal-detail'); document.getElementById('modal-contact-title').textContent = 'Edit Contact'; document.getElementById('c-nowa').value = currentContactNoWa; document.getElementById('c-original-nowa').value = currentContactNoWa; document.getElementById('modal-contact').style.display = 'flex'; }
+function editContact() { allContactsCache = []; closeModal('modal-detail'); document.getElementById('modal-contact-title').textContent = 'Edit Contact'; document.getElementById('c-nama').value = currentContactNama; document.getElementById('c-nowa').value = currentContactNoWa; document.getElementById('c-original-nowa').value = currentContactNoWa; document.getElementById('modal-contact').style.display = 'flex'; }
 function showAddPassenger() { document.getElementById('modal-passenger').style.display = 'flex'; }
 async function submitPassenger() {
   const nama = document.getElementById('p-nama').value.trim(); if (!nama) { alert('Nama lengkap wajib diisi'); return; }
