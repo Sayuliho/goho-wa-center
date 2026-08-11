@@ -414,6 +414,29 @@ async function loadCustomerInfoPanel(noWa) {
       histBlock.style.display = 'block'; document.getElementById('np-history-loading').textContent = 'memuat...'; document.getElementById('np-history-list').innerHTML = ''; loadPanelBookingHistory(noWa);
     } else { panel.style.display = 'none'; histBlock.style.display = 'none'; }
   } catch(e) {}
+  loadPanelNotes(noWa);
+}
+async function loadPanelNotes(noWa) {
+  const el = document.getElementById('np-notes');
+  if (!el) return;
+  try {
+    const res = await apiGet({ action: 'getSmartNotes', noWa });
+    const notes = res.notes || [];
+    if (!notes.length) { el.innerHTML = ''; return; }
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
+    el.innerHTML = notes.map((n, i) => {
+      const preview = (n.text||n.note||'').substring(0,40) + ((n.text||n.note||'').length > 40 ? '...' : '');
+      const dl = n.deadline ? ' · <span style="color:#c05c00;font-size:9px;">📅 ' + formatDeadline(n.deadline) + '</span>' : '';
+      return `<div onclick="showNoteModal('${escH(noWa)}')" style="display:flex;gap:6px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+        <span style="font-size:10px;color:var(--text-muted);min-width:16px;flex-shrink:0;">${i+1}.</span>
+        <div style="flex:1;min-width:0;">
+          <span style="font-size:10px;">${tagEmoji[n.tag]||'📝'}</span>
+          <span style="font-size:11px;color:var(--text);">${escH(preview)}</span>
+          ${dl}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
 }
 async function loadPanelBookingHistory(noWa) {
   try {
