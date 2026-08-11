@@ -2188,8 +2188,9 @@ async function submitNote(noWa) {
   if (!text) { showToast('Catatan tidak boleh kosong'); return; }
   if (!noWa) { showToast('Tidak ada customer yang dipilih'); return; }
   try {
-    const res = await apiPost({ action: 'saveSmartNote', noWa, text, tag: window._snTag || 'TODO', staffName: currentStaff?.nama || 'STAFF' });
-    if (res.ok || res.success) { document.getElementById('sn-text').value = ''; showToast('✅ Catatan disimpan!'); loadNotes(noWa); }
+    const deadline = document.getElementById('sn-deadline')?.value || null;
+    const res = await apiPost({ action: 'saveSmartNote', noWa, text, tag: window._snTag || 'TODO', staffName: currentStaff?.nama || 'STAFF', deadline: deadline || null });
+    if (res.ok || res.success) { document.getElementById('sn-text').value = ''; const dlEl = document.getElementById('sn-deadline'); if (dlEl) dlEl.value = ''; showToast('✅ Catatan disimpan!'); loadNotes(noWa); loadTicker(); }
     else { showToast('Gagal simpan: ' + (res.msg || 'Error')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
