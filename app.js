@@ -2207,7 +2207,29 @@ async function loadNotes(noWa) {
     if (!notes.length) { listEl.innerHTML = '<div style="font-size:11px;color:var(--text-hint);text-align:center;padding:16px;">Belum ada catatan</div>'; return; }
     const tagClass = { TODO: 'sn-tag-todo', INFO: 'sn-tag-info', PENTING: 'sn-tag-penting', DONE: 'sn-tag-done' };
     const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
-    listEl.innerHTML = notes.map(n => `<div class="sn-note-item" id="sn-note-${escH(n.noteId||n.id||'')}"><div style="margin-bottom:4px;"><span class="sn-tag ${tagClass[n.tag]||'sn-tag-info'}" style="font-size:9px;padding:2px 7px;">${tagEmoji[n.tag]||'📝'} ${n.tag||'INFO'}</span></div><div class="sn-note-text">${escH(n.text||n.catatan||'')}</div><div class="sn-note-footer"><span class="sn-note-meta">${escH(n.staffName||'')} · ${n.createdAt?new Date(n.createdAt).toLocaleDateString('id-ID'):''}</span>${n.tag!=='DONE'?`<button class="sn-done-btn" onclick="doneNote('${escH(n.noteId||n.id||'')}','${escH(noWa)}')">✓ Done</button>`:'<span style="font-size:10px;color:var(--green-mid);">✅ Selesai</span>'}</div></div>`).join('');
+    listEl.innerHTML = notes.map(n => {
+  const nid = escH(n.noteId||n.id||'');
+  const nwa = escH(noWa);
+  const ntag = n.tag||'INFO';
+  const ntxt = escH(n.text||n.catatan||'');
+  const ndl = n.deadline ? ' · 📅 ' + formatDeadline(n.deadline) : '';
+  const isDone = ntag === 'DONE';
+  return `<div class="sn-note-item" id="sn-note-${nid}">
+    <div style="margin-bottom:4px;">
+      <span class="sn-tag ${tagClass[ntag]||'sn-tag-info'}" style="font-size:9px;padding:2px 7px;">${tagEmoji[ntag]||'📝'} ${ntag}</span>
+      ${ndl ? `<span style="font-size:9px;color:var(--text-muted);">${ndl}</span>` : ''}
+    </div>
+    <div class="sn-note-text">${ntxt}</div>
+    <div class="sn-note-footer">
+      <span class="sn-note-meta">${escH(n.staffName||'')} · ${n.createdAt?new Date(n.createdAt).toLocaleDateString('id-ID'):''}</span>
+      <div style="display:flex;gap:4px;">
+        ${!isDone ? `<button class="sn-done-btn" onclick="doneNote('${nid}','${nwa}')">✓ Done</button>` : '<span style="font-size:10px;color:var(--green-mid);">✅ Selesai</span>'}
+        <button onclick="editSmartNote('${nid}','${nwa}')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;">✏️</button>
+        <button onclick="deleteSmartNote('${nid}','${nwa}')" style="background:none;border:1px solid #fca5a5;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;color:#dc2626;">🗑️</button>
+      </div>
+    </div>
+  </div>`;
+}).join('');
   } catch(e) { listEl.innerHTML = '<div style="font-size:11px;color:var(--red);text-align:center;padding:12px;">Gagal memuat catatan</div>'; }
 }
 async function doneNote(noteId, noWa) {
