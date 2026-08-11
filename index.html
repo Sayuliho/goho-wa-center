@@ -724,6 +724,48 @@
   </div>
 </div>
 
+<!-- MODAL GLOBAL REMINDER -->
+<div class="modal" id="modal-global-reminder" style="display:none;">
+  <div class="modal-box modal-sm">
+    <div class="modal-header"><h3>🔔 Reminder</h3><button onclick="closeModal('modal-global-reminder')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">Jenis Reminder</div>
+        <div style="display:flex;gap:8px;">
+          <button id="gr-type-global" onclick="setGrType('global')" style="flex:1;padding:6px;border:2px solid var(--green-mid);border-radius:6px;background:var(--green-mid);color:white;font-size:11px;font-weight:600;cursor:pointer;">🌐 Internal</button>
+          <button id="gr-type-customer" onclick="setGrType('customer')" style="flex:1;padding:6px;border:2px solid var(--border);border-radius:6px;background:white;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;">👤 Customer</button>
+        </div>
+      </div>
+      <div id="gr-customer-row" style="display:none;" class="form-group">
+        <label>Cari Customer</label>
+        <div style="position:relative;">
+          <input type="text" id="gr-customer-search" placeholder="Ketik nama atau nomor WA..." oninput="searchGrContact(this.value)" autocomplete="off">
+          <div id="gr-customer-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:180px;overflow-y:auto;"></div>
+        </div>
+        <div id="gr-customer-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:6px;font-size:11px;font-weight:600;color:var(--text);"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">Kategori</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="sn-tag sn-tag-todo" onclick="setGrTag(this,'TODO')" style="opacity:1;font-weight:700;">📌 TODO</span>
+          <span class="sn-tag sn-tag-info" onclick="setGrTag(this,'INFO')">ℹ️ INFO</span>
+          <span class="sn-tag sn-tag-penting" onclick="setGrTag(this,'PENTING')">⚠️ PENTING</span>
+        </div>
+      </div>
+      <div class="form-group"><label>Isi Reminder *</label><textarea id="gr-text" rows="3" placeholder="Tulis reminder..."></textarea></div>
+      <div class="form-group">
+        <label>Deadline <span style="font-size:10px;color:var(--text-muted);">(opsional — isi agar muncul di ticker)</span></label>
+        <input type="date" id="gr-deadline">
+      </div>
+      <button class="btn-primary" style="width:100%;margin-bottom:14px;" onclick="submitGlobalReminder()"><i class="ti ti-device-floppy"></i> Simpan Reminder</button>
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;display:flex;justify-content:space-between;">
+        <span>Reminder Aktif</span><span id="gr-count" style="font-size:10px;color:var(--text-hint);"></span>
+      </div>
+      <div id="gr-list" style="max-height:220px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
 <script src="/app.js?v=20260709c" defer></script>
 </body>
 </html>
