@@ -89,6 +89,13 @@
       <i class="ti ti-logout" style="font-size:16px;cursor:pointer;color:rgba(255,255,255,0.5);" onclick="doLogout()" title="Logout"></i>
     </div>
   </div>
+  <!-- TICKER REMINDER -->
+  <div id="ticker-bar" style="display:none;background:#1a4a35;border-bottom:1px solid rgba(255,255,255,0.1);overflow:hidden;height:28px;cursor:pointer;" onclick="openReminderModal()">
+    <div id="ticker-track" style="display:flex;align-items:center;height:100%;white-space:nowrap;animation:tickerScroll 30s linear infinite;">
+      <span style="color:rgba(255,255,255,0.5);font-size:10px;padding-left:12px;margin-right:12px;flex-shrink:0;">🔔 REMINDER:</span>
+      <span id="ticker-text" style="font-size:11px;color:white;font-weight:500;"></span>
+    </div>
+  </div>
   <div class="main-tabs" id="main-tabs">
     <div class="main-tab active" onclick="switchMainTab('chat')" id="mtab-chat"><i class="ti ti-message-circle"></i> Chat<span class="tab-badge hidden" id="mtab-chat-badge">0</span></div>
     <div class="main-tab" onclick="switchMainTab('contacts')" id="mtab-contacts"><i class="ti ti-users"></i> Contacts</div>
