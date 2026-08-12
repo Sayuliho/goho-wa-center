@@ -2662,7 +2662,7 @@ async function loadTicker() {
       const tgl = r.deadline ? ' · ' + formatDeadline(r.deadline) : '';
       return emoji + ' ' + escH(r.namaCustomer) + ': ' + escH(r.text) + tgl;
     });
-    document.getElementById('ticker-text').textContent = parts.join('          ┃          ');
+    document.getElementById('ticker-text').innerHTML = parts.join('<span style="color:#f59e0b; margin:0 30px; font-weight:900;">┃</span>');
     const bar = document.getElementById('ticker-bar');
 const track = document.getElementById('ticker-track');
 bar.style.display = 'block';
