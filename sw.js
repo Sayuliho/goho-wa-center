@@ -1,22 +1,22 @@
 // GOHO WA Center - Service Worker
-// Fase 1: PWA support, caching, background sync
-const CACHE_NAME = 'goho-wa-v2';
+const CACHE_NAME = 'goho-wa-v3';
+
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css'
 ];
-// Install — cache static assets
+
+// Install — cache static assets (fonts/icons saja, BUKAN HTML)
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(['/index.html']).catch(() => {});
+      return cache.addAll(STATIC_ASSETS).catch(() => {});
     })
   );
   self.skipWaiting();
 });
-// Activate — clean old caches
+
+// Activate — hapus semua cache lama
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -25,33 +25,33 @@ self.addEventListener('activate', event => {
   );
   self.clients.claim();
 });
-// Fetch — network first, fallback to cache for HTML
+
+// Fetch handler
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Skip POST/non-GET — Cache API tidak support method selain GET/HEAD
+  // Skip non-GET
   if (event.request.method !== 'GET') return;
 
-  // Cross-origin requests (Workers, GAS, dll) — skip, biarkan ke network
+  // Cross-origin (Workers, GAS, dll) — skip
   if (url.origin !== self.location.origin) return;
 
   // API calls — always network, never cache
   if (url.pathname.startsWith('/api/')) return;
 
-  // HTML — network first, fallback cache
+  // HTML — NETWORK ONLY, jangan pernah cache
+  // Ini fix utama: sebelumnya HTML di-cache, makanya versi lama muncul lagi
   if (event.request.destination === 'document') {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() => caches.match('/index.html'))
+      fetch(event.request, { cache: 'no-store' }).catch(() => {
+        // Fallback ke cache hanya kalau benar-benar offline
+        return caches.match('/index.html');
+      })
     );
     return;
   }
-  // Other assets — cache first
+
+  // JS/CSS/assets lain — cache first (aman karena Cloudflare Pages pakai content hash)
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
@@ -65,6 +65,7 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
 // Push notification handler
 self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
@@ -79,18 +80,17 @@ self.addEventListener('push', event => {
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
+
 // Notification click — open/focus app
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // Focus existing window if open
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus();
         }
       }
-      // Open new window
       return clients.openWindow('/');
     })
   );
