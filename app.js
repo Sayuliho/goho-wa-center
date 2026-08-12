@@ -1160,12 +1160,22 @@ async function submitSaveMedia() {
     } else if (_previewFileId) {
       ({ base64, fileType } = await getBase64FromFileId(_previewFileId));
     } else if (_previewMediaUrl) {
-      // PDF/dokumen dari customer — ambil via proxy menggunakan Drive URL
+      // Coba ambil fileId dari Drive URL
       const fileIdMatch = _previewMediaUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
       if (fileIdMatch) {
         ({ base64, fileType } = await getBase64FromFileId(fileIdMatch[1]));
       } else {
-        throw new Error('Tidak bisa mengambil file: URL tidak dikenali');
+        // Fonnte URL — fetch langsung dari URL
+        const resp = await fetch(_previewMediaUrl);
+        if (!resp.ok) throw new Error('Gagal fetch file dari URL');
+        const blob = await resp.blob();
+        fileType = blob.type || 'image/jpeg';
+        base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
       }
     } else {
       throw new Error('Tidak ada file untuk disimpan');
