@@ -1072,25 +1072,37 @@ function makeModalDraggable(modalId) {
 
 function openSaveModal() {
   if (!_previewFileId && !_previewMediaUrl) { showToast('Tidak ada file untuk disimpan'); return; }
-  // Deteksi ekstensi dari file asli — simpan ke window._saveFileExt
+  // Deteksi ekstensi dari file asli
   const origName = _previewFileName || '';
   const dotIdx = origName.lastIndexOf('.');
-  window._saveFileExt = dotIdx >= 0 ? origName.substring(dotIdx).toLowerCase() : '.jpeg';
-  // Pre-fill nama file dengan nama asli, tapi user bisa ganti
-  document.getElementById('save-file-name').value = origName;
-  document.getElementById('save-file-name').placeholder = 'Contoh: Paspor Budi' + (window._saveFileExt || '.jpeg');
+  window._saveFileExt = dotIdx >= 0 ? origName.substring(dotIdx).toLowerCase() : '.jpg';
+  // Kosongkan nama — staff cukup input nama orang saja
+  document.getElementById('save-file-name').value = '';
+  document.getElementById('save-file-name').placeholder = 'Contoh: Murni';
+  document.getElementById('save-file-preview').textContent = '';
+  document.getElementById('save-kategori').value = 'Paspor';
   document.getElementById('save-target').value = 'aktif';
   document.getElementById('save-custom-nowa-row').style.display = 'none';
   document.getElementById('save-contact-search').value = '';
   document.getElementById('save-contact-results').style.display = 'none';
   document.getElementById('modal-save-media').style.display = 'flex';
-  // v32: modal ini bisa digeser bebas, supaya tidak menutupi foto
-  // paspor di belakangnya saat staff mengetik nama sesuai paspor.
-  // Hanya aktif di desktop (mouse) — di mobile dilewati otomatis
-  // karena drag pakai mousedown/mousemove, bukan touch events.
   if (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches) {
     makeModalDraggable('modal-save-media');
   }
+}
+
+// Preview nama file otomatis saat staff ketik nama atau ganti kategori
+function updateSaveFilePreview() {
+  const nama = (document.getElementById('save-file-name').value || '').trim();
+  const kat  = document.getElementById('save-kategori').value;
+  const ext  = window._saveFileExt || '.jpg';
+  const prefixMap = { 'Paspor':'Paspor', 'KTP':'KTP', 'Visa':'Visa', 'Tiket':'Tiket', 'Hotel':'Hotel', 'Lainnya':'' };
+  const prefix  = prefixMap[kat] || '';
+  const preview = document.getElementById('save-file-preview');
+  if (!preview) return;
+  if (!nama) { preview.textContent = ''; return; }
+  const finalName = prefix ? prefix + '_' + nama + ext : nama + ext;
+  preview.textContent = '→ ' + finalName;
 }
 
 function toggleSaveTarget(val) {
@@ -1122,12 +1134,13 @@ function selectSaveContact(noWa, nama) {
 }
 
 async function submitSaveMedia() {
-  let namaFile = document.getElementById('save-file-name').value.trim();
-  if (!namaFile) { showToast('Nama file wajib diisi'); return; }
-  // Pastikan nama file punya ekstensi — tambahkan dari file asli jika tidak ada
-  const ext = window._saveFileExt || '.jpeg';
-  if (namaFile.indexOf('.') === -1) { namaFile = namaFile + ext; }
+  const namaInput = document.getElementById('save-file-name').value.trim();
+  if (!namaInput) { showToast('Nama wajib diisi'); return; }
+  const ext = window._saveFileExt || '.jpg';
   const kategori = document.getElementById('save-kategori').value;
+  const prefixMap = { 'Paspor':'Paspor', 'KTP':'KTP', 'Visa':'Visa', 'Tiket':'Tiket', 'Hotel':'Hotel', 'Lainnya':'' };
+  const prefix = prefixMap[kategori] || '';
+  const namaFile = prefix ? prefix + '_' + namaInput + ext : namaInput + ext;
   const target   = document.getElementById('save-target').value;
   let noWaTujuan = currentRoom ? currentRoom.noWa : '';
   if (target === 'lain') {
@@ -1252,6 +1265,31 @@ function renderBubble(m) {
       return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<div class="b-img-lazy" data-file-id="${escH(_fid)}" data-mime="image/jpeg" data-nama="${escH(fileName)}" style="width:200px;height:140px;border-radius:8px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="openDocBlob('${escH(_fid)}','${escH(fileName)}',true)">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(fileName)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
     }
     return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div>${mediaActions}</div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
+  }
+
+  // Deteksi gambar dari mediaUrl langsung (Fonnte URL / fallback gagal upload Drive)
+  const isDirectImg = m.mediaUrl &&
+    ['jpg','jpeg','png','webp'].includes((m.mediaExtension || '').toLowerCase()) &&
+    !(m.message && m.message.match(/^\[IMG:([^:]+):(.+)\]$/));
+  if (isDirectImg) {
+    const fileName = m.mediaFilename || 'gambar';
+    const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
+    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
+    const mediaActions = !isStaff ? `<div style="display:flex;gap:4px;margin-top:4px;">
+      <button onclick="saveBubbleMedia('','${escH(fileName)}','${escH(m.mediaUrl)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
+    </div>` : '';
+    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}">
+      <div class="bubble ${cls}">
+        ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
+        <img src="${escH(m.mediaUrl)}"
+          style="width:200px;height:140px;border-radius:8px;object-fit:cover;display:block;cursor:pointer;"
+          onclick="window.open('${escH(m.mediaUrl)}','_blank')"
+          onerror="this.style.display='none';this.nextSibling.style.display='block'">
+        <span style="display:none;color:#999;font-size:11px;">📷 ${escH(fileName)}</span>
+        ${mediaActions}
+        <div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div>
+      </div>
+    </div>`;
   }
 
   // Deteksi pesan gambar dengan fileId (format: [IMG:fileId:namaFile])
