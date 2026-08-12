@@ -1165,8 +1165,9 @@ async function submitSaveMedia() {
       if (fileIdMatch) {
         ({ base64, fileType } = await getBase64FromFileId(fileIdMatch[1]));
       } else {
-        // Fonnte URL — fetch langsung dari URL
-        const resp = await fetch(_previewMediaUrl);
+        // Fonnte URL — fetch via worker proxy (CORS)
+        const proxyUrl = 'https://goho-proxy.gohotravel.workers.dev?action=fetchMediaUrl&url=' + encodeURIComponent(_previewMediaUrl);
+        const resp = await fetch(proxyUrl);
         if (!resp.ok) throw new Error('Gagal fetch file dari URL');
         const blob = await resp.blob();
         fileType = blob.type || 'image/jpeg';
