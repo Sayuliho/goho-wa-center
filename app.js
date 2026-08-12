@@ -2192,13 +2192,17 @@ async function loadModalDocs() {
       const ext = (doc.namaFile || '').split('.').pop().toLowerCase();
       const isImg = ['jpg','jpeg','png','webp'].includes(ext); const isPdf = ext === 'pdf';
       const icon = isPdf ? '📄' : isImg ? '🖼️' : '📎';
+      const uploadedAt = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) : '-';
       const ocrStatus = doc.ocrStatus || 'none';
       const ocrBadge = ocrStatus === 'done'
-       ? '<span class="doc-ocr-badge ocr-done" title="Sudah di-OCR">✓ OCR</span>'
-       : (isImg && ocrStatus === 'pending')
-         ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${escH(doc.docId)}','${escH(doc.fileId)}','${escH(doc.namaFile)}')" title="Klik untuk scan OCR">📷 Scan OCR</span>`
-    : '';
-    div.innerHTML = `<span style="font-size:20px;flex-shrink:0;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escH(doc.namaFile)}">${escH(doc.namaFile)}${ocrBadge}</div><div style="font-size:10px;color:var(--text-muted);">${escH(doc.kategori)} · ${uploadedAt}</div></div>
+        ? '<span class="doc-ocr-badge ocr-done" title="Sudah di-OCR">✓ OCR</span>'
+        : (isImg && ocrStatus === 'pending')
+          ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${escH(doc.docId)}','${escH(doc.fileId)}','${escH(doc.namaFile)}')" title="Klik untuk scan OCR">📷 Scan OCR</span>`
+          : '';
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);';
+      div.innerHTML = `<span style="font-size:20px;flex-shrink:0;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escH(doc.namaFile)}">${escH(doc.namaFile)}${ocrBadge}</div><div style="font-size:10px;color:var(--text-muted);">${escH(doc.kategori)} · ${uploadedAt}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button onclick="downloadDoc('${doc.fileId}','${escH(doc.namaFile)}',this)" title="Download" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">⬇️</button><button onclick="modalOpenViewer('${doc.fileId}','${escH(doc.namaFile)}')" title="Buka Viewer" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🪟</button><button onclick="modalSendDoc('${doc.docId}','${doc.fileId}','${escH(doc.namaFile)}')" title="Kirim via WA" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">📤</button><button onclick="modalDeleteDoc('${doc.docId}','${doc.fileId}',this)" title="Hapus" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🗑️</button></div>`;
+      list.appendChild(div);
     });
   } catch(e) { loading.style.display = 'none'; empty.style.display = 'block'; }
 }
