@@ -197,9 +197,11 @@
         </div>
         <div class="doc-tabs">
           <div class="doc-tab active" onclick="switchDocTab('semua',this)">Semua</div>
-          <div class="doc-tab" onclick="switchDocTab('Identitas',this)">🪪 ID</div>
-          <div class="doc-tab" onclick="switchDocTab('Tiket & Voucher',this)">✈️ Tiket</div>
-          <div class="doc-tab" onclick="switchDocTab('Lainnya',this)">📄 Lain</div>
+          <div class="doc-tab" onclick="switchDocTab('Paspor',this)">🛂</div>
+          <div class="doc-tab" onclick="switchDocTab('KTP',this)">🪪</div>
+          <div class="doc-tab" onclick="switchDocTab('Visa',this)">📋</div>
+          <div class="doc-tab" onclick="switchDocTab('Tiket',this)">✈️</div>
+          <div class="doc-tab" onclick="switchDocTab('Lainnya',this)">📄</div>
         </div>
         <div class="doc-list-area" id="doc-list"><div class="doc-empty">Pilih chat untuk lihat dokumen</div></div>
         <div class="doc-upload-area">
@@ -373,16 +375,20 @@
     <div class="modal-header"><h3>💾 Simpan ke Dokumen</h3><button onclick="closeModal('modal-save-media')">✕</button></div>
     <div class="modal-body">
       <div class="form-group">
-        <label>Nama File *</label>
-        <input type="text" id="save-file-name" placeholder="contoh: Paspor_Budi.jpeg">
-      </div>
-      <div class="form-group">
         <label>Kategori</label>
-        <select id="save-kategori">
-          <option value="Identitas">🪪 Identitas (KTP/Paspor/Visa)</option>
-          <option value="Tiket & Voucher">✈️ Tiket & Voucher</option>
+        <select id="save-kategori" onchange="updateSaveFilePreview()">
+          <option value="Paspor">🛂 Paspor</option>
+          <option value="KTP">🪪 KTP</option>
+          <option value="Visa">📋 Visa</option>
+          <option value="Tiket">✈️ Tiket</option>
+          <option value="Hotel">🏨 Hotel</option>
           <option value="Lainnya">📎 Lainnya</option>
         </select>
+      </div>
+      <div class="form-group">
+        <label>Nama (tanpa ekstensi) *</label>
+        <input type="text" id="save-file-name" placeholder="Contoh: Murni" oninput="updateSaveFilePreview()">
+        <div id="save-file-preview" style="font-size:11px;color:#0F6E56;margin-top:4px;font-weight:600;"></div>
       </div>
       <div class="form-group">
         <label>Simpan ke Customer</label>
@@ -512,8 +518,11 @@
       <div id="inner-dokumen" style="display:none;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
           <select id="modal-doc-kategori" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;">
-            <option value="Identitas">🪪 Identitas (KTP/Paspor/Visa)</option>
-            <option value="Tiket & Voucher">✈️ Tiket & Voucher</option>
+            <option value="Paspor">🛂 Paspor</option>
+            <option value="KTP">🪪 KTP</option>
+            <option value="Visa">📋 Visa</option>
+            <option value="Tiket">✈️ Tiket</option>
+            <option value="Hotel">🏨 Hotel</option>
             <option value="Lainnya">📎 Lainnya</option>
           </select>
           <label style="display:flex;align-items:center;gap:5px;padding:7px 12px;background:var(--green-mid);color:white;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
