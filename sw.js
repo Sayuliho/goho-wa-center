@@ -1,6 +1,5 @@
 // GOHO WA Center - Service Worker
 // Fase 1: PWA support, caching, background sync
-
 const CACHE_NAME = 'goho-wa-v2';
 const STATIC_ASSETS = [
   '/',
@@ -8,7 +7,6 @@ const STATIC_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css'
 ];
-
 // Install — cache static assets
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -18,7 +16,6 @@ self.addEventListener('install', event => {
   );
   self.skipWaiting();
 });
-
 // Activate — clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
@@ -28,15 +25,18 @@ self.addEventListener('activate', event => {
   );
   self.clients.claim();
 });
-
 // Fetch — network first, fallback to cache for HTML
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
+  // Skip POST/non-GET — Cache API tidak support method selain GET/HEAD
+  if (event.request.method !== 'GET') return;
+
+  // Cross-origin requests (Workers, GAS, dll) — skip, biarkan ke network
+  if (url.origin !== self.location.origin) return;
+
   // API calls — always network, never cache
-  if (url.pathname.startsWith('/api/')) {
-    return; // Let it go to network normally
-  }
+  if (url.pathname.startsWith('/api/')) return;
 
   // HTML — network first, fallback cache
   if (event.request.destination === 'document') {
@@ -51,7 +51,6 @@ self.addEventListener('fetch', event => {
     );
     return;
   }
-
   // Other assets — cache first
   event.respondWith(
     caches.match(event.request).then(cached => {
@@ -66,7 +65,6 @@ self.addEventListener('fetch', event => {
     })
   );
 });
-
 // Push notification handler
 self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
@@ -81,7 +79,6 @@ self.addEventListener('push', event => {
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
-
 // Notification click — open/focus app
 self.addEventListener('notificationclick', event => {
   event.notification.close();
