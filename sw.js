@@ -6,7 +6,6 @@ const STATIC_ASSETS = [
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css'
 ];
 
-// Install — cache static assets (fonts/icons saja, BUKAN HTML)
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -16,7 +15,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activate — hapus semua cache lama
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -26,32 +24,24 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch handler
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Skip non-GET
   if (event.request.method !== 'GET') return;
-
-  // Cross-origin (Workers, GAS, dll) — skip
   if (url.origin !== self.location.origin) return;
-
-  // API calls — always network, never cache
   if (url.pathname.startsWith('/api/')) return;
 
-  // HTML — NETWORK ONLY, jangan pernah cache
-  // Ini fix utama: sebelumnya HTML di-cache, makanya versi lama muncul lagi
+  // HTML — network only, jangan cache
   if (event.request.destination === 'document') {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' }).catch(() => {
-        // Fallback ke cache hanya kalau benar-benar offline
         return caches.match('/index.html');
       })
     );
     return;
   }
 
-  // JS/CSS/assets lain — cache first (aman karena Cloudflare Pages pakai content hash)
+  // JS/CSS/assets — cache first
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
@@ -66,7 +56,6 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Push notification handler
 self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
   const title = data.title || 'GOHO WA Center';
@@ -81,7 +70,6 @@ self.addEventListener('push', event => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Notification click — open/focus app
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
