@@ -1182,7 +1182,7 @@ async function submitSaveMedia() {
     } else {
       throw new Error('Tidak ada file untuk disimpan');
     }
-    const res = await apiPost({ action: 'saveCustomerDoc', noWa: noWaTujuan, kategori, namaFile, fileType, fileData: base64, uploadedBy: currentStaff.nama, keterangan: 'Disimpan dari bubble chat' });
+    const res = await apiPostGAS({ action: 'saveCustomerDoc', noWa: noWaTujuan, kategori, namaFile, fileType, fileData: base64, uploadedBy: currentStaff.nama, keterangan: 'Disimpan dari bubble chat' });
     if (res.ok) {
       showToast('✅ Tersimpan ke Dokumen ' + (target === 'lain' ? noWaTujuan : 'Customer') + '!');
       closeModal('modal-save-media');
