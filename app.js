@@ -60,6 +60,7 @@ async function apiGet(params) {
   catch(e) { return {ok: false, msg: e.toString()}; }
 }
 async function apiPost(body) { const r = await fetch(API, { method: 'POST', body: JSON.stringify(body) }); return r.json(); }
+async function apiPostGAS(body) { const r = await fetch('https://script.google.com/macros/s/AKfycbycdw7-ZYJaPY5J2varxb82LagiCKAlmDfkLOxCZZYEZwi5ZrpH9GLkZYFX-fg6se2t/exec', { method: 'POST', body: JSON.stringify(body) }); return r.json(); }
 function autoExpandTextarea(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
 
 // ===================== PWA =====================
