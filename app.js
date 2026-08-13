@@ -2242,7 +2242,7 @@ async function handleModalDocUpload(input) {
   label.innerHTML = '<i class="ti ti-loader spin" style="font-size:13px;"></i> Uploading...'; label.style.background = '#555';
   try {
     const base64 = await fileToBase64(file);
-    const res = await apiPost({ action: 'saveCustomerDoc', noWa: currentContactNoWa, kategori, namaFile: file.name, fileType: file.type || 'application/octet-stream', fileData: base64, uploadedBy: currentStaff?.nama || 'STAFF', keterangan: '' });
+    const res = await apiPostGAS({ action: 'saveCustomerDoc', noWa: currentContactNoWa, kategori, namaFile: file.name, fileType: file.type || 'application/octet-stream', fileData: base64, uploadedBy: currentStaff?.nama || 'STAFF', keterangan: '' });
     if (res.ok) { showToast('✅ ' + file.name + ' tersimpan!'); loadModalDocs(); } else { showToast('Gagal upload: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { label.style.background = 'var(--green-mid)'; label.innerHTML = '<i class="ti ti-upload" style="font-size:13px;"></i>&nbsp;Upload<input type="file" id="modal-doc-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none;" onchange="handleModalDocUpload(this)">'; input.value = ''; }
