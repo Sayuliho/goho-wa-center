@@ -1756,8 +1756,8 @@ function renderDocList(docs) {
 async function handleDocUpload(input) {
   if (!input.files || !input.files[0]) return; if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
   const file = input.files[0]; if (file.size > 15 * 1024 * 1024) { showToast('File terlalu besar, maksimal 15MB'); input.value = ''; return; }
-  const kat = prompt('Pilih kategori:\n1 = Identitas (KTP/Paspor/Visa)\n2 = Tiket & Voucher\n3 = Lainnya\n\nKetik 1, 2, atau 3:');
-  const katMap = { '1': 'Identitas', '2': 'Tiket & Voucher', '3': 'Lainnya' }; const kategori = katMap[kat] || 'Lainnya';
+  const kat = prompt('Pilih kategori:\n1 = Paspor\n2 = KTP\n3 = Visa\n4 = Tiket\n5 = Hotel\n6 = Lainnya\n\nKetik 1–6:');
+  const katMap = { '1': 'Paspor', '2': 'KTP', '3': 'Visa', '4': 'Tiket', '5': 'Hotel', '6': 'Lainnya' }; const kategori = katMap[kat] || 'Lainnya';
   const label = document.getElementById('doc-upload-label'); label.innerHTML = '<i class="ti ti-loader spin" style="font-size:14px;"></i> Mengupload...';
   try {
     const base64 = await fileToBase64(file);
