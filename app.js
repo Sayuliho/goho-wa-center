@@ -1463,6 +1463,7 @@ async function handleFileUpload(input) {
     try {
       const base64 = await fileToBase64(file);
       const res = await apiPost({action: 'sendFile', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, fileName: file.name, fileType: file.type || 'application/octet-stream', fileData: base64});
+      console.log('sendFile result:', JSON.stringify(res));
       if (!res.ok) showToast('Gagal kirim: ' + file.name);
     } catch(e) { showToast('Error: ' + file.name); }
   }
