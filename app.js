@@ -1317,7 +1317,7 @@ function renderBubble(m) {
     if (imgCache[fileId]) {
       return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-loaded="1" style="width:200px;height:140px;border-radius:8px;overflow:hidden;"><img src="${imgCache[fileId]}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview('${imgCache[fileId]}','${escH(fileId)}','${escH(namaFile)}','')"></div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnImg}</div></div></div>`;
     }
-    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg" data-nama="${escH(namaFile)}">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnImg}</div></div></div>`;
+    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg" data-nama="${escH(namaFile)}">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnImg}</div></div></div>`;
   }
 
   // Bubble teks biasa
