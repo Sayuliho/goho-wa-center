@@ -1,0 +1,30 @@
+name: Bump asset version
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app.js'
+      - 'styles.css'
+      - 'sw.js'
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version string
+        run: |
+          VER=$(date +'%Y%m%d%H%M')
+          sed -i "s|app\.js?v=[^\"]*|app.js?v=${VER}|g" index.html
+          sed -i "s|styles\.css?v=[^\"]*|styles.css?v=${VER}|g" index.html
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git diff --quiet || (git add index.html && git commit -m "chore: bump asset version [skip ci]")
+          git push
