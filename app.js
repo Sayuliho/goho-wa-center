@@ -1984,6 +1984,12 @@ function setFotoEl(passengerId, src) {
   const el = document.getElementById(elId);
   if (el) el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in;" onclick="openPasporLightboxFromImg(this)">';
 }
+function openPasporLightboxFromFoto(elId) {
+  const el = document.getElementById(elId);
+  const img = el ? el.querySelector('img') : null;
+  if (!img) return;
+  openPasporLightboxFromImg(img);
+}
 
 function openPasporLightboxFromImg(imgEl) {
   const overlay = document.getElementById('mpx-foto-popup');
