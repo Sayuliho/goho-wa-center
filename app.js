@@ -1948,15 +1948,16 @@ function searchPassenger(query) {
         results.innerHTML = `<div style="padding:8px 12px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div><div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
         return;
       }
-      results.innerHTML = res.passengers.map(p => `
-        <div class="mpx-result-item" onclick="addPassengerToList(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-          <div class="mpx-result-foto" id="foto-${p.passengerId}" onclick="openPasporLightboxById('${p.passengerId}','${escH(p.namaLengkap)}')" style="cursor:zoom-in;">
-          <div class="mpx-result-info">
-            <div class="mpx-result-nama">${escH(p.namaLengkap)}</div>
-            <div class="mpx-result-paspor">${p.noPaspor || '-'} · ${formatMpxDate(p.tglLahir) || '-'}</div>
-          </div>
-        </div>`).join('') +
-        `<div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
+      _mpxSearchOptions = res.passengers;
+   results.innerHTML = res.passengers.map((p, idx) => `
+  <div class="mpx-result-item" onclick="addPassengerToList(${idx})">
+    <div class="mpx-result-foto" id="foto-${p.passengerId}" onclick="event.stopPropagation();openPasporLightboxFromFoto('foto-${escH(p.passengerId)}')" style="cursor:zoom-in;">${getInitials(p.namaLengkap)}</div>
+    <div class="mpx-result-info">
+      <div class="mpx-result-nama">${escH(p.namaLengkap)}</div>
+      <div class="mpx-result-paspor">${p.noPaspor || '-'} · ${formatMpxDate(p.tglLahir) || '-'}</div>
+    </div>
+  </div>`).join('') +
+  `<div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
       res.passengers.forEach(p => { if (p.fotoFileId) loadFotoPreview(p.passengerId, p.fotoFileId); });
     } catch(e) {
       results.innerHTML = '<div style="padding:8px 12px;font-size:11px;color:var(--red);">Error: ' + e.message + '</div>';
