@@ -7,7 +7,7 @@ let currentFlightDate = null; // tanggal terbang aktif untuk hitung ADT/CHD/INF 
 
 // ===================== SESSION MANAGEMENT =====================
 function saveSession(staff) {
-  const session = { staff: staff, expiry: Date.now() + (30 * 24 * 60 * 60 * 1000) };
+  const session = { staff: staff, expiry: Date.now() + (8 * 60 * 60 * 1000) };
   try { localStorage.setItem('goho_session', JSON.stringify(session)); } catch(e) {}
 }
 function loadSession() {
