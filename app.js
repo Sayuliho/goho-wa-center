@@ -1255,7 +1255,7 @@ function renderBubble(m) {
     const fileName = fileMatch[1]; const fileUrl = fileMatch[2]; const ispdf = fileName.toLowerCase().endsWith('.pdf');
     const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
     const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
-    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
+    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
   }
 
   // Deteksi pesan dokumen dari customer (MEDIA_URL ada, message = [Dokumen/PDF] atau [Dokumen/...])
@@ -1292,7 +1292,7 @@ function renderBubble(m) {
     </div>` : '';
     return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}">
       <div class="bubble ${cls}">
-        ${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
+        ${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}
         <img src="${escH(m.mediaUrl)}"
           style="width:200px;height:140px;border-radius:8px;object-fit:cover;display:block;cursor:pointer;"
           onclick="window.open('${escH(m.mediaUrl)}','_blank')"
@@ -1323,7 +1323,7 @@ function renderBubble(m) {
   // Bubble teks biasa
   const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
   const delBtnTxt = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
-  return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-txt">${escH(m.message)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnTxt}</div></div></div>`;
+  return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-txt">${escH(m.message)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnTxt}</div></div></div>`;
 }
 
 
