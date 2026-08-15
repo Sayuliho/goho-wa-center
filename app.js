@@ -1991,7 +1991,9 @@ function openPasporLightboxFromImg(imgEl) {
   overlay.style.display = 'flex';
 }
 
-function addPassengerToList(p) {
+function addPassengerToList(idx) {
+  const p = _mpxSearchOptions[idx];
+  if (!p) return;
   if (multiPaxList.find(x => x.passengerId === p.passengerId)) { showToast('Penumpang sudah ditambahkan'); return; }
   multiPaxList.push(p);
   document.getElementById('mpx-search').value = '';
@@ -2004,7 +2006,7 @@ function removePassenger(idx) { multiPaxList.splice(idx, 1); renderMultiPaxList(
 function splitNama(namaLengkap) {
   const parts = (namaLengkap || '').trim().split(/\s+/);
   const depan    = parts[0] || '-';
-  const belakang = parts.length > 1 ? parts.slice(1).join(' ') : '-';
+  const belakang = parts.length > 1 ? parts.slice(1).join(' ') : parts[0] || '-';
   return { depan, belakang };
 }
 
