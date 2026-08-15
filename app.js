@@ -59,8 +59,20 @@ async function apiGet(params) {
   try { const r = await fetch('https://goho-proxy.gohotravel.workers.dev?' + query, { method: 'GET', cache: 'no-store' }); return JSON.parse(await r.text()); }
   catch(e) { return {ok: false, msg: e.toString()}; }
 }
-async function apiPost(body) { const r = await fetch(API, { method: 'POST', body: JSON.stringify(body) }); return r.json(); }
-async function apiPostGAS(body) { const r = await fetch('https://script.google.com/macros/s/AKfycbycdw7-ZYJaPY5J2varxb82LagiCKAlmDfkLOxCZZYEZwi5ZrpH9GLkZYFX-fg6se2t/exec', { method: 'POST', body: JSON.stringify(body) }); return r.json(); }
+async function apiPost(body) {
+  try {
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  } catch(e) {
+    console.error('[apiPost] error:', e.toString());
+    return { ok: false, msg: 'Network error: ' + e.toString() };
+  }
+}
 function autoExpandTextarea(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
 
 // ===================== PWA =====================
