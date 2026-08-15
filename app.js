@@ -1923,6 +1923,7 @@ function quickBeaCukai() { window.open('https://ecd.beacukai.go.id','_blank'); s
 let multiPaxOpen = false;
 let multiPaxList = [];
 let mpxSearchTimer = null;
+let _mpxSearchOptions = [];
 const fotoCache = {};
 
 function toggleMultiPax() {
