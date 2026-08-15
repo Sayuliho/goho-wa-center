@@ -536,7 +536,11 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
         .then(data => {
           if (data.base64) {
             const src = 'data:' + (data.mimeType || mimeType) + ';base64,' + data.base64;
-            imgCache[fileId] = src; // simpan ke cache
+            // Batas cache 50 gambar
+if (Object.keys(imgCache).length >= 50) {
+  delete imgCache[Object.keys(imgCache)[0]];
+}
+imgCache[fileId] = src; // simpan ke cache
             const _fid = fileId; const _fna = el.dataset.nama || 'gambar';
             el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview(\'' + src + '\',\'' + _fid + '\',\'' + _fna + '\',\'\')">';
           } else {
