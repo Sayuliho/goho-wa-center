@@ -458,7 +458,9 @@ async function loadPanelBookingHistory(noWa) {
     if (res.history && res.history.length > 0) {
       loading.textContent = res.total + ' booking';
       const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
-      list.innerHTML = res.history.map(h => `<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;"><div style="font-weight:600;color:var(--text);">${icon[h.tipe]||'📋'} ${escH(h.detail)}</div><div style="color:var(--text-muted);">📅 ${h.tglEvent} · ${escH(h.extra)}</div></div>`).join('');
+      const parseDate = s => { if (!s) return 0; const [d,m,y] = s.split('/'); return new Date(+y,+m-1,+d).getTime(); };
+      const sorted = [...res.history].sort((a,b) => parseDate(b.tglEvent) - parseDate(a.tglEvent));
+      list.innerHTML = sorted.map(h => `<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;"><div style="font-weight:600;color:var(--text);">${icon[h.tipe]||'📋'} ${escH(h.detail)}</div><div style="color:var(--text-muted);">📅 ${h.tglEvent} · ${escH(h.extra)}</div></div>`).join('');
     } else { loading.textContent = ''; list.innerHTML = '<div style="font-size:11px;color:var(--text-hint);">Belum ada booking</div>'; }
   } catch(e) { const l = document.getElementById('np-history-loading'); if (l) l.textContent = ''; }
 }
