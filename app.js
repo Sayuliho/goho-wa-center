@@ -1979,6 +1979,8 @@ let _alliPaxList     = [];
 let _alliSearchTimer = null;
 
 function openAlliModal() {
+  const oldModal = document.getElementById('modal-alli');
+  if (oldModal) oldModal.remove();
   let modal = document.getElementById('modal-alli');
   if (!modal) {
     modal = document.createElement('div');
