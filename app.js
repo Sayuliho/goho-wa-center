@@ -2013,6 +2013,10 @@ function openAlliModal() {
               <label>Email Customer</label>
               <input type="text" id="alli-email" placeholder="email@example.com">
             </div>
+            <div class="form-group">
+              <label>No WA / Kontak</label>
+              <input type="text" id="alli-kontak" placeholder="628xxxxxxxxxx">
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <div class="form-group">
                 <label>Jumlah Bagasi</label>
