@@ -1936,6 +1936,87 @@ function quickArrival(jurusan) {
   if (info) { window.open(info.url,'_blank'); showToast('📋 Buka '+info.nama+' untuk '+dest); } else showToast('Info arrival card untuk '+dest+' belum tersedia');
 }
 function quickBeaCukai() { window.open('https://ecd.beacukai.go.id','_blank'); showToast('🛃 Buka e-CD Bea Cukai Indonesia'); }
+function quickArrivalIndonesia(maskapai, kodeFlight, jurusan, tglTerbang, namaTamu) {
+  if (!currentRoom) { showToast('Pilih chat dulu'); return; }
+  const noWa = currentRoom.noWa;
+  const paxList = multiPaxList.length > 0 ? multiPaxList : [];
+  let lines = [];
+  lines.push('=== RINGKASAN DATA ARRIVAL CARD INDONESIA ===');
+  lines.push('Maskapai   : ' + maskapai);
+  lines.push('No Flight  : ' + kodeFlight);
+  lines.push('Rute       : ' + jurusan);
+  lines.push('Tgl Datang : ' + tglTerbang);
+  lines.push('Provinsi   : SUMATERA UTARA');
+  lines.push('Kota       : KOTA MEDAN');
+  lines.push('Alamat     : MEDAN');
+  lines.push('Email      : ');
+  lines.push('Kontak     : ' + (noWa || ''));
+  lines.push('Jml Bagasi : 1');
+  lines.push('');
+  if (paxList.length > 0) {
+    paxList.forEach((p, i) => {
+      const isLaki = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki';
+      lines.push('--- Peserta ' + (i+1) + ' ---');
+      lines.push('Nama         : ' + p.namaLengkap);
+      lines.push('No Paspor    : ' + (p.noPaspor || ''));
+      lines.push('Tgl Lahir    : ' + (p.tglLahir || ''));
+      lines.push('Sex          : ' + (isLaki ? 'MALE' : 'FEMALE'));
+      lines.push('Exp Paspor   : ' + (p.expiryPaspor || ''));
+      lines.push('');
+    });
+  } else {
+    lines.push('--- Peserta 1 ---');
+    lines.push('Nama         : ' + namaTamu);
+    lines.push('No Paspor    : ');
+    lines.push('Tgl Lahir    : ');
+    lines.push('Sex          : ');
+    lines.push('Exp Paspor   : ');
+    lines.push('');
+  }
+  openAlliModal(lines.join('\n'));
+}
+
+let _alliRingkasan = '';
+function openAlliModal(ringkasan) {
+  _alliRingkasan = ringkasan;
+  let modal = document.getElementById('modal-alli');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-alli';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-box modal-sm">
+        <div class="modal-header">
+          <h3>🛬 Arrival Card Indonesia</h3>
+          <button onclick="closeModal('modal-alli')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Cek & lengkapi data sebelum dikirim ke extension:</div>
+          <textarea id="alli-ringkasan-text" style="width:100%;height:220px;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--border);border-radius:6px;resize:vertical;outline:none;"></textarea>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">⚠️ Pastikan Email, No Paspor, Tgl Lahir, Exp Paspor sudah diisi sebelum kirim.</div>
+        </div>
+        <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);">
+          <button onclick="closeModal('modal-alli')" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;font-family:var(--font);">Batal</button>
+          <button onclick="submitAlliData()" style="flex:2;padding:8px;border:none;border-radius:6px;background:#1a4d8f;color:white;font-weight:600;cursor:pointer;font-family:var(--font);">🛬 Kirim & Buka Form</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('alli-ringkasan-text').value = _alliRingkasan;
+  document.getElementById('modal-alli').style.display = 'flex';
+}
+
+function submitAlliData() {
+  const text = document.getElementById('alli-ringkasan-text').value.trim();
+  if (!text) { showToast('Data kosong'); return; }
+  const msg = { type: 'GOHO_ALLI_DATA', ringkasan: text };
+  let retry = 0;
+  const send = () => { window.postMessage(msg, '*'); if (retry++ < 3) setTimeout(send, 300); };
+  send();
+  window.open('https://allindonesia.imigrasi.go.id/arrival-card-submission/personal-information', '_blank');
+  closeModal('modal-alli');
+  showToast('✅ Data dikirim ke extension AllIndonesia');
+}
 
 // ===================== MULTI PAX =====================
 let multiPaxOpen = false;
