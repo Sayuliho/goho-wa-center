@@ -2056,9 +2056,9 @@ function openAlliModal() {
 }
 
 async function cariPnrAlli() {
-  const pnr       = document.getElementById('alli-pnr').value.trim().toUpperCase();
-  const notfound  = document.getElementById('alli-pnr-notfound');
-  const result    = document.getElementById('alli-pnr-result');
+  const pnr      = document.getElementById('alli-pnr').value.trim().toUpperCase();
+  const notfound = document.getElementById('alli-pnr-notfound');
+  const result   = document.getElementById('alli-pnr-result');
   notfound.style.display = 'none';
   result.style.display   = 'none';
   _alliBookingData = null;
@@ -2067,12 +2067,25 @@ async function cariPnrAlli() {
     const res = await apiGet({ action: 'cariBookingPnrMdac', kodePnr: pnr });
     if (!res.found || !res.bookings || !res.bookings.length) { notfound.style.display = 'block'; return; }
     const b = res.bookings[0];
-    _alliBookingData = b;
-    document.getElementById('alli-result-nama').textContent     = b.namaTamu    || '-';
-    document.getElementById('alli-result-maskapai').textContent = b.maskapai    || '-';
-    document.getElementById('alli-result-flight').textContent   = b.kodeFlight  || '-';
-    document.getElementById('alli-result-rute').textContent     = b.rute        || '-';
-    document.getElementById('alli-result-tgl').textContent      = b.tglTerbang  || '-';
+    // PP: tgl kedatangan = tglPulang | OW: tgl kedatangan = tglTerbang
+    const tglDatang = (b.jenisTiket === 'PP' && b.tglPulang) ? b.tglPulang : b.tglTerbang;
+    _alliBookingData = {
+      maskapai:   b.maskapai,
+      kodeFlight: b.kodeFlight,
+      rute:       b.rute,
+      tglTerbang: tglDatang,
+      namaTamu:   b.namaTamu,
+      jenisTiket: b.jenisTiket,
+    };
+    document.getElementById('alli-result-nama').textContent     = b.namaTamu   || '-';
+    document.getElementById('alli-result-maskapai').textContent = b.maskapai   || '-';
+    document.getElementById('alli-result-flight').textContent   = b.kodeFlight || '-';
+    document.getElementById('alli-result-rute').textContent     = b.rute       || '-';
+    document.getElementById('alli-result-tgl').textContent      = tglDatang    || '-';
+    // Auto-fill kontak dari chat aktif
+    if (currentRoom && currentRoom.noWa) {
+      document.getElementById('alli-kontak') && (document.getElementById('alli-kontak').value = currentRoom.noWa);
+    }
     result.style.display = 'block';
   } catch(e) { notfound.style.display = 'block'; }
 }
