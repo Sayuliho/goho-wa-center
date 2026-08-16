@@ -1939,73 +1939,235 @@ function quickArrival(jurusan) {
 }
 function quickBeaCukai() { window.open('https://ecd.beacukai.go.id','_blank'); showToast('🛃 Buka e-CD Bea Cukai Indonesia'); }
 function quickArrivalIndonesia(maskapai, kodeFlight, jurusan, tglTerbang, namaTamu) {
-  if (!currentRoom) { showToast('Pilih chat dulu'); return; }
-  const noWa = currentRoom.noWa;
-  const paxList = multiPaxList.length > 0 ? multiPaxList : [];
-  let lines = [];
-  lines.push('=== RINGKASAN DATA ARRIVAL CARD INDONESIA ===');
-  lines.push('Maskapai   : ' + maskapai);
-  lines.push('No Flight  : ' + kodeFlight);
-  lines.push('Rute       : ' + jurusan);
-  lines.push('Tgl Datang : ' + tglTerbang);
-  lines.push('Provinsi   : SUMATERA UTARA');
-  lines.push('Kota       : KOTA MEDAN');
-  lines.push('Alamat     : MEDAN');
-  lines.push('Email      : ');
-  lines.push('Kontak     : ' + (noWa || ''));
-  lines.push('Jml Bagasi : 1');
-  lines.push('');
-  if (paxList.length > 0) {
-    paxList.forEach((p, i) => {
-      const isLaki = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki';
-      lines.push('--- Peserta ' + (i+1) + ' ---');
-      lines.push('Nama         : ' + p.namaLengkap);
-      lines.push('No Paspor    : ' + (p.noPaspor || ''));
-      lines.push('Tgl Lahir    : ' + (p.tglLahir || ''));
-      lines.push('Sex          : ' + (isLaki ? 'MALE' : 'FEMALE'));
-      lines.push('Exp Paspor   : ' + (p.expiryPaspor || ''));
-      lines.push('');
-    });
-  } else {
-    lines.push('--- Peserta 1 ---');
-    lines.push('Nama         : ' + namaTamu);
-    lines.push('No Paspor    : ');
-    lines.push('Tgl Lahir    : ');
-    lines.push('Sex          : ');
-    lines.push('Exp Paspor   : ');
-    lines.push('');
-  }
-  openAlliModal(lines.join('\n'));
+  openAlliModal();
 }
 
-let _alliRingkasan = '';
-function openAlliModal(ringkasan) {
-  _alliRingkasan = ringkasan;
+const BANDARA_WILAYAH = {
+  'KNO': { provinsi: 'SUMATERA UTARA',   kota: 'KOTA MEDAN',         alamat: 'MEDAN' },
+  'MES': { provinsi: 'SUMATERA UTARA',   kota: 'KOTA MEDAN',         alamat: 'MEDAN' },
+  'CGK': { provinsi: 'DKI JAKARTA',      kota: 'JAKARTA',            alamat: 'JAKARTA' },
+  'HLP': { provinsi: 'DKI JAKARTA',      kota: 'JAKARTA',            alamat: 'JAKARTA' },
+  'DPS': { provinsi: 'BALI',             kota: 'KOTA DENPASAR',      alamat: 'DENPASAR' },
+  'SUB': { provinsi: 'JAWA TIMUR',       kota: 'KOTA SURABAYA',      alamat: 'SURABAYA' },
+  'UPG': { provinsi: 'SULAWESI SELATAN', kota: 'KOTA MAKASSAR',      alamat: 'MAKASSAR' },
+  'PDG': { provinsi: 'SUMATERA BARAT',   kota: 'KOTA PADANG',        alamat: 'PADANG' },
+  'PLM': { provinsi: 'SUMATERA SELATAN', kota: 'KOTA PALEMBANG',     alamat: 'PALEMBANG' },
+  'BPN': { provinsi: 'KALIMANTAN TIMUR', kota: 'KOTA BALIKPAPAN',    alamat: 'BALIKPAPAN' },
+  'PKU': { provinsi: 'RIAU',             kota: 'KOTA PEKANBARU',     alamat: 'PEKANBARU' },
+  'BTH': { provinsi: 'KEPULAUAN RIAU',   kota: 'KOTA BATAM',         alamat: 'BATAM' },
+  'BDO': { provinsi: 'JAWA BARAT',       kota: 'KOTA BANDUNG',       alamat: 'BANDUNG' },
+  'JOG': { provinsi: 'DI YOGYAKARTA',    kota: 'KOTA YOGYAKARTA',    alamat: 'YOGYAKARTA' },
+  'SOC': { provinsi: 'JAWA TENGAH',      kota: 'KOTA SURAKARTA',     alamat: 'SOLO' },
+  'MDC': { provinsi: 'SULAWESI UTARA',   kota: 'KOTA MANADO',        alamat: 'MANADO' },
+  'PNK': { provinsi: 'KALIMANTAN BARAT', kota: 'KOTA PONTIANAK',     alamat: 'PONTIANAK' },
+  'AMQ': { provinsi: 'MALUKU',           kota: 'KOTA AMBON',         alamat: 'AMBON' },
+  'DJJ': { provinsi: 'PAPUA',            kota: 'KOTA JAYAPURA',      alamat: 'JAYAPURA' },
+  'TIM': { provinsi: 'PAPUA',            kota: 'MIMIKA',             alamat: 'TIMIKA' },
+  'MLG': { provinsi: 'JAWA TIMUR',       kota: 'KOTA MALANG',        alamat: 'MALANG' },
+  'TKG': { provinsi: 'LAMPUNG',          kota: 'KOTA BANDAR LAMPUNG',alamat: 'BANDAR LAMPUNG' },
+};
+
+function deteksiWilayahDariRute(rute) {
+  if (!rute) return null;
+  const parts  = rute.toUpperCase().replace(/\s/g,'').split('-');
+  const tujuan = parts[parts.length - 1].substring(0, 3);
+  return BANDARA_WILAYAH[tujuan] || null;
+}
+
+let _alliBookingData = null;
+let _alliPaxList     = [];
+let _alliSearchTimer = null;
+
+function openAlliModal() {
   let modal = document.getElementById('modal-alli');
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'modal-alli';
     modal.className = 'modal';
     modal.innerHTML = `
-      <div class="modal-box modal-sm">
+      <div class="modal-box modal-wide">
         <div class="modal-header">
           <h3>🛬 Arrival Card Indonesia</h3>
           <button onclick="closeModal('modal-alli')">✕</button>
         </div>
         <div class="modal-body">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Cek & lengkapi data sebelum dikirim ke extension:</div>
-          <textarea id="alli-ringkasan-text" style="width:100%;height:220px;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--border);border-radius:6px;resize:vertical;outline:none;"></textarea>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">⚠️ Pastikan Email, No Paspor, Tgl Lahir, Exp Paspor sudah diisi sebelum kirim.</div>
+          <div id="alli-step1">
+            <div class="form-group">
+              <label>Kode PNR Booking</label>
+              <input type="text" id="alli-pnr" placeholder="Contoh: ABC123" style="text-transform:uppercase" onblur="cariPnrAlli()">
+            </div>
+            <div id="alli-pnr-notfound" style="display:none;color:#b3261e;font-size:12px;margin-top:-8px;margin-bottom:8px;">❌ PNR tidak ditemukan di sistem.</div>
+            <div id="alli-pnr-result" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px;font-size:12px;margin-bottom:12px;">
+              ✅ <b id="alli-result-nama"></b> — <span id="alli-result-maskapai"></span> <span id="alli-result-flight"></span><br>
+              Rute: <span id="alli-result-rute"></span> | Terbang: <span id="alli-result-tgl"></span>
+            </div>
+            <div class="form-group" style="position:relative;">
+              <label>Cari & Tambah Peserta</label>
+              <input type="text" id="alli-search-pax" placeholder="Ketik nama peserta..." oninput="searchPaxAlli(this.value)" autocomplete="off">
+              <div id="alli-search-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;"></div>
+            </div>
+            <div id="alli-pax-list" style="margin-bottom:12px;"></div>
+            <div class="form-group">
+              <label>Email Customer</label>
+              <input type="text" id="alli-email" placeholder="email@example.com">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group">
+                <label>Jumlah Bagasi</label>
+                <input type="number" id="alli-bagasi" value="1" min="1" max="20">
+              </div>
+              <div class="form-group">
+                <label>No Kursi (opsional)</label>
+                <input type="text" id="alli-kursi" placeholder="cth: 12A">
+              </div>
+            </div>
+          </div>
+          <div id="alli-step2" style="display:none;">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Cek & edit data sebelum dikirim ke extension:</div>
+            <textarea id="alli-ringkasan-text" style="width:100%;height:260px;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--border);border-radius:6px;resize:vertical;outline:none;"></textarea>
+            <div style="font-size:10px;color:#e07b00;margin-top:6px;">⚠️ Pastikan Email sudah terisi sebelum kirim.</div>
+          </div>
         </div>
         <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);">
           <button onclick="closeModal('modal-alli')" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;font-family:var(--font);">Batal</button>
-          <button onclick="submitAlliData()" style="flex:2;padding:8px;border:none;border-radius:6px;background:#1a4d8f;color:white;font-weight:600;cursor:pointer;font-family:var(--font);">🛬 Kirim & Buka Form</button>
+          <button id="alli-btn-preview" onclick="alliPreviewRingkasan()" style="flex:2;padding:8px;border:none;border-radius:6px;background:#1a4d8f;color:white;font-weight:600;cursor:pointer;font-family:var(--font);">👁 Preview Ringkasan</button>
+          <button id="alli-btn-kirim" onclick="submitAlliData()" style="display:none;flex:2;padding:8px;border:none;border-radius:6px;background:#1a4d8f;color:white;font-weight:600;cursor:pointer;font-family:var(--font);">🛬 Kirim & Buka Form</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
   }
-  document.getElementById('alli-ringkasan-text').value = _alliRingkasan;
-  document.getElementById('modal-alli').style.display = 'flex';
+  // Reset
+  document.getElementById('alli-step1').style.display = 'block';
+  document.getElementById('alli-step2').style.display = 'none';
+  document.getElementById('alli-btn-preview').style.display = 'block';
+  document.getElementById('alli-btn-kirim').style.display   = 'none';
+  document.getElementById('alli-pnr').value = '';
+  document.getElementById('alli-pnr-result').style.display   = 'none';
+  document.getElementById('alli-pnr-notfound').style.display = 'none';
+  document.getElementById('alli-search-pax').value = '';
+  document.getElementById('alli-search-results').style.display = 'none';
+  document.getElementById('alli-pax-list').innerHTML = '';
+  document.getElementById('alli-email').value  = '';
+  document.getElementById('alli-bagasi').value = '1';
+  document.getElementById('alli-kursi').value  = '';
+  _alliBookingData = null;
+  _alliPaxList     = [];
+  modal.style.display = 'flex';
+}
+
+async function cariPnrAlli() {
+  const pnr       = document.getElementById('alli-pnr').value.trim().toUpperCase();
+  const notfound  = document.getElementById('alli-pnr-notfound');
+  const result    = document.getElementById('alli-pnr-result');
+  notfound.style.display = 'none';
+  result.style.display   = 'none';
+  _alliBookingData = null;
+  if (!pnr) return;
+  try {
+    const res = await apiGet({ action: 'cariBookingPnrMdac', kodePnr: pnr });
+    if (!res.found || !res.bookings || !res.bookings.length) { notfound.style.display = 'block'; return; }
+    const b = res.bookings[0];
+    _alliBookingData = b;
+    document.getElementById('alli-result-nama').textContent     = b.namaTamu    || '-';
+    document.getElementById('alli-result-maskapai').textContent = b.maskapai    || '-';
+    document.getElementById('alli-result-flight').textContent   = b.kodeFlight  || '-';
+    document.getElementById('alli-result-rute').textContent     = b.rute        || '-';
+    document.getElementById('alli-result-tgl').textContent      = b.tglTerbang  || '-';
+    result.style.display = 'block';
+  } catch(e) { notfound.style.display = 'block'; }
+}
+
+function searchPaxAlli(query) {
+  clearTimeout(_alliSearchTimer);
+  const results = document.getElementById('alli-search-results');
+  if (!query || query.trim().length < 2) { results.style.display = 'none'; return; }
+  _alliSearchTimer = setTimeout(async () => {
+    try {
+      const res = await apiGet({ action: 'getPassengersByName', query: query.trim() });
+      if (!res.ok || !res.passengers || !res.passengers.length) {
+        results.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div>';
+        results.style.display = 'block'; return;
+      }
+      window._alliSearchOptions = res.passengers;
+      results.innerHTML = res.passengers.map((p, i) =>
+        `<div onclick="pilihPaxAlli(${i})" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">${getInitials(p.namaLengkap)}</div>
+          <div><div style="font-weight:600;">${escH(p.namaLengkap)}</div><div style="font-size:10px;color:var(--text-muted);">${p.noPaspor||'-'} · ${p.tglLahir||'-'}</div></div>
+        </div>`
+      ).join('');
+      results.style.display = 'block';
+    } catch(e) {}
+  }, 350);
+}
+
+function pilihPaxAlli(idx) {
+  const p = window._alliSearchOptions[idx];
+  if (!p) return;
+  if (_alliPaxList.find(x => x.noPaspor === p.noPaspor && p.noPaspor)) { showToast('Peserta sudah ditambahkan'); return; }
+  _alliPaxList.push(p);
+  document.getElementById('alli-search-pax').value = '';
+  document.getElementById('alli-search-results').style.display = 'none';
+  renderAlliPaxList();
+}
+
+function hapusPaxAlli(idx) {
+  _alliPaxList.splice(idx, 1);
+  renderAlliPaxList();
+}
+
+function renderAlliPaxList() {
+  const list = document.getElementById('alli-pax-list');
+  if (!_alliPaxList.length) { list.innerHTML = ''; return; }
+  list.innerHTML = _alliPaxList.map((p, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;margin-bottom:4px;font-size:12px;">
+      <span style="font-weight:600;">${i+1}. ${escH(p.namaLengkap)}</span>
+      <span style="color:var(--text-muted);font-size:10px;">${p.noPaspor||'-'}</span>
+      <button onclick="hapusPaxAlli(${i})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;">✕</button>
+    </div>`
+  ).join('');
+}
+
+function alliPreviewRingkasan() {
+  if (!_alliBookingData)   { showToast('Cari PNR dulu'); return; }
+  if (!_alliPaxList.length){ showToast('Tambahkan minimal 1 peserta'); return; }
+  const b      = _alliBookingData;
+  const email  = document.getElementById('alli-email').value.trim();
+  const bagasi = document.getElementById('alli-bagasi').value || '1';
+  const kursi  = document.getElementById('alli-kursi').value.trim();
+  const noWa   = currentRoom ? currentRoom.noWa : '';
+  const wilayah  = deteksiWilayahDariRute(b.rute);
+  const provinsi = wilayah ? wilayah.provinsi : 'SUMATERA UTARA';
+  const kota     = wilayah ? wilayah.kota     : 'KOTA MEDAN';
+  const alamat   = wilayah ? wilayah.alamat   : 'MEDAN';
+  let lines = [];
+  lines.push('=== RINGKASAN DATA ARRIVAL CARD INDONESIA ===');
+  lines.push('Maskapai   : ' + (b.maskapai   || ''));
+  lines.push('No Flight  : ' + (b.kodeFlight || ''));
+  lines.push('Rute       : ' + (b.rute       || ''));
+  lines.push('Tgl Datang : ' + (b.tglTerbang || ''));
+  lines.push('Provinsi   : ' + provinsi);
+  lines.push('Kota       : ' + kota);
+  lines.push('Alamat     : ' + alamat);
+  lines.push('Email      : ' + email);
+  lines.push('Kontak     : ' + noWa);
+  lines.push('Jml Bagasi : ' + bagasi);
+  if (kursi) lines.push('No Kursi   : ' + kursi);
+  lines.push('');
+  _alliPaxList.forEach((p, i) => {
+    const isLaki = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki';
+    lines.push('--- Peserta ' + (i+1) + ' ---');
+    lines.push('Nama         : ' + p.namaLengkap);
+    lines.push('No Paspor    : ' + (p.noPaspor    || ''));
+    lines.push('Tgl Lahir    : ' + (p.tglLahir    || ''));
+    lines.push('Sex          : ' + (isLaki ? 'MALE' : 'FEMALE'));
+    lines.push('Exp Paspor   : ' + (p.expiryPaspor || ''));
+    lines.push('');
+  });
+  document.getElementById('alli-ringkasan-text').value = lines.join('\n');
+  document.getElementById('alli-step1').style.display    = 'none';
+  document.getElementById('alli-step2').style.display    = 'block';
+  document.getElementById('alli-btn-preview').style.display = 'none';
+  document.getElementById('alli-btn-kirim').style.display   = 'block';
 }
 
 function submitAlliData() {
