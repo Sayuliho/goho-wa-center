@@ -2155,14 +2155,14 @@ function alliPreviewRingkasan() {
   let lines = [];
   lines.push('=== RINGKASAN DATA ARRIVAL CARD INDONESIA ===');
   lines.push('Maskapai   : ' + (b.maskapai   || ''));
-  lines.push('No Flight  : ' + (b.kodeFlight || ''));
+  lines.push('No Flight  : ' + (b.kodeFlight || b.noFlight || b.kode || ''));
   lines.push('Rute       : ' + (b.rute       || ''));
   lines.push('Tgl Datang : ' + (b.tglTerbang || ''));
   lines.push('Provinsi   : ' + provinsi);
   lines.push('Kota       : ' + kota);
   lines.push('Alamat     : ' + alamat);
   lines.push('Email      : ' + email);
-  lines.push('Kontak     : ' + noWa);
+  lines.push('Kontak     : ' + ((document.getElementById('alli-kontak') ? document.getElementById('alli-kontak').value.trim() : '') || (currentRoom ? currentRoom.noWa : '') || noWa));
   lines.push('Jml Bagasi : ' + bagasi);
   if (kursi) lines.push('No Kursi   : ' + kursi);
   lines.push('');
