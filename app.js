@@ -2070,18 +2070,19 @@ async function cariPnrAlli() {
     if (!res.found || !res.bookings || !res.bookings.length) { notfound.style.display = 'block'; return; }
     const b = res.bookings[0];
     // PP: tgl kedatangan = tglPulang | OW: tgl kedatangan = tglTerbang
-    const tglDatang = (b.jenisTiket === 'PP' && b.tglPulang) ? b.tglPulang : b.tglTerbang;
+    const tglDatang    = (b.jenisTiket === 'PP' && b.tglPulang)    ? b.tglPulang    : b.tglTerbang;
+    const flightDatang = (b.jenisTiket === 'PP' && b.flightPulang) ? b.flightPulang : b.kodeFlight;
     _alliBookingData = {
-      maskapai:   b.maskapai,
-      kodeFlight: b.kodeFlight,
-      rute:       b.rute,
-      tglTerbang: tglDatang,
-      namaTamu:   b.namaTamu,
-      jenisTiket: b.jenisTiket,
+    maskapai:   b.maskapai,
+    kodeFlight: flightDatang,
+    rute:       b.rute,
+    tglTerbang: tglDatang,
+    namaTamu:   b.namaTamu,
+    jenisTiket: b.jenisTiket,
     };
     document.getElementById('alli-result-nama').textContent     = b.namaTamu   || '-';
     document.getElementById('alli-result-maskapai').textContent = b.maskapai   || '-';
-    document.getElementById('alli-result-flight').textContent   = b.kodeFlight || '-';
+    document.getElementById('alli-result-flight').textContent   = flightDatang  || '-';
     document.getElementById('alli-result-rute').textContent     = b.rute       || '-';
     document.getElementById('alli-result-tgl').textContent      = tglDatang    || '-';
     // Auto-fill kontak dari chat aktif
