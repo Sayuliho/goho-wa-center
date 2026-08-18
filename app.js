@@ -913,7 +913,7 @@ async function saveCropOrFull() {
   }
 
   const mimeType = 'image/jpeg';
-  const b64 = canvas.toDataURL(mimeType, 0.92).split(',')[1];
+  const b64 = canvas.toDataURL(mimeType, 0.97).split(',')[1];
   window._croppedBase64   = b64;
   window._croppedMimeType = mimeType;
 
