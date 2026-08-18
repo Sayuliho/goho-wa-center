@@ -125,10 +125,14 @@
       <span class="layanan-flag">🇲🇾</span>
       <div><div class="layanan-nama">MDAC Malaysia</div><div class="layanan-sub">Malaysia Digital Arrival Card</div></div>
     </div>
+    <div class="layanan-item" onclick="pilihLayanan('alli')">
+      <span class="layanan-flag">🛬</span>
+      <div><div class="layanan-nama">Arrival Card ID</div><div class="layanan-sub">Kartu Kedatangan Indonesia</div></div>
+    </div>
     <div class="layanan-item" onclick="pilihLayanan('harga')">
-  <span class="layanan-flag">📶</span>
-  <div><div class="layanan-nama">Harga SIM / eSIM</div><div class="layanan-sub">Cek harga Aviroam</div></div>
-  </div>
+      <span class="layanan-flag">📶</span>
+      <div><div class="layanan-nama">Harga SIM / eSIM</div><div class="layanan-sub">Cek harga Aviroam</div></div>
+    </div>
     <div class="layanan-item layanan-soon" onclick="pilihLayanan('twac')">
       <span class="layanan-flag">🇹🇼</span>
       <div><div class="layanan-nama">TWAC Taiwan</div><div class="layanan-sub coming">Coming soon</div></div>
@@ -137,14 +141,6 @@
       <span class="layanan-flag">🇸🇬</span>
       <div><div class="layanan-nama">SG Card Singapore</div><div class="layanan-sub coming">Coming soon</div></div>
     </div>
-    <div class="layanan-item layanan-soon" onclick="pilihLayanan('allin')">
-      <span class="layanan-flag">🇮🇩</span>
-      <div><div class="layanan-nama">All-in Indonesia</div><div class="layanan-sub coming">Coming soon</div></div>
-    </div>
-    <div class="layanan-item" onclick="pilihLayanan('alli')">
-          <span class="layanan-flag">🛬</span>
-          <div><div class="layanan-nama">Arrival Card ID</div><div class="layanan-sub">Kartu Kedatangan Indonesia</div></div>
-        </div>
   </div>
   <div class="main-area" id="page-chat" style="display:flex;">
     <div class="sidebar" id="sidebar">
@@ -291,8 +287,6 @@
 
 <!-- MODAL PREVIEW FOTO FULLSCREEN + IMAGE EDITOR -->
 <div id="modal-img-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10000;flex-direction:column;align-items:center;justify-content:center;">
-
-  <!-- Toolbar Atas: Rotate + Zoom -->
   <div class="img-editor-toolbar">
     <button onclick="imgRotate(-15)" title="Putar kiri">↺</button>
     <button onclick="imgRotate(-90)" title="Putar kiri 90°" style="font-size:11px;">◀90°</button>
@@ -305,13 +299,9 @@
     <div class="tb-sep"></div>
     <button onclick="imgResetTransform()" title="Reset posisi" style="font-size:11px;">Reset</button>
   </div>
-
-  <!-- Kontainer Gambar + Crop Overlay -->
   <div id="img-editor-wrap">
     <img id="img-preview-src" src="" alt="">
     <canvas id="img-editor-canvas-bg"></canvas>
-
-    <!-- Crop overlay — aktif saat crop mode -->
     <div id="crop-overlay"
       onmousedown="cropStart(event)"
       onmousemove="cropMove(event)"
@@ -322,8 +312,6 @@
       <div id="crop-box"></div>
     </div>
   </div>
-
-  <!-- Toolbar Bawah: Crop + Rotation Slider -->
   <div class="img-editor-bottom">
     <button id="btn-crop-toggle" onclick="toggleCropMode()" title="Aktifkan crop">✂️ Crop</button>
     <div class="tb-sep" style="height:18px;"></div>
@@ -332,18 +320,13 @@
       oninput="imgRotateSlider(this.value)" title="Geser untuk rotasi halus">
     <span id="rotate-slider-label" style="font-size:11px;color:rgba(255,255,255,0.6);min-width:32px;">0°</span>
   </div>
-
-  <!-- Tombol Kanan Atas -->
   <div id="img-preview-actions">
     <button id="btn-save-crop" onclick="saveCropOrFull()">💾 Simpan</button>
     <button id="btn-forward-img" onclick="openForwardModal()">📤 Forward</button>
     <button id="btn-close-preview" onclick="closeImgPreview()">✕</button>
   </div>
-
-  <!-- Nama file -->
   <div id="img-preview-name" style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:6px;position:absolute;bottom:60px;left:50%;transform:translateX(-50%);pointer-events:none;"></div>
 </div>
-
 
 <!-- MODAL KIRIM DOKUMEN -->
 <div class="modal" id="modal-send-doc" style="display:none;">
@@ -574,7 +557,6 @@
   <div class="modal-box modal-wide">
     <div class="modal-header"><h3>🇲🇾 MDAC — Malaysia Digital Arrival Card</h3><button onclick="closeModal('modal-mdac')">✕</button></div>
     <div class="modal-body">
-
       <div class="form-group">
         <label>Kode PNR</label>
         <input type="text" id="mdac-pnr" placeholder="Contoh: ABC123" style="text-transform:uppercase" onblur="cariPnrMdac()">
@@ -584,22 +566,17 @@
         ✅ <b id="mdac-result-nama"></b> — <span id="mdac-result-maskapai"></span> <span id="mdac-result-flight"></span><br>
         Rute: <span id="mdac-result-rute"></span> | Terbang: <span id="mdac-result-tgl"></span>
       </div>
-
       <div class="form-group" style="position:relative;margin-top:14px;">
         <label>Cari & Tambah Peserta</label>
         <input type="text" id="mdac-search-pax" placeholder="Ketik nama peserta..." oninput="searchPaxMdac(this.value)" autocomplete="off">
         <div class="mdac-search-results" id="mdac-search-results"></div>
       </div>
-
       <div id="mdac-pax-list"></div>
-
       <div style="height:1px;background:var(--border);margin:14px 0;"></div>
-
       <div class="form-group">
         <label>Alamat / Hotel Tujuan di Malaysia</label>
         <input type="text" id="mdac-alamat" placeholder="Nama hotel & alamat lengkap">
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">
           <label>State (Negeri)</label>
@@ -628,7 +605,6 @@
           <input type="text" id="mdac-city" placeholder="cth: Genting Highlands">
         </div>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">
           <label>Postcode</label>
@@ -643,7 +619,6 @@
           </select>
         </div>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">
           <label>Email</label>
@@ -654,7 +629,6 @@
           <input type="text" id="mdac-kontak" placeholder="628xxxxxxxxxx">
         </div>
       </div>
-
       <div class="form-group">
         <label>Tanggal Kembali / Keluar dari Malaysia <span style="color:#c00;">*</span></label>
         <input type="date" id="mdac-tgl-pulang">
@@ -662,9 +636,7 @@
           Kalau tiket PP, isi sesuai tanggal pulang di booking. Kalau tiket one-way, isi estimasi tanggal keluar dari Malaysia (boleh kira-kira).
         </div>
       </div>
-
       <div class="mdac-summary-box" id="mdac-summary-box" style="display:none;"></div>
-
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-mdac')">Batal</button>
@@ -681,25 +653,25 @@
     </div>
     <div class="modal-body">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
-  <div class="form-group" style="margin:0;">
-    <label>Negara / Region</label>
-    <select id="h-country" onchange="hargaUpdateDay()" style="width:100%;">
-      <option value="">— Pilih negara —</option>
-    </select>
-  </div>
-  <div class="form-group" style="margin:0;">
-    <label>Durasi (hari)</label>
-    <select id="h-day" onchange="hargaUpdatePkg()" disabled style="width:100%;">
-      <option value="">— Pilih durasi —</option>
-    </select>
-  </div>
-  <div class="form-group" style="margin:0;">
-    <label>Paket data</label>
-    <select id="h-pkg" onchange="hargaShowResult()" disabled style="width:100%;">
-      <option value="">— Pilih paket —</option>
-    </select>
-  </div>
-</div>
+        <div class="form-group" style="margin:0;">
+          <label>Negara / Region</label>
+          <select id="h-country" onchange="hargaUpdateDay()" style="width:100%;">
+            <option value="">— Pilih negara —</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>Durasi (hari)</label>
+          <select id="h-day" onchange="hargaUpdatePkg()" disabled style="width:100%;">
+            <option value="">— Pilih durasi —</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>Paket data</label>
+          <select id="h-pkg" onchange="hargaShowResult()" disabled style="width:100%;">
+            <option value="">— Pilih paket —</option>
+          </select>
+        </div>
+      </div>
       <div id="h-loading" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text-muted);">
         <i class="ti ti-loader spin"></i> Memuat data harga...
       </div>
