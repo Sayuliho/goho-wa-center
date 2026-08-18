@@ -386,7 +386,7 @@ function renderChatItem(c) {
 // ===================== OPEN CHAT =====================
 async function openChat(roomId) {
   const chat = allChats.find(c => c.roomId === roomId); if (!chat) return;
-  if ((chat.status === 'WAITING' || chat.status === 'NEED_HUMAN') && !chat.assignedTo) {
+  if (chat.status === 'WAITING' || chat.status === 'NEED_HUMAN') {
     const res = await apiPost({action: 'assignChat', roomId: chat.roomId, staffName: currentStaff.nama});
     if (res.ok) { chat.status = 'ASSIGNED'; chat.assignedTo = currentStaff.nama; }
   }
