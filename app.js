@@ -1482,7 +1482,7 @@ async function handleFileUpload(input) {
     status.textContent = `Mengupload ${i+1}/${files.length}: ${file.name}...`;
     try {
       const base64 = await fileToBase64(file);
-      const res = await apiPost({action: 'sendFile', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, fileName: file.name, fileType: file.type || 'application/octet-stream', fileData: base64});
+      const res = await apiPost({action: 'sendFile', roomId: currentRoom.roomId, staffName: currentStaff.nama, noWa: currentRoom.noWa, fileName: file.name, fileType: file.type || 'application/octet-stream', fileData: base64, deviceLabel: currentRoom.deviceLabel || 'WA2'});
       console.log('sendFile result:', JSON.stringify(res));
       if (!res.ok) showToast('Gagal kirim: ' + file.name);
     } catch(e) { showToast('Error: ' + file.name); }
