@@ -3,7 +3,7 @@ let currentStaff = null, currentRoom = null, currentTab = 'aktif', currentMainTa
 let allChats = [], allRoomsCache = [], allContactsCache = [];
 let currentContactNoWa = '', currentContactNama = '';
 let pollInterval = null, lastMsgCount = 0, unreadCounts = {}, lastSeenAt = {};
-let currentFlightDate = null; // tanggal terbang aktif untuk hitung ADT/CHD/INF di Multi Pax â null = belum terdeteksi, fallback ke hari ini
+let currentFlightDate = null; // tanggal terbang aktif untuk hitung ADT/CHD/INF di Multi Pax — null = belum terdeteksi, fallback ke hari ini
 
 // ===================== SESSION MANAGEMENT =====================
 function saveSession(staff) {
@@ -141,7 +141,7 @@ function pilihLayanan(type) {
   } else if (type === 'alli') {
     quickArrivalIndonesia('','','','', currentRoom ? currentRoom.nama : '');
   } else {
-    showToast('ð§ ' + (labels[type] || type) + ' â coming soon');
+    showToast('🚧 ' + (labels[type] || type) + ' — coming soon');
   }
 }
 
@@ -177,16 +177,16 @@ function unlockAudio() {
 }
 document.addEventListener('click', unlockAudio); document.addEventListener('keydown', unlockAudio);
 function showSoundActivation() {
-  const btn = document.createElement('div'); btn.id = 'sound-btn'; btn.innerHTML = 'ð Aktifkan Suara Notif';
+  const btn = document.createElement('div'); btn.id = 'sound-btn'; btn.innerHTML = '🔔 Aktifkan Suara Notif';
   btn.style.cssText = 'position:fixed;top:56px;right:12px;background:#0F6E56;color:white;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;z-index:9998;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
-  btn.onclick = function() { unlockAudio(); playNotifSound(); btn.innerHTML = 'â Suara Aktif'; btn.style.background = '#666'; setTimeout(() => btn.remove(), 2000); };
+  btn.onclick = function() { unlockAudio(); playNotifSound(); btn.innerHTML = '✅ Suara Aktif'; btn.style.background = '#666'; setTimeout(() => btn.remove(), 2000); };
   document.body.appendChild(btn);
-  setTimeout(() => { unlockAudio(); const b = document.getElementById('sound-btn'); if (b) { b.innerHTML = 'â Suara Aktif'; b.style.background = '#666'; setTimeout(() => b.remove(), 1500); } }, 3000);
+  setTimeout(() => { unlockAudio(); const b = document.getElementById('sound-btn'); if (b) { b.innerHTML = '✅ Suara Aktif'; b.style.background = '#666'; setTimeout(() => b.remove(), 1500); } }, 3000);
 }
 function showNotifPopup(nama, noWa, roomId) {
   const old = document.getElementById('notif-popup'); if (old) old.remove();
   const popup = document.createElement('div'); popup.id = 'notif-popup';
-  popup.innerHTML = `<div style="display:flex;align-items:flex-start;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">ð¬</div><div style="flex:1;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;">Chat Baru Masuk!</div><div style="font-size:12px;color:#555;">${escH(nama)}</div><div style="font-size:11px;color:#888;">${noWa}</div></div><button onclick="dismissNotif()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;line-height:1;">â</button></div><button onclick="goToChat('${roomId}')" style="margin-top:8px;width:100%;padding:6px;background:#0F6E56;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);">Buka Chat â</button>`;
+  popup.innerHTML = `<div style="display:flex;align-items:flex-start;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💬</div><div style="flex:1;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;">Chat Baru Masuk!</div><div style="font-size:12px;color:#555;">${escH(nama)}</div><div style="font-size:11px;color:#888;">${noWa}</div></div><button onclick="dismissNotif()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;line-height:1;">✕</button></div><button onclick="goToChat('${roomId}')" style="margin-top:8px;width:100%;padding:6px;background:#0F6E56;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);">Buka Chat →</button>`;
   popup.style.cssText = 'position:fixed;bottom:24px;right:24px;background:white;border-radius:12px;padding:14px;width:280px;box-shadow:0 8px 30px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(0,0,0,0.08);';
   document.body.appendChild(popup); setTimeout(() => dismissNotif(), 8000);
 }
@@ -211,8 +211,8 @@ function checkNewChats(waitingChats) {
 
 // ===================== POLLING (PATCH v1 - hemat resource) =====================
 // Perubahan dari versi sebelumnya:
-// 1. Interval lebih longgar: 2sâ5s (msg), 3sâ10s (chatlist), 6sâ15s (waiting)
-// 2. loadStats() tidak lagi jalan SETIAP siklus 10 detik â
+// 1. Interval lebih longgar: 2s→5s (msg), 3s→10s (chatlist), 6s→15s (waiting)
+// 2. loadStats() tidak lagi jalan SETIAP siklus 10 detik —
 //    sekarang ikut siklus 10 detik tapi hanya kalau tab visible
 // 3. Page Visibility API: polling dihentikan kalau tab gak fokus,
 //    tapi polling notif (waiting queue) tetap jalan pelan (30s) supaya
@@ -288,11 +288,11 @@ function _stopBackgroundPolls() {
 
 function _onVisibilityChange() {
   if (document.hidden) {
-    // Tab tidak terlihat â hentikan poll berat, ganti ke poll ringan
+    // Tab tidak terlihat → hentikan poll berat, ganti ke poll ringan
     _stopForegroundPolls();
     _startBackgroundPolls();
   } else {
-    // Tab aktif lagi â langsung refresh sekali, lalu nyalakan poll normal
+    // Tab aktif lagi → langsung refresh sekali, lalu nyalakan poll normal
     _stopBackgroundPolls();
     _startForegroundPolls();
 
@@ -375,9 +375,9 @@ function renderChatItem(c) {
       <div class="ci-row3">
   <span class="pill ${getStatusClass(c.status)}">${statusLabel}</span>
   ${c.produk ? `<span class="pill ${getProdukClass(c.produk)}">${c.produk}</span>` : ''}
-  ${c.assignedTo ? `<span class="ci-handler">ð¤ ${escH(c.assignedTo)}</span>` : ''}
+  ${c.assignedTo ? `<span class="ci-handler">👤 ${escH(c.assignedTo)}</span>` : ''}
   ${c.menitTunggu > 10 ? `<span class="pill p-alert">${c.menitTunggu} mnt</span>` : ''}
-  ${c.deviceLabel === 'WA2' ? `<span class="pill" style="background:#1d4ed8;color:white;font-size:9px;">ð± WA2</span>` : `<span class="pill" style="background:#0F6E56;color:white;font-size:9px;">ð± WA1</span>`}
+  ${c.deviceLabel === 'WA2' ? `<span class="pill" style="background:#1d4ed8;color:white;font-size:9px;">📱 WA2</span>` : `<span class="pill" style="background:#0F6E56;color:white;font-size:9px;">📱 WA1</span>`}
 </div>
     </div>
   </div>`;
@@ -391,19 +391,19 @@ async function openChat(roomId) {
     if (res.ok) { chat.status = 'ASSIGNED'; chat.assignedTo = currentStaff.nama; }
   }
   currentRoom = chat; lastMsgCount = 0; unreadCounts[roomId] = 0;
-  currentFlightDate = null; // reset setiap ganti chat â diisi ulang oleh loadSmartContext()
+  currentFlightDate = null; // reset setiap ganti chat — diisi ulang oleh loadSmartContext()
   updateGlobalBadge(Object.values(unreadCounts).reduce((s, v) => s + v, 0));
   if (docPanelOpen) { docPanelOpen = false; document.getElementById('doc-panel').classList.remove('active'); document.getElementById('doc-panel-btn').classList.remove('active-panel'); document.getElementById('info-panel-content').style.display = 'flex'; }
   document.getElementById('chat-empty').classList.add('hidden'); document.getElementById('chat-active').classList.remove('hidden');
   document.getElementById('notes-panel').style.display = 'flex';
   document.getElementById('ct-av').textContent = getInitials(chat.nama); document.getElementById('ct-name').textContent = chat.nama;
   document.getElementById('ct-wa').textContent = chat.noWa; document.getElementById('ct-status').textContent = chat.status;
-  document.getElementById('ct-by').textContent = chat.assignedTo ? 'Â· ' + chat.assignedTo : '';
+  document.getElementById('ct-by').textContent = chat.assignedTo ? '· ' + chat.assignedTo : '';
   document.getElementById('np-produk').textContent = chat.produk || '-';
   document.getElementById('np-status') && (document.getElementById('np-status').innerHTML = `<span class="pill ${getStatusClass(chat.status)}">${chat.status}</span>`);
   document.getElementById('chat-area').innerHTML = '<div class="loading">Memuat pesan...</div>';
   renderActionRow(chat);
-// Pesan dan info customer langsung â SmartContext delay 2 detik
+// Pesan dan info customer langsung — SmartContext delay 2 detik
 // supaya chat terbuka cepat dulu, baru context di-load background
 Promise.all([
   loadMessages(roomId, true),
@@ -438,14 +438,14 @@ async function loadPanelNotes(noWa) {
     const res = await apiGet({ action: 'getSmartNotes', noWa });
     const notes = res.notes || [];
     if (!notes.length) { el.innerHTML = ''; return; }
-    const tagEmoji = { TODO: 'ð', INFO: 'â¹ï¸', PENTING: 'â ï¸', DONE: 'â' };
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
     el.innerHTML = notes.map((n, i) => {
       const preview = (n.text||n.note||'').substring(0,40) + ((n.text||n.note||'').length > 40 ? '...' : '');
-      const dl = n.deadline ? ' Â· <span style="color:#c05c00;font-size:9px;">ð ' + formatDeadline(n.deadline) + '</span>' : '';
+      const dl = n.deadline ? ' · <span style="color:#c05c00;font-size:9px;">📅 ' + formatDeadline(n.deadline) + '</span>' : '';
       return `<div onclick="showNoteModal('${escH(noWa)}')" style="display:flex;gap:6px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
         <span style="font-size:10px;color:var(--text-muted);min-width:16px;flex-shrink:0;">${i+1}.</span>
         <div style="flex:1;min-width:0;">
-          <span style="font-size:10px;">${tagEmoji[n.tag]||'ð'}</span>
+          <span style="font-size:10px;">${tagEmoji[n.tag]||'📝'}</span>
           <span style="font-size:11px;color:var(--text);">${escH(preview)}</span>
           ${dl}
         </div>
@@ -459,10 +459,10 @@ async function loadPanelBookingHistory(noWa) {
     const loading = document.getElementById('np-history-loading'); const list = document.getElementById('np-history-list'); if (!loading || !list) return;
     if (res.history && res.history.length > 0) {
       loading.textContent = res.total + ' booking';
-      const icon = {PESAWAT:'âï¸', HOTEL:'ð¨', TOUR:'ð´', ATRAKSI:'ð¡'};
+      const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
       const parseDate = s => { if (!s) return 0; const [d,m,y] = s.split('/'); return new Date(+y,+m-1,+d).getTime(); };
       const sorted = [...res.history].sort((a,b) => parseDate(b.tglEvent) - parseDate(a.tglEvent));
-      list.innerHTML = sorted.map(h => `<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;"><div style="font-weight:600;color:var(--text);">${icon[h.tipe]||'ð'} ${escH(h.detail)}</div><div style="color:var(--text-muted);">ð ${h.tglEvent} Â· ${escH(h.extra)}</div></div>`).join('');
+      list.innerHTML = sorted.map(h => `<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;"><div style="font-weight:600;color:var(--text);">${icon[h.tipe]||'📋'} ${escH(h.detail)}</div><div style="color:var(--text-muted);">📅 ${h.tglEvent} · ${escH(h.extra)}</div></div>`).join('');
     } else { loading.textContent = ''; list.innerHTML = '<div style="font-size:11px;color:var(--text-hint);">Belum ada booking</div>'; }
   } catch(e) { const l = document.getElementById('np-history-loading'); if (l) l.textContent = ''; }
 }
@@ -476,15 +476,15 @@ function renderActionRow(chat) {
   const isUnassigned = !chat.assignedTo || chat.status === 'WAITING';
 
   if (isMyChat || isOwner) {
-    // Chat milik sendiri atau owner â full action
+    // Chat milik sendiri atau owner — full action
     row.innerHTML = `<button class="abtn abtn-note" onclick="showNoteInput()"><i class="ti ti-notes"></i> Catatan</button><button class="abtn abtn-multipax" onclick="toggleMultiPax()"><i class="ti ti-users"></i> Multi Pax</button><button class="abtn abtn-booked" onclick="tandaiBooked()"><i class="ti ti-check"></i> Booked</button><button class="abtn abtn-lepas" onclick="lepasChat()"><i class="ti ti-logout"></i> Lepas</button><button class="abtn abtn-selesai" onclick="selesaiChat()"><i class="ti ti-circle-check"></i> Selesai</button>`;
     reply.style.display = 'flex';
   } else if (isUnassigned) {
-    // Belum ada yang handle â tampilkan tombol Ambil Chat
+    // Belum ada yang handle — tampilkan tombol Ambil Chat
     row.innerHTML = `<button class="abtn abtn-booked" onclick="ambilChat()" style="background:#0F6E56;"><i class="ti ti-hand-finger"></i> Ambil Chat</button>`;
     reply.style.display = 'none'; uploadBar.classList.remove('show');
   } else {
-    // Di-handle staff lain â tampilkan info + tombol Ambil Chat
+    // Di-handle staff lain — tampilkan info + tombol Ambil Chat
     row.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;"><span style="font-size:11px;color:var(--text-muted);">Di-handle oleh <strong>${escH(chat.assignedTo)}</strong></span><button class="abtn abtn-lepas" onclick="ambilChat()" style="padding:4px 10px;font-size:11px;"><i class="ti ti-hand-finger"></i> Ambil</button></div>`;
     reply.style.display = 'none'; uploadBar.classList.remove('show');
   }
@@ -498,7 +498,7 @@ async function ambilChat() {
     currentRoom.status = 'ASSIGNED';
     renderActionRow(currentRoom);
     loadChats(false);
-    showToast('â Chat diambil oleh ' + currentStaff.nama);
+    showToast('✅ Chat diambil oleh ' + currentStaff.nama);
   } else {
     showToast('Gagal ambil chat: ' + (res.msg || ''));
   }
@@ -507,7 +507,7 @@ async function ambilChat() {
 // ===================== MESSAGES =====================
 let msgOffset = 0;
 
-// Cache gambar supaya tidak fetch ulang tiap polling â gambar steady tidak kedip
+// Cache gambar supaya tidak fetch ulang tiap polling → gambar steady tidak kedip
 const imgCache = {};
 
 // IntersectionObserver untuk lazy load gambar di bubble
@@ -533,7 +533,7 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
       imgObserver.unobserve(el);
 
       // Tampil spinner saat loading
-      el.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;">â³</div>';
+      el.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;">⏳</div>';
 
       fetch('https://goho-proxy.gohotravel.workers.dev?action=getImageBase64&fileId=' + encodeURIComponent(fileId))
         .then(r => r.json())
@@ -548,16 +548,16 @@ imgCache[fileId] = src; // simpan ke cache
             const _fid = fileId; const _fna = el.dataset.nama || 'gambar';
             el.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview(\'' + src + '\',\'' + _fid + '\',\'' + _fna + '\',\'\')">';
           } else {
-            el.innerHTML = '<div style="padding:8px;font-size:11px;color:#aaa;">ð¼ï¸ Gambar tidak tersedia</div>';
+            el.innerHTML = '<div style="padding:8px;font-size:11px;color:#aaa;">🖼️ Gambar tidak tersedia</div>';
           }
         }).catch(() => {
-          el.innerHTML = '<div style="padding:8px;font-size:11px;color:#aaa;">ð¼ï¸ Gagal load</div>';
+          el.innerHTML = '<div style="padding:8px;font-size:11px;color:#aaa;">🖼️ Gagal load</div>';
         });
     }
   });
 }, { threshold: 0.1 }) : null;
 
-// Set berisi msgId yang sudah di-render â untuk diff agar tidak replace DOM
+// Set berisi msgId yang sudah di-render — untuk diff agar tidak replace DOM
 const renderedMsgIds = new Set();
 
 async function loadMessages(roomId, forceScroll) {
@@ -584,18 +584,18 @@ async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
     const hasMore = res.total > offset + 50;
 
     if (prepend) {
-      // Muat pesan lebih lama â tambah di atas
+      // Muat pesan lebih lama — tambah di atas
       const btn = document.getElementById('load-more-btn'); if (btn) btn.remove();
       const html = res.data.map(m => renderBubble(m)).join('');
       area.insertAdjacentHTML('afterbegin', html);
       res.data.forEach(m => renderedMsgIds.add(m.msgId));
     } else if (forceScroll || renderedMsgIds.size === 0) {
-      // Pertama kali buka chat â render semua sekaligus
+      // Pertama kali buka chat — render semua sekaligus
       area.innerHTML = res.data.map(m => renderBubble(m)).join('');
       renderedMsgIds.clear();
       res.data.forEach(m => renderedMsgIds.add(m.msgId));
     } else {
-      // Polling â hanya tambah pesan yang belum ada, DOM lama tidak disentuh
+      // Polling — hanya tambah pesan yang belum ada, DOM lama tidak disentuh
       const newMsgs = res.data.filter(m => !renderedMsgIds.has(m.msgId));
       if (newMsgs.length > 0) {
         const html = newMsgs.map(m => renderBubble(m)).join('');
@@ -605,7 +605,7 @@ async function fetchMessages(roomId, offset, forceScroll, prepend = false) {
     }
 
     if (hasMore && !document.getElementById('load-more-btn')) {
-      area.insertAdjacentHTML('afterbegin', `<div id="load-more-btn" style="text-align:center;padding:8px;"><button onclick="loadMoreMessages('${roomId}')" style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;background:white;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:var(--font);">â Muat pesan lebih lama</button></div>`);
+      area.insertAdjacentHTML('afterbegin', `<div id="load-more-btn" style="text-align:center;padding:8px;"><button onclick="loadMoreMessages('${roomId}')" style="padding:6px 16px;border:1px solid var(--border);border-radius:20px;background:white;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:var(--font);">↑ Muat pesan lebih lama</button></div>`);
     }
 
     if (forceScroll || isNearBottom || hasNewMessages) area.scrollTop = area.scrollHeight;
@@ -645,7 +645,7 @@ function closeImgPreview() {
   document.getElementById('img-preview-src').src = '';
 }
 // =====================================================
-// GOHO IMAGE EDITOR â tambahkan di app.js
+// GOHO IMAGE EDITOR — tambahkan di app.js
 // Tempelkan SETELAH fungsi closeImgPreview() yang sudah ada
 // =====================================================
 
@@ -656,11 +656,11 @@ let _cropMode = false;
 let _cropDragging = false;
 let _cropStart = { x: 0, y: 0 };
 let _cropRect = null;   // {x,y,w,h} dalam piksel di layar (relatif ke crop-overlay)
-window._croppedBase64 = null;   // hasil crop â dibaca submitSaveMedia()
+window._croppedBase64 = null;   // hasil crop — dibaca submitSaveMedia()
 window._croppedMimeType = null;
 
 // ---- Reset saat buka lightbox baru ----
-// Panggil ini di openImgPreview() â GANTI baris:
+// Panggil ini di openImgPreview() — GANTI baris:
 //   document.getElementById('modal-img-preview').style.display = 'flex';
 // Jadi:
 //   imgEditorReset(); document.getElementById('modal-img-preview').style.display = 'flex';
@@ -676,7 +676,7 @@ function imgEditorReset() {
   const slider = document.getElementById('rotate-slider');
   if (slider) { slider.value = 0; }
   const sliderLabel = document.getElementById('rotate-slider-label');
-  if (sliderLabel) sliderLabel.textContent = '0Â°';
+  if (sliderLabel) sliderLabel.textContent = '0°';
   const zoomLabel = document.getElementById('zoom-label');
   if (zoomLabel) zoomLabel.textContent = '100%';
 
@@ -703,7 +703,7 @@ function imgRotate(deg) {
   const slider = document.getElementById('rotate-slider');
   if (slider) slider.value = sliderVal;
   const sliderLabel = document.getElementById('rotate-slider-label');
-  if (sliderLabel) sliderLabel.textContent = Math.round(_imgRotation) + 'Â°';
+  if (sliderLabel) sliderLabel.textContent = Math.round(_imgRotation) + '°';
   _applyImgTransform();
   _clearCropBox(); // crop lama tidak valid lagi setelah rotate
 }
@@ -711,7 +711,7 @@ function imgRotate(deg) {
 function imgRotateSlider(val) {
   _imgRotation = parseFloat(val);
   const sliderLabel = document.getElementById('rotate-slider-label');
-  if (sliderLabel) sliderLabel.textContent = Math.round(_imgRotation) + 'Â°';
+  if (sliderLabel) sliderLabel.textContent = Math.round(_imgRotation) + '°';
   _applyImgTransform();
   _clearCropBox();
 }
@@ -738,7 +738,7 @@ function imgResetTransform() {
   const slider = document.getElementById('rotate-slider');
   if (slider) slider.value = 0;
   const sliderLabel = document.getElementById('rotate-slider-label');
-  if (sliderLabel) sliderLabel.textContent = '0Â°';
+  if (sliderLabel) sliderLabel.textContent = '0°';
   _applyImgTransform();
   _clearCropBox();
 }
@@ -750,7 +750,7 @@ function toggleCropMode() {
   const overlay = document.getElementById('crop-overlay');
   if (_cropMode) {
     btn.classList.add('crop-active');
-    btn.textContent = 'âï¸ Crop ON';
+    btn.textContent = '✂️ Crop ON';
     overlay.style.display = 'block';
     _clearCropBox();
   } else {
@@ -762,7 +762,7 @@ function _exitCropMode() {
   _cropMode = false;
   const btn = document.getElementById('btn-crop-toggle');
   const overlay = document.getElementById('crop-overlay');
-  if (btn) { btn.classList.remove('crop-active'); btn.textContent = 'âï¸ Crop'; }
+  if (btn) { btn.classList.remove('crop-active'); btn.textContent = '✂️ Crop'; }
   if (overlay) overlay.style.display = 'none';
   _clearCropBox();
 }
@@ -859,13 +859,13 @@ async function saveCropOrFull() {
   const absCos  = Math.abs(Math.cos(rad));
   const absSin  = Math.abs(Math.sin(rad));
 
-  // Ukuran canvas setelah rotate (tanpa zoom â zoom hanya CSS display)
+  // Ukuran canvas setelah rotate (tanpa zoom — zoom hanya CSS display)
   const rotW = Math.round(natW * absCos + natH * absSin);
   const rotH = Math.round(natW * absSin + natH * absCos);
 
   if (_cropRect && _cropRect.w > 8 && _cropRect.h > 8) {
     // ---- MODE CROP ----
-    // 1. Render gambar full ke canvas (dengan rotate, TANPA zoom â zoom hanya CSS)
+    // 1. Render gambar full ke canvas (dengan rotate, TANPA zoom — zoom hanya CSS)
     const fullCanvas = document.createElement('canvas');
     fullCanvas.width  = rotW;
     fullCanvas.height = rotH;
@@ -921,7 +921,7 @@ async function saveCropOrFull() {
 }
 
 // =====================================================
-// PATCH submitSaveMedia â tambahkan 5 baris ini
+// PATCH submitSaveMedia — tambahkan 5 baris ini
 // TEPAT SETELAH baris: "let base64, fileType;"
 // di dalam fungsi submitSaveMedia() yang sudah ada
 // =====================================================
@@ -938,7 +938,7 @@ async function saveCropOrFull() {
 // Lihat instruksi di PATCH_submitSaveMedia.txt
 
 // =====================================================
-// OCR BADGE â render di doc panel setelah file disimpan
+// OCR BADGE — render di doc panel setelah file disimpan
 // =====================================================
 
 // Dipanggil dari submitSaveMedia() setelah res.ok, sebelum reload doc panel
@@ -947,19 +947,19 @@ let _lastSavedDocId = null;
 
 function markDocOcrPending(docId, namaFile) {
   _lastSavedDocId = docId;
-  // Badge akan tampil di renderDocList() â data dari server sudah include ocrStatus
+  // Badge akan tampil di renderDocList() — data dari server sudah include ocrStatus
   // Untuk feedback instan sebelum reload, kita simpan state lokal
 }
 
-// Render badge OCR â dipanggil dari renderDocList() per item
+// Render badge OCR — dipanggil dari renderDocList() per item
 // Tambahkan ini ke dalam loop renderDocList di app.js yang sudah ada,
 // tepat setelah variable safeId, safeFile, safeName:
 //
 //   const ocrStatus = d.ocrStatus || 'none'; // 'none' | 'pending' | 'done'
 //   const ocrBadge = ocrStatus === 'done'
-//     ? '<span class="doc-ocr-badge ocr-done" title="OCR sudah selesai">â OCR</span>'
+//     ? '<span class="doc-ocr-badge ocr-done" title="OCR sudah selesai">✓ OCR</span>'
 //     : ocrStatus === 'pending'
-//       ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${safeId}','${safeFile}','${safeName}')" title="Klik untuk scan OCR paspor">ð· Scan OCR</span>`
+//       ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${safeId}','${safeFile}','${safeName}')" title="Klik untuk scan OCR paspor">📷 Scan OCR</span>`
 //       : '';
 //
 // Dan ganti baris html += `<div class="doc-item">...` dengan:
@@ -973,7 +973,7 @@ function markDocOcrPending(docId, namaFile) {
 // ---- Trigger OCR dari badge ----
 async function runDocOcr(docId, fileId, namaFile) {
   if (!confirm('Scan OCR paspor "' + namaFile + '"?\nData akan otomatis masuk ke PASSENGER_LIST.\nPastikan foto sudah jelas sebelum scan.')) return;
-  showToast('â³ Sedang scan OCR...');
+  showToast('⏳ Sedang scan OCR...');
   try {
     const { base64, fileType } = await getBase64FromFileId(fileId);
     const res = await apiPost({
@@ -987,13 +987,13 @@ async function runDocOcr(docId, fileId, namaFile) {
       staffName: currentStaff ? currentStaff.nama : ''
     });
     if (res.ok) {
-      showToast('â OCR selesai! Data masuk ke Penumpang.');
-      Set ocrStatus done di D1
+      showToast('✅ OCR selesai! Data masuk ke Penumpang.');
+      // Set ocrStatus done di D1
       try { await apiPost({ action: 'setDocOcrStatus', fileId, status: 'done' }); } catch(_) {}
       // Reload doc panel supaya badge update
       if (docPanelOpen && currentRoom) loadDocPanel(currentRoom.noWa);
     } else {
-      showToast('â OCR gagal: ' + (res.msg || 'Error'));
+      showToast('❌ OCR gagal: ' + (res.msg || 'Error'));
     }
   } catch(e) {
     showToast('Error OCR: ' + e.toString());
@@ -1020,7 +1020,7 @@ let _saveSearchTimer = null;
 // dengan klik-tahan-drag di mana saja di area modal-box, KECUALI di
 // atas elemen interaktif (input/select/textarea/button/label) supaya
 // staff tetap bisa mengetik/klik normal di dalamnya.
-// Hanya aktif untuk mouse (desktop) â di touch device (HP/tablet)
+// Hanya aktif untuk mouse (desktop) — di touch device (HP/tablet)
 // drag dimatikan supaya tidak mengganggu scroll/tap normal.
 // Posisi modal otomatis reset ke tengah setiap kali ditutup, karena
 // kita hanya menambah transform sementara lewat inline style yang
@@ -1099,7 +1099,7 @@ function openSaveModal() {
   const origName = _previewFileName || '';
   const dotIdx = origName.lastIndexOf('.');
   window._saveFileExt = dotIdx >= 0 ? origName.substring(dotIdx).toLowerCase() : '.jpg';
-  // Kosongkan nama â staff cukup input nama orang saja
+  // Kosongkan nama — staff cukup input nama orang saja
   document.getElementById('save-file-name').value = '';
   document.getElementById('save-file-name').placeholder = 'Contoh: Murni';
   document.getElementById('save-file-preview').textContent = '';
@@ -1125,7 +1125,7 @@ function updateSaveFilePreview() {
   if (!preview) return;
   if (!nama) { preview.textContent = ''; return; }
   const finalName = prefix ? prefix + '_' + nama + ext : nama + ext;
-  preview.textContent = 'â ' + finalName;
+  preview.textContent = '→ ' + finalName;
 }
 
 function toggleSaveTarget(val) {
@@ -1188,7 +1188,7 @@ async function submitSaveMedia() {
       if (fileIdMatch) {
         ({ base64, fileType } = await getBase64FromFileId(fileIdMatch[1]));
       } else {
-        // Fonnte URL â fetch via worker proxy (CORS)
+        // Fonnte URL — fetch via worker proxy (CORS)
         const proxyUrl = 'https://goho-proxy.gohotravel.workers.dev?action=fetchMediaUrl&url=' + encodeURIComponent(_previewMediaUrl);
         const resp = await fetch(proxyUrl);
         if (!resp.ok) throw new Error('Gagal fetch file dari URL');
@@ -1206,7 +1206,7 @@ async function submitSaveMedia() {
     }
     const res = await apiPost({ action: 'saveCustomerDoc', noWa: noWaTujuan, kategori, namaFile, fileType, fileData: base64, uploadedBy: currentStaff.nama, keterangan: 'Disimpan dari bubble chat' });
     if (res.ok) {
-      showToast('â Tersimpan ke Dokumen ' + (target === 'lain' ? noWaTujuan : 'Customer') + '!');
+      showToast('✅ Tersimpan ke Dokumen ' + (target === 'lain' ? noWaTujuan : 'Customer') + '!');
       closeModal('modal-save-media');
       if (docPanelOpen && target === 'aktif') loadDocPanel(currentRoom ? currentRoom.noWa : '');
     } else { showToast('Gagal simpan: ' + (res.msg || '')); }
@@ -1223,7 +1223,7 @@ function openForwardModal() {
   document.getElementById('forward-contact-search').dataset.selectedNowa = '';
   document.getElementById('forward-contact-results').style.display = 'none';
   document.getElementById('modal-forward').style.display = 'flex';
-  // v32: drag support, sama seperti modal-save-media â hanya desktop
+  // v32: drag support, sama seperti modal-save-media — hanya desktop
   if (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches) {
     makeModalDraggable('modal-forward');
   }
@@ -1262,7 +1262,7 @@ async function submitForward() {
   try {
     const { base64, fileType } = await getBase64FromFileId(_previewFileId);
     const res = await apiPost({ action: 'forwardFile', noWa: noWaTujuan, fileData: base64, fileName: namaFile, fileType, staffName: currentStaff.nama });
-    if (res.ok) { showToast('â File berhasil di-forward ke ' + noWaTujuan); closeModal('modal-forward'); }
+    if (res.ok) { showToast('✅ File berhasil di-forward ke ' + noWaTujuan); closeModal('modal-forward'); }
     else { showToast('Gagal forward: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
@@ -1272,12 +1272,12 @@ function renderBubble(m) {
   const isStaff = m.sender === 'STAFF'; const isBot = m.sender === 'BOT'; const cls = isStaff ? 'b-staff' : (isBot ? 'b-bot' : 'b-cust');
 
   // Deteksi pesan file biasa (PDF / non-gambar)
-  const fileMatch = m.message && typeof m.message === 'string' && m.message.match(/^ð (.+)\n(https?:\/\/.+)$/);
+  const fileMatch = m.message && typeof m.message === 'string' && m.message.match(/^📎 (.+)\n(https?:\/\/.+)$/);
   if (fileMatch) {
     const fileName = fileMatch[1]; const fileUrl = fileMatch[2]; const ispdf = fileName.toLowerCase().endsWith('.pdf');
-    const checkmark = isStaff ? '<span class="b-checkmark">â</span>' : '';
-    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">ðï¸</button>`;
-    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">ð¥ Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
+    const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
+    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
+    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div><a class="b-file-link" href="${escH(fileUrl)}" target="_blank">📥 Download / Lihat</a></div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
   }
 
   // Deteksi pesan dokumen dari customer (MEDIA_URL ada, message = [Dokumen/PDF] atau [Dokumen/...])
@@ -1288,15 +1288,15 @@ function renderBubble(m) {
     const ext = (m.mediaExtension || fileName.split('.').pop() || '').toLowerCase();
     const ispdf = ext === 'pdf';
     const isImg = ['jpg','jpeg','png','webp'].includes(ext);
-    const checkmark = isStaff ? '<span class="b-checkmark">â</span>' : '';
-    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">ðï¸</button>`;
+    const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
+    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
     const _fid = fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || '';
     const mediaActions = !isStaff ? `<div style="display:flex;gap:4px;margin-top:4px;">
-      <button onclick="saveBubbleMedia('${_fid}','${escH(fileName)}','${escH(fileUrl)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">ð¾ Simpan</button>
-      <button onclick="openDocBlob('${_fid}','${escH(fileName)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">ð Buka</button>
+      <button onclick="saveBubbleMedia('${_fid}','${escH(fileName)}','${escH(fileUrl)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
+      <button onclick="openDocBlob('${_fid}','${escH(fileName)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">📄 Buka</button>
     </div>` : '';
     if (isImg) {
-      return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<div class="b-img-lazy" data-file-id="${escH(_fid)}" data-mime="image/jpeg" data-nama="${escH(fileName)}" style="width:200px;height:140px;border-radius:8px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="openDocBlob('${escH(_fid)}','${escH(fileName)}',true)">ð¼ï¸</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(fileName)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
+      return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<div class="b-img-lazy" data-file-id="${escH(_fid)}" data-mime="image/jpeg" data-nama="${escH(fileName)}" style="width:200px;height:140px;border-radius:8px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="openDocBlob('${escH(_fid)}','${escH(fileName)}',true)">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(fileName)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
     }
     return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ?`<div class="b-bot-lbl">GOHO Bot</div>`:''}<div class="b-file"><i class="ti ti-${ispdf?'file-type-pdf':'file'}"></i><div class="b-file-info"><div class="b-file-name">${escH(fileName)}</div>${mediaActions}</div></div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div></div></div>`;
   }
@@ -1307,10 +1307,10 @@ function renderBubble(m) {
     !(m.message && m.message.match(/^\[IMG:([^:]+):(.+)\]$/));
   if (isDirectImg) {
     const fileName = m.mediaFilename || 'gambar';
-    const checkmark = isStaff ? '<span class="b-checkmark">â</span>' : '';
-    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">ðï¸</button>`;
+    const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
+    const delBtn = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
     const mediaActions = !isStaff ? `<div style="display:flex;gap:4px;margin-top:4px;">
-      <button onclick="saveBubbleMedia('','${escH(fileName)}','${escH(m.mediaUrl)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">ð¾ Simpan</button>
+      <button onclick="saveBubbleMedia('','${escH(fileName)}','${escH(m.mediaUrl)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
     </div>` : '';
     return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}">
       <div class="bubble ${cls}">
@@ -1319,7 +1319,7 @@ function renderBubble(m) {
           style="width:200px;height:140px;border-radius:8px;object-fit:cover;display:block;cursor:pointer;"
           onclick="window.open('${escH(m.mediaUrl)}','_blank')"
           onerror="this.style.display='none';this.nextSibling.style.display='block'">
-        <span style="display:none;color:#999;font-size:11px;">ð· ${escH(fileName)}</span>
+        <span style="display:none;color:#999;font-size:11px;">📷 ${escH(fileName)}</span>
         ${mediaActions}
         <div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtn}</div>
       </div>
@@ -1330,21 +1330,21 @@ function renderBubble(m) {
   const imgMatch = m.message && typeof m.message === 'string' && m.message.match(/^\[IMG:([^:]+):(.+)\]$/);
   if (imgMatch) {
     const fileId = imgMatch[1]; const namaFile = imgMatch[2];
-    const checkmark = isStaff ? '<span class="b-checkmark">â</span>' : '';
+    const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
     const mediaActions = !isStaff ? `<div style="display:flex;gap:4px;margin-top:4px;">
-      <button onclick="saveBubbleMedia('${escH(fileId)}','${escH(namaFile)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">ð¾ Simpan</button>
-      <button onclick="forwardBubbleMedia('${escH(fileId)}','${escH(namaFile)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">ð¤ Forward</button>
+      <button onclick="saveBubbleMedia('${escH(fileId)}','${escH(namaFile)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">💾 Simpan</button>
+      <button onclick="forwardBubbleMedia('${escH(fileId)}','${escH(namaFile)}')" style="font-size:10px;padding:2px 8px;border:1px solid #ccc;border-radius:5px;background:white;cursor:pointer;">📤 Forward</button>
     </div>` : '';
-    const delBtnImg = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">ðï¸</button>`;
+    const delBtnImg = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
     if (imgCache[fileId]) {
       return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-loaded="1" style="width:200px;height:140px;border-radius:8px;overflow:hidden;"><img src="${imgCache[fileId]}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openImgPreview('${imgCache[fileId]}','${escH(fileId)}','${escH(namaFile)}','')"></div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnImg}</div></div></div>`;
     }
-    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg" data-nama="${escH(namaFile)}">ð¼ï¸</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnImg}</div></div></div>`;
+    return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-img-lazy" data-file-id="${escH(fileId)}" data-mime="image/jpeg" data-nama="${escH(namaFile)}">🖼️</div><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">${escH(namaFile)}</div>${mediaActions}<div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnImg}</div></div></div>`;
   }
 
   // Bubble teks biasa
-  const checkmark = isStaff ? '<span class="b-checkmark">â</span>' : '';
-  const delBtnTxt = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">ðï¸</button>`;
+  const checkmark = isStaff ? '<span class="b-checkmark">✓</span>' : '';
+  const delBtnTxt = `<button onclick="deleteBubbleMsg('${escH(m.msgId)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#ccc;padding:0 2px;line-height:1;" title="Hapus pesan">🗑️</button>`;
   return `<div class="bw ${isStaff?'right':''}" id="msg-${escH(m.msgId)}"><div class="bubble ${cls}">${isBot && !isStaff ? `<div class="b-bot-lbl">GOHO Bot</div>` : ''}<div class="b-txt">${escH(m.message)}</div><div class="b-meta">${formatTime(m.timestamp)}${checkmark}${delBtnTxt}</div></div></div>`;
 }
 
@@ -1372,7 +1372,7 @@ async function openDocBlob(fileId, fileName, isImage) {
   if (!fileId) { showToast('File ID tidak ditemukan'); return; }
   const btn = event && event.target ? event.target : null;
   const origLabel = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = 'â³'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
   try {
     const res = await apiGet({ action: 'getImageBase64', fileId });
     if (!res.ok) { showToast('Gagal ambil file: ' + (res.msg || '')); return; }
@@ -1387,7 +1387,7 @@ async function openDocBlob(fileId, fileName, isImage) {
       openPdfModal(src, fileName);
     }
   } catch(e) { showToast('Error: ' + e.toString()); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = origLabel || 'ð Buka'; } }
+  finally { if (btn) { btn.disabled = false; btn.textContent = origLabel || '📄 Buka'; } }
 }
 
 function openPdfModal(src, fileName) {
@@ -1396,7 +1396,7 @@ function openPdfModal(src, fileName) {
     modal = document.createElement('div');
     modal.id = 'modal-pdf-viewer';
     modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10000;flex-direction:column;align-items:center;justify-content:center;';
-    modal.innerHTML = `<div style="position:absolute;top:12px;right:12px;display:flex;gap:8px;"><button id="pdf-modal-dl" style="background:#25D366;border:none;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">â¬ï¸ Download</button><button onclick="closePdfModal()" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:8px 14px;border-radius:8px;font-size:14px;cursor:pointer;">â</button></div><iframe id="pdf-modal-frame" style="width:95vw;height:88vh;border:none;border-radius:8px;background:white;margin-top:44px;"></iframe><div id="pdf-modal-name" style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:8px;"></div>`;
+    modal.innerHTML = `<div style="position:absolute;top:12px;right:12px;display:flex;gap:8px;"><button id="pdf-modal-dl" style="background:#25D366;border:none;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">⬇️ Download</button><button onclick="closePdfModal()" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:8px 14px;border-radius:8px;font-size:14px;cursor:pointer;">✕</button></div><iframe id="pdf-modal-frame" style="width:95vw;height:88vh;border:none;border-radius:8px;background:white;margin-top:44px;"></iframe><div id="pdf-modal-name" style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:8px;"></div>`;
     document.body.appendChild(modal);
   }
   const frame = document.getElementById('pdf-modal-frame');
@@ -1421,7 +1421,7 @@ function forwardBubbleMedia(fileId, namaFile) {
   openForwardModal();
 }
 async function lepasChat() { if (!currentRoom) return; const res = await apiPost({action: 'releaseChat', roomId: currentRoom.roomId}); if (res.ok) { showToast('Chat dilepas'); closeCurrentChat(); } }
-async function selesaiChat() { if (!currentRoom) return; if (!confirm('Tandai chat ini selesai? Chat akan dipindah ke Arsip.')) return; const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId}); if (res.ok) { showToast('Chat selesai â Arsip'); closeCurrentChat(); } }
+async function selesaiChat() { if (!currentRoom) return; if (!confirm('Tandai chat ini selesai? Chat akan dipindah ke Arsip.')) return; const res = await apiPost({action: 'closeChat', roomId: currentRoom.roomId}); if (res.ok) { showToast('Chat selesai → Arsip'); closeCurrentChat(); } }
 function closeCurrentChat() {
   currentRoom = null; lastMsgCount = 0;
   document.getElementById('chat-active').classList.add('hidden'); document.getElementById('chat-empty').classList.remove('hidden'); document.getElementById('notes-panel').style.display = 'none';
@@ -1439,7 +1439,7 @@ async function kirimPesan() {
   input.value = ''; input.style.height = 'auto';
   const tempId = 'TEMP-' + Date.now();
   const area = document.getElementById('chat-area');
-  area.insertAdjacentHTML('beforeend', `<div class="bw right" id="${tempId}"><div class="bubble b-staff"><div class="b-txt">${escH(msg)}</div><div class="b-meta">${formatTime(new Date().toISOString())} <span style="color:#bbb;font-size:9px;">â³</span></div></div></div>`);
+  area.insertAdjacentHTML('beforeend', `<div class="bw right" id="${tempId}"><div class="bubble b-staff"><div class="b-txt">${escH(msg)}</div><div class="b-meta">${formatTime(new Date().toISOString())} <span style="color:#bbb;font-size:9px;">⏳</span></div></div></div>`);
   area.scrollTop = area.scrollHeight;
   renderedMsgIds.add(tempId);
 
@@ -1490,7 +1490,7 @@ async function handleFileUpload(input) {
     } catch(e) { showToast('Error: ' + file.name); }
   }
 
-  status.textContent = `â ${files.length} file berhasil dikirim!`;
+  status.textContent = `✅ ${files.length} file berhasil dikirim!`;
   setTimeout(() => bar.classList.remove('show'), 3000);
   lastMsgCount = 0;
   await loadMessages(currentRoom.roomId, true);
@@ -1540,7 +1540,7 @@ function showPastePreview(file) {
       <img src="${e.target.result}" style="height:48px;width:48px;object-fit:cover;border-radius:6px;border:1px solid #ccc;">
       <span style="font-size:12px;color:#555;flex:1;">Screenshot siap dikirim</span>
       <button onclick="sendPasteImage()" style="background:#0F6E56;color:white;border:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">Kirim</button>
-      <button onclick="cancelPaste()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;">â</button>
+      <button onclick="cancelPaste()" style="background:none;border:none;font-size:16px;color:#999;cursor:pointer;">✕</button>
     `;
 
     const replyRow = document.getElementById('reply-row');
@@ -1576,18 +1576,18 @@ async function sendPasteImage() {
     });
 
     if (res.ok) {
-      status.textContent = 'â Screenshot berhasil dikirim!';
+      status.textContent = '✅ Screenshot berhasil dikirim!';
       setTimeout(() => bar.classList.remove('show'), 3000);
       lastMsgCount = 0;
       await loadMessages(currentRoom.roomId, true);
       loadChats(false);
     } else {
-      status.textContent = 'â Gagal: ' + (res.msg || 'Error');
+      status.textContent = '❌ Gagal: ' + (res.msg || 'Error');
       setTimeout(() => bar.classList.remove('show'), 4000);
       showToast('Gagal kirim screenshot');
     }
   } catch(e) {
-    status.textContent = 'â Error: ' + e.toString();
+    status.textContent = '❌ Error: ' + e.toString();
     setTimeout(() => bar.classList.remove('show'), 4000);
   }
 }
@@ -1607,7 +1607,7 @@ async function submitNewChat() {
   const btn = document.getElementById('nc-send-btn'); btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
   try {
     const res = await apiPost({action: 'startNewChat', noWa: newChatTarget.noWa, nama: newChatTarget.nama, message: pesan, staffName: currentStaff.nama});
-    if (res.ok) { closeModal('modal-new-chat'); showToast('â Pesan terkirim ke ' + newChatTarget.nama); if (currentStaff.role === 'OWNER') switchMainTab('chat'); currentTab = 'aktif'; setActiveTab('aktif'); await loadChats(false); if (res.roomId) setTimeout(() => openChat(res.roomId), 600); }
+    if (res.ok) { closeModal('modal-new-chat'); showToast('✅ Pesan terkirim ke ' + newChatTarget.nama); if (currentStaff.role === 'OWNER') switchMainTab('chat'); currentTab = 'aktif'; setActiveTab('aktif'); await loadChats(false); if (res.roomId) setTimeout(() => openChat(res.roomId), 600); }
     else { showToast('Gagal kirim: ' + (res.msg || 'Error')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
@@ -1619,7 +1619,7 @@ async function loadContacts(query) {
   if (allContactsCache.length === 0 || query === undefined) { list.innerHTML = '<div class="loading">Memuat...</div>'; try { const res = await apiGet({action: 'getAllCustomers', query: ''}); allContactsCache = res.customers || []; } catch(e) { list.innerHTML = '<div class="empty-state">Gagal memuat</div>'; return; } }
   const q = (query !== undefined ? query : (document.getElementById('contact-search')?.value || '')).toLowerCase().trim();
   const filtered = q ? allContactsCache.filter(c => String(c.nama||'').toLowerCase().includes(q) || String(c.noWa||'').toLowerCase().includes(q) || String(c.kota||'').toLowerCase().includes(q)) : allContactsCache;
-  if (filtered.length > 0) { list.innerHTML = filtered.map(c => `<div class="contact-card" onclick="openContactDetail('${escH(c.noWa)}', '${escH(c.nama)}')"><div class="contact-avatar">${String(c.nama || '?').charAt(0).toUpperCase()}</div><div class="contact-info"><div class="contact-name">${c.nama ? escH(c.nama) : '<span style="color:var(--text-hint);font-style:italic;">Belum ada nama</span>'}</div><div class="contact-wa">ð± ${c.noWa}</div><div class="contact-meta">${c.kota ? 'ð '+escH(c.kota)+' Â· ' : ''}WA</div></div><div class="contact-actions">${c.totalBooking > 0 ? `<div class="contact-badge">${c.totalBooking}x booking</div>` : ''}<button class="btn-chat" onclick="event.stopPropagation();openNewChatModal('${escH(c.noWa)}','${escH(c.nama)}')"><i class="ti ti-message-circle"></i> Chat</button></div></div>`).join(''); }
+  if (filtered.length > 0) { list.innerHTML = filtered.map(c => `<div class="contact-card" onclick="openContactDetail('${escH(c.noWa)}', '${escH(c.nama)}')"><div class="contact-avatar">${String(c.nama || '?').charAt(0).toUpperCase()}</div><div class="contact-info"><div class="contact-name">${c.nama ? escH(c.nama) : '<span style="color:var(--text-hint);font-style:italic;">Belum ada nama</span>'}</div><div class="contact-wa">📱 ${c.noWa}</div><div class="contact-meta">${c.kota ? '📍 '+escH(c.kota)+' · ' : ''}WA</div></div><div class="contact-actions">${c.totalBooking > 0 ? `<div class="contact-badge">${c.totalBooking}x booking</div>` : ''}<button class="btn-chat" onclick="event.stopPropagation();openNewChatModal('${escH(c.noWa)}','${escH(c.nama)}')"><i class="ti ti-message-circle"></i> Chat</button></div></div>`).join(''); }
   else { list.innerHTML = '<div class="empty-state">Belum ada contact</div>'; }
 }
 function searchContacts() { loadContacts(document.getElementById('contact-search')?.value || ''); }
@@ -1632,7 +1632,7 @@ async function openContactDetail(noWa, nama) {
   currentContactNoWa = noWa; currentContactNama = nama || noWa;
   document.getElementById('detail-name').textContent = nama || noWa; document.getElementById('detail-nowa').textContent = noWa;
   ['detail-email','detail-kota','detail-booking','detail-catatan'].forEach(id => { document.getElementById(id).textContent = '-'; });
-  document.getElementById('booking-history').innerHTML = '<button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">ð Muat Riwayat Booking</button>';
+  document.getElementById('booking-history').innerHTML = '<button class="btn-secondary" style="width:100%;margin-top:4px;" onclick="loadBookingHistory()">🔍 Muat Riwayat Booking</button>';
   document.getElementById('passenger-list').innerHTML = '<div class="loading">Klik tab untuk muat...</div>';
   document.getElementById('modal-detail').style.display = 'flex'; showInnerTabById('riwayat');
   try { const res = await apiGet({action: 'getCustomer', noWa}); if (res.customer) { const c = res.customer; document.getElementById('detail-email').textContent = c.email || '-'; document.getElementById('detail-kota').textContent = c.kota || '-'; document.getElementById('detail-booking').textContent = c.totalBooking || 0; document.getElementById('detail-catatan').textContent = c.catatan || '-'; } } catch(e) {}
@@ -1642,7 +1642,7 @@ async function loadBookingHistory() {
   try { const res = await apiGet({action: 'getBookingHistory', noWa: currentContactNoWa}); if (res.history && res.history.length > 0) { window._bookingRaw = res.history; document.getElementById('detail-booking').textContent = res.total; renderBookingHistory(res.history, 'all'); } else { box.innerHTML = '<div class="empty-state">Belum ada riwayat booking</div>'; } } catch(e) { box.innerHTML = '<div class="empty-state">Gagal memuat riwayat</div>'; }
 }
 function renderBookingHistory(history, periode) {
-  const box = document.getElementById('booking-history'); const icon = {PESAWAT:'âï¸', HOTEL:'ð¨', TOUR:'ð´', ATRAKSI:'ð¡'};
+  const box = document.getElementById('booking-history'); const icon = {PESAWAT:'✈️', HOTEL:'🏨', TOUR:'🌴', ATRAKSI:'🎡'};
   const monthNames = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   const years = [...new Set(history.map(h => { if (!h.tglBeli) return ''; const p = h.tglBeli.split('/'); return p[2] || ''; }).filter(Boolean))].sort().reverse();
   const months = [...new Set(history.map(h => { if (!h.tglBeli) return ''; const p = h.tglBeli.split('/'); return (p[2] && p[1]) ? p[2] + '-' + p[1] : ''; }).filter(Boolean))].sort().reverse();
@@ -1650,12 +1650,12 @@ function renderBookingHistory(history, periode) {
   if (periode && periode !== 'all') { if (periode.length === 4) { filtered = history.filter(h => h.tglBeli && h.tglBeli.split('/')[2] === periode); } else { const [yr, mo] = periode.split('-'); filtered = history.filter(h => { if (!h.tglBeli) return false; const p = h.tglBeli.split('/'); return p[2] === yr && p[1] === mo; }); } }
   const filterHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><span style="font-size:11px;color:var(--text-muted);">Periode:</span><select id="filter-periode" onchange="applyBookingFilter()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--font);outline:none;"><option value="all" ${periode==='all'?'selected':''}>Semua</option><optgroup label="Per Tahun">${years.map(y => `<option value="${y}" ${periode===y?'selected':''}>${y}</option>`).join('')}</optgroup><optgroup label="Per Bulan">${months.map(m => { const [yr, mo] = m.split('-'); const label = monthNames[parseInt(mo)] + ' ' + yr; return `<option value="${m}" ${periode===m?'selected':''}>${label}</option>`; }).join('')}</optgroup></select><span style="font-size:11px;color:var(--text-muted);">${filtered.length} dari ${history.length} booking</span></div>`;
   if (!filtered.length) { box.innerHTML = filterHTML + '<div class="empty-state">Tidak ada booking di periode ini</div>'; return; }
-  box.innerHTML = filterHTML + filtered.map(h => `<div class="history-item"><div class="history-tipe">${icon[h.tipe]||'ð'} ${h.tipe}</div><div class="history-detail">${escH(h.detail)}</div><div class="history-meta">ð ${h.tglEvent} &nbsp;|&nbsp; ð ${h.tglBeli} &nbsp;|&nbsp; ${escH(h.extra)}</div><div class="history-meta">Tamu: ${escH(h.namaTamu)}</div></div>`).join('');
+  box.innerHTML = filterHTML + filtered.map(h => `<div class="history-item"><div class="history-tipe">${icon[h.tipe]||'📋'} ${h.tipe}</div><div class="history-detail">${escH(h.detail)}</div><div class="history-meta">📅 ${h.tglEvent} &nbsp;|&nbsp; 🛒 ${h.tglBeli} &nbsp;|&nbsp; ${escH(h.extra)}</div><div class="history-meta">Tamu: ${escH(h.namaTamu)}</div></div>`).join('');
 }
 function applyBookingFilter() { if (!window._bookingRaw) return; renderBookingHistory(window._bookingRaw, document.getElementById('filter-periode').value); }
 async function loadPassengers() {
   const list = document.getElementById('passenger-list'); list.innerHTML = '<div class="loading">Memuat...</div>';
-  try { const res = await apiGet({action: 'getPassengers', noWa: currentContactNoWa}); if (res.passengers && res.passengers.length > 0) { list.innerHTML = res.passengers.map(p => `<div class="history-item"><div class="history-tipe">ð¤ ${escH(p.namaLengkap)}</div><div class="history-meta">${p.jenisKelamin==='L'?'âï¸':'âï¸'} &nbsp;|&nbsp; Lahir: ${p.tglLahir||'-'}</div><div class="history-meta">KTP: ${p.noKtp||'-'} &nbsp;|&nbsp; Paspor: ${p.noPaspor||'-'} (exp: ${p.expiryPaspor||'-'})</div></div>`).join(''); } else { list.innerHTML = '<div class="empty-state">Belum ada data penumpang</div>'; } } catch(e) {}
+  try { const res = await apiGet({action: 'getPassengers', noWa: currentContactNoWa}); if (res.passengers && res.passengers.length > 0) { list.innerHTML = res.passengers.map(p => `<div class="history-item"><div class="history-tipe">👤 ${escH(p.namaLengkap)}</div><div class="history-meta">${p.jenisKelamin==='L'?'♂️':'♀️'} &nbsp;|&nbsp; Lahir: ${p.tglLahir||'-'}</div><div class="history-meta">KTP: ${p.noKtp||'-'} &nbsp;|&nbsp; Paspor: ${p.noPaspor||'-'} (exp: ${p.expiryPaspor||'-'})</div></div>`).join(''); } else { list.innerHTML = '<div class="empty-state">Belum ada data penumpang</div>'; } } catch(e) {}
 }
 function showInnerTab(tab, e) { if (e) { document.querySelectorAll('.inner-tab').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); } showInnerTabById(tab); }
 function waFromContact() { window.open('https://wa.me/' + currentContactNoWa, '_blank'); }
@@ -1685,7 +1685,7 @@ async function loadOwnerStats() {
     const res = await apiGet({action: 'getOwnerStats'}); if (!res.success) return; const s = res.stats;
     document.getElementById('kpi-waiting').textContent = s.waiting; document.getElementById('kpi-active').textContent = s.assigned + s.followUp; document.getElementById('kpi-booked').textContent = s.booked; document.getElementById('kpi-closed').textContent = s.closed; document.getElementById('kpi-customers').textContent = s.totalCustomers;
     const alertBox = document.getElementById('alert-box');
-    if (res.alertChats && res.alertChats.length > 0) { alertBox.style.display = 'block'; document.getElementById('alert-list').innerHTML = res.alertChats.map(a => `<div class="alert-item"><span>${a.roomId} â ${escH(a.namaCustomer)} (${a.menitWaiting} mnt)</span><button class="alert-assign" onclick="quickAssign('${a.roomId}')">Assign</button></div>`).join(''); } else { alertBox.style.display = 'none'; }
+    if (res.alertChats && res.alertChats.length > 0) { alertBox.style.display = 'block'; document.getElementById('alert-list').innerHTML = res.alertChats.map(a => `<div class="alert-item"><span>${a.roomId} — ${escH(a.namaCustomer)} (${a.menitWaiting} mnt)</span><button class="alert-assign" onclick="quickAssign('${a.roomId}')">Assign</button></div>`).join(''); } else { alertBox.style.display = 'none'; }
     const grid = document.getElementById('staff-grid');
     if (res.staffStats && res.staffStats.length > 0) { grid.innerHTML = res.staffStats.map(s => `<div class="staff-card"><div class="staff-card-name"><div class="av av-b" style="width:28px;height:28px;font-size:10px;">${getInitials(s.nama)}</div>${escH(s.nama)} <span class="staff-role">${s.role}</span></div><div class="staff-stats"><div class="stat-row">Active: <span>${s.assigned}</span></div><div class="stat-row">Booked: <span>${s.booked}</span></div><div class="stat-row">Closed: <span>${s.closed}</span></div></div></div>`).join(''); } else { grid.innerHTML = '<div class="empty-state">Belum ada data staff</div>'; }
   } catch(e) {}
@@ -1700,7 +1700,7 @@ function filterAllChats() { const sf = document.getElementById('filter-status').
 function renderAllChats(rooms) {
   const list = document.getElementById('all-chats-list'); const sc = {WAITING:'p-wait',ASSIGNED:'p-assign',FOLLOW_UP:'p-follow',BOOKED:'p-booked',CLOSED:'p-assign'};
   if (!rooms.length) { list.innerHTML = '<div class="empty-state">Tidak ada chat</div>'; return; }
-  list.innerHTML = rooms.map(r => `<div class="contact-card"><div class="av ${getAvatarClass(r.namaCustomer)}">${getInitials(r.namaCustomer)}</div><div class="contact-info"><div class="contact-name">${escH(r.namaCustomer)} <span class="pill ${sc[r.status]||'p-assign'}" style="margin-left:4px;">${r.status}</span></div><div class="contact-wa">ð± ${r.noWa} ${r.assignedTo ? 'Â· '+escH(r.assignedTo) : ''}</div><div class="contact-meta">${escH(r.lastMessage||'-')}</div></div><button class="btn-secondary btn-sm" onclick="quickAssign('${r.roomId}')">Assign</button></div>`).join('');
+  list.innerHTML = rooms.map(r => `<div class="contact-card"><div class="av ${getAvatarClass(r.namaCustomer)}">${getInitials(r.namaCustomer)}</div><div class="contact-info"><div class="contact-name">${escH(r.namaCustomer)} <span class="pill ${sc[r.status]||'p-assign'}" style="margin-left:4px;">${r.status}</span></div><div class="contact-wa">📱 ${r.noWa} ${r.assignedTo ? '· '+escH(r.assignedTo) : ''}</div><div class="contact-meta">${escH(r.lastMessage||'-')}</div></div><button class="btn-secondary btn-sm" onclick="quickAssign('${r.roomId}')">Assign</button></div>`).join('');
 }
 async function quickAssign(roomId) { const staffName = prompt('Assign ke staff (masukkan nama):'); if (!staffName) return; try { const res = await apiPost({action: 'assignChatOwner', roomId, staffName}); if (res.success) { showToast(res.message); loadAllChats(); loadOwnerStats(); } } catch(e) { showToast('Gagal assign'); } }
 
@@ -1718,7 +1718,7 @@ async function loadDocPanel(noWa) {
   try { const res = await apiGet({ action: 'getCustomerDocs', noWa }); if (res.ok) { allDocsCache = res.docs || []; document.getElementById('doc-total').textContent = allDocsCache.length + ' file'; renderDocList(allDocsCache); } else { document.getElementById('doc-list').innerHTML = '<div class="doc-empty">Gagal memuat dokumen</div>'; } } catch(e) { document.getElementById('doc-list').innerHTML = '<div class="doc-empty">Error memuat</div>'; }
 }
 function switchDocTab(tab, el) { currentDocTab = tab; document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active')); if (el) el.classList.add('active'); renderDocList(tab === 'semua' ? allDocsCache : allDocsCache.filter(d => d.kategori === tab)); }
-function getDocIcon(namaFile, kategori) { const ext = (namaFile || '').split('.').pop().toLowerCase(); if (ext === 'pdf') return 'ð'; if (['jpg','jpeg','png'].includes(ext)) return 'ð¼ï¸'; if (kategori === 'Identitas') return 'ðªª'; if (kategori === 'Tiket & Voucher') return 'âï¸'; return 'ð'; }
+function getDocIcon(namaFile, kategori) { const ext = (namaFile || '').split('.').pop().toLowerCase(); if (ext === 'pdf') return '📄'; if (['jpg','jpeg','png'].includes(ext)) return '🖼️'; if (kategori === 'Identitas') return '🪪'; if (kategori === 'Tiket & Voucher') return '✈️'; return '📁'; }
 function formatDocDate(isoStr) { if (!isoStr) return ''; try { const d = new Date(isoStr); return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }); } catch(e) { return ''; } }
 function isImageFile(namaFile) { const ext = (namaFile || '').split('.').pop().toLowerCase(); return ['jpg','jpeg','png','gif','webp','bmp'].includes(ext); }
 function truncateFileName(nama, maxLen) {
@@ -1748,7 +1748,7 @@ async function downloadDoc(fileId, namaFile, btn) {
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
-    showToast('â¬ï¸ ' + (namaFile || 'File') + ' tersimpan ke Downloads');
+    showToast('⬇️ ' + (namaFile || 'File') + ' tersimpan ke Downloads');
   } catch(e) {
     showToast('Error download: ' + e.toString());
   } finally {
@@ -1767,11 +1767,11 @@ function renderDocList(docs) {
       const isImg = isImageFile(d.namaFile);
       const ocrStatus = d.ocrStatus || 'none';
       const ocrBadge  = ocrStatus === 'done'
-        ? '<span class="doc-ocr-badge ocr-done" title="Sudah di-OCR">â OCR</span>'
+        ? '<span class="doc-ocr-badge ocr-done" title="Sudah di-OCR">✓ OCR</span>'
         : (isImg && ocrStatus === 'pending')
-          ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${safeId}','${safeFile}','${safeName}')" title="Klik untuk scan OCR">ð· Scan OCR</span>`
+          ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${safeId}','${safeFile}','${safeName}')" title="Klik untuk scan OCR">📷 Scan OCR</span>`
           : '';
-      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 22))}${ocrBadge}</div></div><div class="doc-item-acts">${isImg ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}','${safeId}')" title="Buka Passport Viewer">ðª</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">ð¤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">ðï¸</div></div></div>`;
+      html += `<div class="doc-item"><div class="doc-item-icon">${getDocIcon(d.namaFile, d.kategori)}</div><div class="doc-item-info"><div class="doc-item-name" title="${safeName}">${escH(truncateFileName(d.namaFile, 22))}${ocrBadge}</div></div><div class="doc-item-acts">${isImg ? `<div class="doc-act-btn" onclick="openPiP('${safeFile}','${safeName}','${safeId}')" title="Buka Passport Viewer">🪟</div>` : ''}<div class="doc-act-btn" onclick="openSendDocModal('${safeId}','${safeFile}','${safeName}')" title="Kirim ke tamu">📤</div><div class="doc-act-btn danger" onclick="deleteDoc('${safeId}','${safeFile}')" title="Hapus">🗑️</div></div></div>`;
     });
   });
   el.innerHTML = html;
@@ -1779,13 +1779,13 @@ function renderDocList(docs) {
 async function handleDocUpload(input) {
   if (!input.files || !input.files[0]) return; if (!currentRoom) { showToast('Pilih chat dulu'); input.value = ''; return; }
   const file = input.files[0]; if (file.size > 15 * 1024 * 1024) { showToast('File terlalu besar, maksimal 15MB'); input.value = ''; return; }
-  const kat = prompt('Pilih kategori:\n1 = Paspor\n2 = KTP\n3 = Visa\n4 = Tiket\n5 = Hotel\n6 = Lainnya\n\nKetik 1â6:');
+  const kat = prompt('Pilih kategori:\n1 = Paspor\n2 = KTP\n3 = Visa\n4 = Tiket\n5 = Hotel\n6 = Lainnya\n\nKetik 1–6:');
   const katMap = { '1': 'Paspor', '2': 'KTP', '3': 'Visa', '4': 'Tiket', '5': 'Hotel', '6': 'Lainnya' }; const kategori = katMap[kat] || 'Lainnya';
   const label = document.getElementById('doc-upload-label'); label.innerHTML = '<i class="ti ti-loader spin" style="font-size:14px;"></i> Mengupload...';
   try {
     const base64 = await fileToBase64(file);
     const res = await apiPost({action: 'saveCustomerDoc', noWa: currentRoom.noWa, kategori, namaFile: file.name, fileType: file.type || 'application/octet-stream', fileData: base64, uploadedBy: currentStaff.nama, keterangan: '', ocrStatus: kategori === 'Paspor' ? 'pending' : 'none'});
-    if (res.ok) { showToast('â ' + file.name + ' tersimpan!'); loadDocPanel(currentRoom.noWa); } else { showToast('Gagal upload: ' + (res.msg || 'Error')); }
+    if (res.ok) { showToast('✅ ' + file.name + ' tersimpan!'); loadDocPanel(currentRoom.noWa); } else { showToast('Gagal upload: ' + (res.msg || 'Error')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { label.innerHTML = `<i class="ti ti-upload" style="font-size:14px;"></i> Upload Dokumen<input type="file" id="doc-file-input" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleDocUpload(this)">`; input.value = ''; }
 }
@@ -1848,10 +1848,10 @@ async function submitSendDoc() {
   try {
     const res = await apiPost({action: 'sendDocToCustomer', noWa: noWaTujuan, fileId: _sendDocFileId, namaFile: _sendDocNama, roomId: roomIdTujuan, staffName: currentStaff.nama});
     if (res.ok) {
-      showToast('â Dokumen berhasil dikirim!');
+      showToast('✅ Dokumen berhasil dikirim!');
       closeModal('modal-send-doc');
       if (target === 'aktif' && currentRoom) { lastMsgCount = 0; loadMessages(currentRoom.roomId, true); }
-    } else { showToast('â Gagal: ' + (res.msg || '')); }
+    } else { showToast('❌ Gagal: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
 }
@@ -1878,11 +1878,11 @@ function openPiP(fileId, namaFile, docId) {
   window.open(url, 'goho_passport_viewer',
     'width='+pw+',height='+ph+',left='+px+',top='+py+
     ',resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no');
-  showToast('ðª Membuka GOHO Passport Viewer...');
+  showToast('🪟 Membuka GOHO Passport Viewer...');
 }
 
-const MASKAPAI_EMOJI = { 'LION': 'ð¦', 'BATIK': 'ð¦', 'WINGS': 'ðª½', 'AIRASIA': 'ð´', 'CITILINK': 'ð¢', 'GARUDA': 'ð¦', 'SRIWIJAYA': 'ðµ', 'NAM': 'âï¸' };
-function getMaskapaiEmoji(nama) { const upper = (nama||'').toUpperCase(); for (const key of Object.keys(MASKAPAI_EMOJI)) { if (upper.includes(key)) return MASKAPAI_EMOJI[key]; } return 'âï¸'; }
+const MASKAPAI_EMOJI = { 'LION': '🦁', 'BATIK': '🦋', 'WINGS': '🪽', 'AIRASIA': '🔴', 'CITILINK': '🟢', 'GARUDA': '🦅', 'SRIWIJAYA': '🔵', 'NAM': '✈️' };
+function getMaskapaiEmoji(nama) { const upper = (nama||'').toUpperCase(); for (const key of Object.keys(MASKAPAI_EMOJI)) { if (upper.includes(key)) return MASKAPAI_EMOJI[key]; } return '✈️'; }
 function formatHarga(num) { if (!num || num===0) return ''; return 'Rp ' + Number(num).toLocaleString('id-ID'); }
 async function loadSmartContext(roomId, noWa) {
   const block = document.getElementById('np-context-block'); const list = document.getElementById('np-context-list'); const loading = document.getElementById('np-context-loading'); if (!block||!list) return;
@@ -1897,7 +1897,7 @@ async function loadSmartContext(roomId, noWa) {
       return;
     }
 
-    // Fallback: belum ada kode PNR yang disebut di chat â coba cari booking aktif langsung by noWa
+    // Fallback: belum ada kode PNR yang disebut di chat — coba cari booking aktif langsung by noWa
     loading.textContent = 'cek booking aktif...';
     const upRes = await apiGet({action:'getUpcomingBooking', noWa});
     if (upRes.ok && upRes.bookings && upRes.bookings.length > 0) {
@@ -1913,33 +1913,33 @@ async function loadSmartContext(roomId, noWa) {
   } catch(e) { loading.textContent = ''; list.innerHTML = '<div class="context-none">Error loading konteks</div>'; }
 }
 function renderContextCard(b) {
-  const emoji = getMaskapaiEmoji(b.maskapai); const allKodes = (b.allKodes||[b.kode]).join(' Â· ');
-  return `<div class="context-booking-card"><div class="context-maskapai"><span>${emoji} ${escH(b.maskapai)}</span><span style="font-size:9px;color:var(--text-hint);">${escH(b.tglTerbang)}</span></div><div class="context-kode">${escH(allKodes)}</div><div class="context-rute">âï¸ ${escH(b.jurusan)}</div><div class="context-detail">ð¤ ${escH(b.nama)}<br>ð Beli: ${escH(b.tglBeli)}${b.harga ? ' Â· ' + formatHarga(b.harga) : ''}${b.noInv&&b.noInv!=='-' ? '<br>ð '+escH(b.noInv) : ''}</div><div class="context-action-row"><button class="ctx-btn ctx-btn-checkin" onclick="quickCheckin('${escH(b.kode)}','${escH(b.maskapai)}','${escH(b.jurusan)}')">ð« Check-in</button><button class="ctx-btn ctx-btn-arrival" onclick="quickArrival('${escH(b.jurusan)}')">ð Arrival Card</button><button class="ctx-btn ctx-btn-beacukai" onclick="quickBeaCukai()">ð Bea Cukai</button><button class="ctx-btn ctx-btn-arrival" onclick="quickArrivalIndonesia('${escH(b.maskapai)}','${escH(b.kodeFlight)}','${escH(b.jurusan)}','${escH(b.tglTerbang)}','${escH(b.nama)}')">ð¬ Arrival ID</button></div></div>`;
+  const emoji = getMaskapaiEmoji(b.maskapai); const allKodes = (b.allKodes||[b.kode]).join(' · ');
+  return `<div class="context-booking-card"><div class="context-maskapai"><span>${emoji} ${escH(b.maskapai)}</span><span style="font-size:9px;color:var(--text-hint);">${escH(b.tglTerbang)}</span></div><div class="context-kode">${escH(allKodes)}</div><div class="context-rute">✈️ ${escH(b.jurusan)}</div><div class="context-detail">👤 ${escH(b.nama)}<br>🛒 Beli: ${escH(b.tglBeli)}${b.harga ? ' · ' + formatHarga(b.harga) : ''}${b.noInv&&b.noInv!=='-' ? '<br>📋 '+escH(b.noInv) : ''}</div><div class="context-action-row"><button class="ctx-btn ctx-btn-checkin" onclick="quickCheckin('${escH(b.kode)}','${escH(b.maskapai)}','${escH(b.jurusan)}')">🛫 Check-in</button><button class="ctx-btn ctx-btn-arrival" onclick="quickArrival('${escH(b.jurusan)}')">📋 Arrival Card</button><button class="ctx-btn ctx-btn-beacukai" onclick="quickBeaCukai()">🛃 Bea Cukai</button><button class="ctx-btn ctx-btn-arrival" onclick="quickArrivalIndonesia('${escH(b.maskapai)}','${escH(b.kodeFlight)}','${escH(b.jurusan)}','${escH(b.tglTerbang)}','${escH(b.nama)}')">🛬 Arrival ID</button></div></div>`;
 }
-// v28: Card untuk hasil fallback getUpcomingBooking â TANPA kode PNR terverifikasi dari chat.
+// v28: Card untuk hasil fallback getUpcomingBooking — TANPA kode PNR terverifikasi dari chat.
 // Sengaja dibedakan visual (border abu-abu, label "tanpa kode", warning) supaya staff tahu
 // data ini belum dicocokkan ke chat customer, beda dengan renderContextCard yang sudah verified.
 function renderUpcomingCard(b) {
   return `<div class="context-booking-card" style="border-left:3px solid #999;">
-    <div class="context-maskapai"><span>ð ${escH(b.tipe)}</span><span style="font-size:9px;color:var(--text-hint);">${escH(b.tglEventFmt)}</span></div>
-    <div class="context-rute">ð¤ ${escH(b.namaTamu)}</div>
+    <div class="context-maskapai"><span>📋 ${escH(b.tipe)}</span><span style="font-size:9px;color:var(--text-hint);">${escH(b.tglEventFmt)}</span></div>
+    <div class="context-rute">👤 ${escH(b.namaTamu)}</div>
     <div class="context-detail">${escH(b.detail)}</div>
-    <div style="font-size:9px;color:#b8860b;margin-top:4px;">â ï¸ Tanpa kode PNR dari chat â cocokkan manual sebelum dipakai</div>
+    <div style="font-size:9px;color:#b8860b;margin-top:4px;">⚠️ Tanpa kode PNR dari chat — cocokkan manual sebelum dipakai</div>
   </div>`;
 }
 function quickCheckin(kode, maskapai, jurusan) {
   const urls = {'LION':'https://checkin.lionair.co.id','AIRASIA':'https://www.airasia.com/check-in/v2/en/gb','CITILINK':'https://www.citilink.co.id/check-in','GARUDA':'https://www.garuda-indonesia.com/id/id/garuda-online/check-in','BATIK':'https://www.batikair.com/id/id/check-in'};
   const upper = (maskapai||'').toUpperCase(); let url = null;
   for (const key of Object.keys(urls)) { if (upper.includes(key)) { url = urls[key]; break; } }
-  if (url) { window.open(url,'_blank'); showToast('ð« Buka halaman check-in '+maskapai); } else showToast('URL check-in belum tersedia untuk '+maskapai);
+  if (url) { window.open(url,'_blank'); showToast('🛫 Buka halaman check-in '+maskapai); } else showToast('URL check-in belum tersedia untuk '+maskapai);
 }
 function quickArrival(jurusan) {
   const arrivalInfo = {'KUL':{nama:'MDAC',url:'https://imigresen-online.imi.gov.my/mdac'},'PEN':{nama:'MDAC',url:'https://imigresen-online.imi.gov.my/mdac'},'BKK':{nama:'TDAC',url:'https://tdac.immigration.go.th'},'DMK':{nama:'TDAC',url:'https://tdac.immigration.go.th'},'SIN':{nama:'SGAC',url:'https://eservices.ica.gov.sg/sgarrivalcard'},'TPE':{nama:'TWAC',url:'https://niaspeedy.immigration.gov.tw'},'PEK':{nama:'CDAC',url:'https://s.nia.gov.cn'},'PVG':{nama:'CDAC',url:'https://s.nia.gov.cn'},'ICN':{nama:'e-Arrival Card Korea',url:'https://www.hikorea.go.kr'},'NRT':{nama:'Visit Japan Web',url:'https://vjw-lp.digital.go.jp'},'HND':{nama:'Visit Japan Web',url:'https://vjw-lp.digital.go.jp'},'HKG':{nama:'Arrival Card HK',url:'https://www.immd.gov.hk'}};
   const iataMatch = (jurusan||'').toUpperCase().match(/[A-Z]{3}/g); if (!iataMatch) { showToast('Rute tidak terdeteksi'); return; }
   const dest = iataMatch[iataMatch.length-1]; const info = arrivalInfo[dest];
-  if (info) { window.open(info.url,'_blank'); showToast('ð Buka '+info.nama+' untuk '+dest); } else showToast('Info arrival card untuk '+dest+' belum tersedia');
+  if (info) { window.open(info.url,'_blank'); showToast('📋 Buka '+info.nama+' untuk '+dest); } else showToast('Info arrival card untuk '+dest+' belum tersedia');
 }
-function quickBeaCukai() { window.open('https://ecd.beacukai.go.id','_blank'); showToast('ð Buka e-CD Bea Cukai Indonesia'); }
+function quickBeaCukai() { window.open('https://ecd.beacukai.go.id','_blank'); showToast('🛃 Buka e-CD Bea Cukai Indonesia'); }
 function quickArrivalIndonesia(maskapai, kodeFlight, jurusan, tglTerbang, namaTamu) {
   openAlliModal();
 }
@@ -1991,8 +1991,8 @@ function openAlliModal() {
     modal.innerHTML = `
       <div class="modal-box modal-wide">
         <div class="modal-header">
-          <h3>ð¬ Arrival Card Indonesia</h3>
-          <button onclick="closeModal('modal-alli')">â</button>
+          <h3>🛬 Arrival Card Indonesia</h3>
+          <button onclick="closeModal('modal-alli')">✕</button>
         </div>
         <div class="modal-body">
           <div id="alli-step1">
@@ -2000,9 +2000,9 @@ function openAlliModal() {
               <label>Kode PNR Booking</label>
               <input type="text" id="alli-pnr" placeholder="Contoh: ABC123" style="text-transform:uppercase" onblur="cariPnrAlli()">
             </div>
-            <div id="alli-pnr-notfound" style="display:none;color:#b3261e;font-size:12px;margin-top:-8px;margin-bottom:8px;">â PNR tidak ditemukan di sistem.</div>
+            <div id="alli-pnr-notfound" style="display:none;color:#b3261e;font-size:12px;margin-top:-8px;margin-bottom:8px;">❌ PNR tidak ditemukan di sistem.</div>
             <div id="alli-pnr-result" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px;font-size:12px;margin-bottom:12px;">
-              â <b id="alli-result-nama"></b> â <span id="alli-result-maskapai"></span> <span id="alli-result-flight"></span><br>
+              ✅ <b id="alli-result-nama"></b> — <span id="alli-result-maskapai"></span> <span id="alli-result-flight"></span><br>
               Rute: <span id="alli-result-rute"></span> | Terbang: <span id="alli-result-tgl"></span>
             </div>
             <div class="form-group" style="position:relative;">
@@ -2033,13 +2033,13 @@ function openAlliModal() {
           <div id="alli-step2" style="display:none;">
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Cek & edit data sebelum dikirim ke extension:</div>
             <textarea id="alli-ringkasan-text" style="width:100%;height:260px;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--border);border-radius:6px;resize:vertical;outline:none;"></textarea>
-            <div style="font-size:10px;color:#e07b00;margin-top:6px;">â ï¸ Pastikan Email sudah terisi sebelum kirim.</div>
+            <div style="font-size:10px;color:#e07b00;margin-top:6px;">⚠️ Pastikan Email sudah terisi sebelum kirim.</div>
           </div>
         </div>
         <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);">
           <button onclick="closeModal('modal-alli')" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;font-family:var(--font);">Batal</button>
-          <button id="alli-btn-preview" onclick="alliPreviewRingkasan()" style="flex:2;padding:8px;border:none;border-radius:6px;background:#1a4d8f;color:white;font-weight:600;cursor:pointer;font-family:var(--font);">ð Preview Ringkasan</button>
-          <button id="alli-btn-kirim" onclick="submitAlliData()" style="display:none;flex:2;padding:8px;border:none;border-radius:6px;background:#1a4d8f;color:white;font-weight:600;cursor:pointer;font-family:var(--font);">ð¬ Kirim & Buka Form</button>
+          <button id="alli-btn-preview" onclick="alliPreviewRingkasan()" style="flex:2;padding:8px;border:none;border-radius:6px;background:#1a4d8f;color:white;font-weight:600;cursor:pointer;font-family:var(--font);">👁 Preview Ringkasan</button>
+          <button id="alli-btn-kirim" onclick="submitAlliData()" style="display:none;flex:2;padding:8px;border:none;border-radius:6px;background:#1a4d8f;color:white;font-weight:600;cursor:pointer;font-family:var(--font);">🛬 Kirim & Buka Form</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
@@ -2114,7 +2114,7 @@ function searchPaxAlli(query) {
       results.innerHTML = res.passengers.map((p, i) =>
         `<div onclick="pilihPaxAlli(${i})" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">
           <div style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">${getInitials(p.namaLengkap)}</div>
-          <div><div style="font-weight:600;">${escH(p.namaLengkap)}</div><div style="font-size:10px;color:var(--text-muted);">${p.noPaspor||'-'} Â· ${p.tglLahir||'-'}</div></div>
+          <div><div style="font-weight:600;">${escH(p.namaLengkap)}</div><div style="font-size:10px;color:var(--text-muted);">${p.noPaspor||'-'} · ${p.tglLahir||'-'}</div></div>
         </div>`
       ).join('');
       results.style.display = 'block';
@@ -2144,7 +2144,7 @@ function renderAlliPaxList() {
     `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;margin-bottom:4px;font-size:12px;">
       <span style="font-weight:600;">${i+1}. ${escH(p.namaLengkap)}</span>
       <span style="color:var(--text-muted);font-size:10px;">${p.noPaspor||'-'}</span>
-      <button onclick="hapusPaxAlli(${i})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;">â</button>
+      <button onclick="hapusPaxAlli(${i})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;">✕</button>
     </div>`
   ).join('');
 }
@@ -2201,7 +2201,7 @@ function submitAlliData() {
   send();
   window.open('https://allindonesia.imigrasi.go.id/arrival-card-submission/personal-information', '_blank');
   closeModal('modal-alli');
-  showToast('â Data dikirim ke extension AllIndonesia');
+  showToast('✅ Data dikirim ke extension AllIndonesia');
 }
 
 // ===================== MULTI PAX =====================
@@ -2239,7 +2239,7 @@ function searchPassenger(query) {
     <div class="mpx-result-foto" id="foto-${p.passengerId}" onclick="event.stopPropagation();openPasporLightboxFromFoto('foto-${escH(p.passengerId)}')" style="cursor:zoom-in;">${getInitials(p.namaLengkap)}</div>
     <div class="mpx-result-info">
       <div class="mpx-result-nama">${escH(p.namaLengkap)}</div>
-      <div class="mpx-result-paspor">${p.noPaspor || '-'} Â· ${formatMpxDate(p.tglLahir) || '-'}</div>
+      <div class="mpx-result-paspor">${p.noPaspor || '-'} · ${formatMpxDate(p.tglLahir) || '-'}</div>
     </div>
   </div>`).join('') +
   `<div class="mpax-add-manual" onclick="showManualForm()"><i class="ti ti-plus" style="font-size:12px;"></i> Input manual</div>`;
@@ -2343,9 +2343,9 @@ function paxTypeBadgeHtml(tglLahirStr) {
   if (!info) return '';
   const colorMap = { ADT: '#1a6b4a', CHD: '#a16207', INF: '#7e22ce' };
   const bg = colorMap[info.tipe] || '#444';
-  const estimateMark = info.isEstimate ? ' title="Estimasi dari tanggal hari ini â tgl terbang belum terdeteksi"' : '';
+  const estimateMark = info.isEstimate ? ' title="Estimasi dari tanggal hari ini — tgl terbang belum terdeteksi"' : '';
   const estimateText = info.isEstimate ? '~' : '';
-  return `<span${estimateMark} style="background:${bg};color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;white-space:nowrap;">${estimateText}${info.tipe} Â· ${info.age}th</span>`;
+  return `<span${estimateMark} style="background:${bg};color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;white-space:nowrap;">${estimateText}${info.tipe} · ${info.age}th</span>`;
 }
 
 function renderMultiPaxList() {
@@ -2366,20 +2366,20 @@ function renderMultiPaxList() {
     const isExpanded = mpxExpandedIdx === i;
     const paspor = p.noPaspor || '';
 
-    // Collapsed row â klik untuk expand
+    // Collapsed row — klik untuk expand
     const collapsedRow = `<div class="mpx-collapsed-row" onclick="toggleMpxCard(${i})" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:${isExpanded?'#1a4a35':'#0d2b1f'};border-radius:${isExpanded?'10px 10px 0 0':'10px'};transition:background 0.15s;">
       <div style="width:22px;height:22px;border-radius:50%;background:#25D366;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
       ${titleBadge}${paxTypeBadge}
     <div style="flex:1;font-size:12px;font-weight:600;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(p.namaLengkap)}</div>
       ${paspor ? `<span style="font-size:10px;color:rgba(255,255,255,0.5);flex-shrink:0;">${escH(paspor)}</span>` : ''}
-      <span style="font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0;margin-left:4px;">${isExpanded ? 'â²' : 'â¼'}</span>
-      <button onclick="event.stopPropagation();removePassenger(${i})" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.6);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">â</button>
+      <span style="font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0;margin-left:4px;">${isExpanded ? '▲' : '▼'}</span>
+      <button onclick="event.stopPropagation();removePassenger(${i})" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.6);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>`;
 
-    // Expanded detail â field berurutan sesuai form airline
+    // Expanded detail — field berurutan sesuai form airline
     const expandedDetail = isExpanded ? `<div style="background:#0a1f16;border-radius:0 0 10px 10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid rgba(255,255,255,0.08);">
       <div style="display:flex;gap:4px;margin-bottom:2px;">
-        <button onclick="copyPaxData(${i})" style="flex:1;background:#25D366;border:none;color:white;padding:5px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">ð Copy Semua</button>
+        <button onclick="copyPaxData(${i})" style="flex:1;background:#25D366;border:none;color:white;padding:5px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📋 Copy Semua</button>
       </div>
       ${mpxFieldAirline('Title', title || '-')}
       ${mpxFieldAirline('Given Name', depan)}
@@ -2400,7 +2400,7 @@ function mpxFieldAirline(label, value) {
   return `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;background:rgba(255,255,255,0.04);">
     <span style="font-size:10px;color:rgba(255,255,255,0.4);width:82px;flex-shrink:0;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">${label}</span>
     <span style="flex:1;font-size:12px;color:white;font-weight:500;">${safe}</span>
-    <button class="mpx-copy-btn" onclick="copyField(this,'${safe}')" title="Salin" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:11px;flex-shrink:0;">ð</button>
+    <button class="mpx-copy-btn" onclick="copyField(this,'${safe}')" title="Salin" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:11px;flex-shrink:0;">📋</button>
   </div>`;
 }
 
@@ -2420,21 +2420,21 @@ function copyPaxData(idx) {
     'NATIONALITY: ' + (p.kewarganegaraan || '-'),
     'KELAMIN   : ' + (isLaki ? 'M' : isPrmp ? 'F' : '-'),
   ].join('\n');
-  navigator.clipboard.writeText(lines).then(() => { showToast('â Data ' + p.namaLengkap + ' tersalin!'); }).catch(() => {
+  navigator.clipboard.writeText(lines).then(() => { showToast('✅ Data ' + p.namaLengkap + ' tersalin!'); }).catch(() => {
     const el = document.createElement('textarea'); el.value = lines; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-    showToast('â Data ' + p.namaLengkap + ' tersalin!');
+    showToast('✅ Data ' + p.namaLengkap + ' tersalin!');
   });
 }
 
 function mpxField(label, value) {
   if (!value) return '';
   const safe = escH(value);
-  return `<div class="mpx-field"><span class="mpx-field-label">${label}</span><span class="mpx-field-value">${safe}</span><button class="mpx-copy-btn" onclick="copyField(this,'${safe}')" title="Salin">ð</button></div>`;
+  return `<div class="mpx-field"><span class="mpx-field-label">${label}</span><span class="mpx-field-value">${safe}</span><button class="mpx-copy-btn" onclick="copyField(this,'${safe}')" title="Salin">📋</button></div>`;
 }
 function copyField(btn, value) {
-  navigator.clipboard.writeText(value).then(() => { btn.classList.add('copied'); btn.textContent = 'â'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'ð'; }, 1500); }).catch(() => {
+  navigator.clipboard.writeText(value).then(() => { btn.classList.add('copied'); btn.textContent = '✓'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500); }).catch(() => {
     const el = document.createElement('textarea'); el.value = value; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-    btn.classList.add('copied'); btn.textContent = 'â'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'ð'; }, 1500);
+    btn.classList.add('copied'); btn.textContent = '✓'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500);
   });
 }
 function showManualForm() { document.getElementById('mpx-results').classList.remove('show'); document.getElementById('mpx-manual-form').classList.add('show'); document.getElementById('mpx-m-nama').focus(); }
@@ -2443,7 +2443,7 @@ function addManualPassenger() {
   const nama = document.getElementById('mpx-m-nama').value.trim();
   if (!nama) { showToast('Nama lengkap wajib diisi'); return; }
   const p = { passengerId: 'MANUAL-' + Date.now(), namaLengkap: nama, noPaspor: document.getElementById('mpx-m-paspor').value.trim(), tglLahir: document.getElementById('mpx-m-lahir').value.trim(), expiryPaspor: document.getElementById('mpx-m-expired').value.trim(), kewarganegaraan: document.getElementById('mpx-m-nat').value.trim() || 'INDONESIA', jenisKelamin: '', fotoFileId: '' };
-  multiPaxList.push(p); hideManualForm(); renderMultiPaxList(); showToast('â ' + nama + ' ditambahkan');
+  multiPaxList.push(p); hideManualForm(); renderMultiPaxList(); showToast('✅ ' + nama + ' ditambahkan');
 }
 function formatMpxDate(val) {
   if (!val) return '';
@@ -2464,7 +2464,7 @@ async function manualLookupKode() {
   const kode = prompt('Masukkan kode booking maskapai (6 huruf):'); if (!kode||!kode.trim()) return;
   const clean = kode.trim().toUpperCase(); if (!/^[A-Z]{6}$/.test(clean)) { showToast('Kode harus tepat 6 huruf'); return; }
   showToast('Mencari kode '+clean+'...');
-  try { const res = await apiGet({action:'lookupKode', kode:clean}); if (res.found) { const block = document.getElementById('np-context-block'); const list = document.getElementById('np-context-list'); const loading = document.getElementById('np-context-loading'); block.style.display = 'block'; loading.textContent = 'manual lookup'; list.innerHTML = renderContextCard(res) + list.innerHTML; showToast('â Kode '+clean+' ditemukan!'); } else { showToast('â Kode '+clean+' tidak ditemukan'); } } catch(e) { showToast('Error: '+e.toString()); }
+  try { const res = await apiGet({action:'lookupKode', kode:clean}); if (res.found) { const block = document.getElementById('np-context-block'); const list = document.getElementById('np-context-list'); const loading = document.getElementById('np-context-loading'); block.style.display = 'block'; loading.textContent = 'manual lookup'; list.innerHTML = renderContextCard(res) + list.innerHTML; showToast('✅ Kode '+clean+' ditemukan!'); } else { showToast('❌ Kode '+clean+' tidak ditemukan'); } } catch(e) { showToast('Error: '+e.toString()); }
 }
 
 // ===================== DOKUMEN DI MODAL KONTAK =====================
@@ -2488,17 +2488,17 @@ async function loadModalDocs() {
     res.docs.forEach(doc => {
       const ext = (doc.namaFile || '').split('.').pop().toLowerCase();
       const isImg = ['jpg','jpeg','png','webp'].includes(ext); const isPdf = ext === 'pdf';
-      const icon = isPdf ? 'ð' : isImg ? 'ð¼ï¸' : 'ð';
+      const icon = isPdf ? '📄' : isImg ? '🖼️' : '📎';
       const uploadedAt = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) : '-';
       const ocrStatus = doc.ocrStatus || 'none';
       const ocrBadge = ocrStatus === 'done'
-        ? '<span class="doc-ocr-badge ocr-done" title="Sudah di-OCR">â OCR</span>'
+        ? '<span class="doc-ocr-badge ocr-done" title="Sudah di-OCR">✓ OCR</span>'
         : (isImg && ocrStatus === 'pending')
-          ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${escH(doc.docId)}','${escH(doc.fileId)}','${escH(doc.namaFile)}')" title="Klik untuk scan OCR">ð· Scan OCR</span>`
+          ? `<span class="doc-ocr-badge ocr-pending" onclick="runDocOcr('${escH(doc.docId)}','${escH(doc.fileId)}','${escH(doc.namaFile)}')" title="Klik untuk scan OCR">📷 Scan OCR</span>`
           : '';
       const div = document.createElement('div');
       div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);';
-      div.innerHTML = `<span style="font-size:20px;flex-shrink:0;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escH(doc.namaFile)}">${escH(doc.namaFile)}${ocrBadge}</div><div style="font-size:10px;color:var(--text-muted);">${escH(doc.kategori)} Â· ${uploadedAt}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button onclick="downloadDoc('${doc.fileId}','${escH(doc.namaFile)}',this)" title="Download" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">â¬ï¸</button><button onclick="modalOpenViewer('${doc.fileId}','${escH(doc.namaFile)}')" title="Buka Viewer" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">ðª</button><button onclick="modalSendDoc('${doc.docId}','${doc.fileId}','${escH(doc.namaFile)}')" title="Kirim via WA" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">ð¤</button><button onclick="modalDeleteDoc('${doc.docId}','${doc.fileId}',this)" title="Hapus" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">ðï¸</button></div>`;
+      div.innerHTML = `<span style="font-size:20px;flex-shrink:0;">${icon}</span><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escH(doc.namaFile)}">${escH(doc.namaFile)}${ocrBadge}</div><div style="font-size:10px;color:var(--text-muted);">${escH(doc.kategori)} · ${uploadedAt}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button onclick="downloadDoc('${doc.fileId}','${escH(doc.namaFile)}',this)" title="Download" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">⬇️</button><button onclick="modalOpenViewer('${doc.fileId}','${escH(doc.namaFile)}')" title="Buka Viewer" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🪟</button><button onclick="modalSendDoc('${doc.docId}','${doc.fileId}','${escH(doc.namaFile)}')" title="Kirim via WA" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">📤</button><button onclick="modalDeleteDoc('${doc.docId}','${doc.fileId}',this)" title="Hapus" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:12px;">🗑️</button></div>`;
       list.appendChild(div);
     });
   } catch(e) { loading.style.display = 'none'; empty.style.display = 'block'; }
@@ -2515,19 +2515,19 @@ function modalOpenViewer(fileId, namaFile) {
   const pw = Math.min(960, window.screen.width - 80); const ph = Math.min(720, window.screen.height - 80);
   const px = Math.round((window.screen.width - pw) / 2); const py = Math.round((window.screen.height - ph) / 2);
   window.open('/viewer.html?' + params.toString(), 'goho_passport_viewer', 'width='+pw+',height='+ph+',left='+px+',top='+py+',resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no');
-  showToast('ðª Membuka GOHO Passport Viewer...');
+  showToast('🪟 Membuka GOHO Passport Viewer...');
 }
 async function modalSendDoc(docId, fileId, namaFile) {
   if (!currentContactNoWa) { showToast('Tidak ada nomor WA customer'); return; }
   if (!confirm('Kirim "' + namaFile + '" ke ' + currentContactNama + ' via WA?')) return;
   showToast('Mengirim...');
-  try { const res = await apiPost({ action: 'sendDocToCustomer', noWa: currentContactNoWa, fileId, namaFile, roomId: '', staffName: currentStaff?.nama || 'STAFF' }); showToast(res.ok ? 'â Dokumen terkirim!' : 'â Gagal: ' + (res.msg || '')); } catch(e) { showToast('Error: ' + e.toString()); }
+  try { const res = await apiPost({ action: 'sendDocToCustomer', noWa: currentContactNoWa, fileId, namaFile, roomId: '', staffName: currentStaff?.nama || 'STAFF' }); showToast(res.ok ? '✅ Dokumen terkirim!' : '❌ Gagal: ' + (res.msg || '')); } catch(e) { showToast('Error: ' + e.toString()); }
 }
 async function modalDeleteDoc(docId, fileId, btn) {
   if (!confirm('Hapus dokumen ini? File akan dihapus permanen.')) return;
   try {
     const res = await apiPost({ action: 'deleteCustomerDoc', docId, fileId });
-    if (res.ok) { btn.closest('div[style]').remove(); const list = document.getElementById('modal-doc-list'); if (!list.children.length) document.getElementById('modal-doc-empty').style.display = 'block'; showToast('ðï¸ Dokumen dihapus'); }
+    if (res.ok) { btn.closest('div[style]').remove(); const list = document.getElementById('modal-doc-list'); if (!list.children.length) document.getElementById('modal-doc-empty').style.display = 'block'; showToast('🗑️ Dokumen dihapus'); }
     else { showToast('Gagal hapus: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
@@ -2539,7 +2539,7 @@ async function handleModalDocUpload(input) {
   try {
     const base64 = await fileToBase64(file);
     const res = await apiPost({ action: 'saveCustomerDoc', noWa: currentContactNoWa, kategori, namaFile: file.name, fileType: file.type || 'application/octet-stream', fileData: base64, uploadedBy: currentStaff?.nama || 'STAFF', keterangan: '' });
-    if (res.ok) { showToast('â ' + file.name + ' tersimpan!'); loadModalDocs(); } else { showToast('Gagal upload: ' + (res.msg || '')); }
+    if (res.ok) { showToast('✅ ' + file.name + ' tersimpan!'); loadModalDocs(); } else { showToast('Gagal upload: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { label.style.background = 'var(--green-mid)'; label.innerHTML = '<i class="ti ti-upload" style="font-size:13px;"></i>&nbsp;Upload<input type="file" id="modal-doc-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none;" onchange="handleModalDocUpload(this)">'; input.value = ''; }
 }
@@ -2567,7 +2567,7 @@ async function submitNote(noWa) {
   try {
     const deadline = document.getElementById('sn-deadline')?.value || null;
     const res = await apiPost({ action: 'saveSmartNote', noWa, text, tag: window._snTag || 'TODO', staffName: currentStaff?.nama || 'STAFF', deadline: deadline || null });
-    if (res.ok || res.success) { document.getElementById('sn-text').value = ''; const dlEl = document.getElementById('sn-deadline'); if (dlEl) dlEl.value = ''; showToast('â Catatan disimpan!'); loadNotes(noWa); loadTicker(); }
+    if (res.ok || res.success) { document.getElementById('sn-text').value = ''; const dlEl = document.getElementById('sn-deadline'); if (dlEl) dlEl.value = ''; showToast('✅ Catatan disimpan!'); loadNotes(noWa); loadTicker(); }
     else { showToast('Gagal simpan: ' + (res.msg || 'Error')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
@@ -2581,26 +2581,26 @@ async function loadNotes(noWa) {
     if (countEl) countEl.textContent = notes.length + ' catatan';
     if (!notes.length) { listEl.innerHTML = '<div style="font-size:11px;color:var(--text-hint);text-align:center;padding:16px;">Belum ada catatan</div>'; return; }
     const tagClass = { TODO: 'sn-tag-todo', INFO: 'sn-tag-info', PENTING: 'sn-tag-penting', DONE: 'sn-tag-done' };
-    const tagEmoji = { TODO: 'ð', INFO: 'â¹ï¸', PENTING: 'â ï¸', DONE: 'â' };
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
     listEl.innerHTML = notes.map(n => {
   const nid = escH(n.noteId||n.id||'');
   const nwa = escH(noWa);
   const ntag = n.tag||'INFO';
   const ntxt = escH(n.text||n.catatan||'');
-  const ndl = n.deadline ? ' Â· ð ' + formatDeadline(n.deadline) : '';
+  const ndl = n.deadline ? ' · 📅 ' + formatDeadline(n.deadline) : '';
   const isDone = ntag === 'DONE';
   return `<div class="sn-note-item" id="sn-note-${nid}">
     <div style="margin-bottom:4px;">
-      <span class="sn-tag ${tagClass[ntag]||'sn-tag-info'}" style="font-size:9px;padding:2px 7px;">${tagEmoji[ntag]||'ð'} ${ntag}</span>
+      <span class="sn-tag ${tagClass[ntag]||'sn-tag-info'}" style="font-size:9px;padding:2px 7px;">${tagEmoji[ntag]||'📝'} ${ntag}</span>
       ${ndl ? `<span style="font-size:9px;color:var(--text-muted);">${ndl}</span>` : ''}
     </div>
     <div class="sn-note-text">${ntxt}</div>
     <div class="sn-note-footer">
-      <span class="sn-note-meta">${escH(n.staffName||'')} Â· ${n.createdAt?new Date(n.createdAt).toLocaleDateString('id-ID'):''}</span>
+      <span class="sn-note-meta">${escH(n.staffName||'')} · ${n.createdAt?new Date(n.createdAt).toLocaleDateString('id-ID'):''}</span>
       <div style="display:flex;gap:4px;">
-        ${!isDone ? `<button class="sn-done-btn" onclick="doneNote('${nid}','${nwa}')">â Done</button>` : '<span style="font-size:10px;color:var(--green-mid);">â Selesai</span>'}
-        <button onclick="editSmartNote('${nid}','${nwa}')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;">âï¸</button>
-        <button onclick="deleteSmartNote('${nid}','${nwa}')" style="background:none;border:1px solid #fca5a5;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;color:#dc2626;">ðï¸</button>
+        ${!isDone ? `<button class="sn-done-btn" onclick="doneNote('${nid}','${nwa}')">✓ Done</button>` : '<span style="font-size:10px;color:var(--green-mid);">✅ Selesai</span>'}
+        <button onclick="editSmartNote('${nid}','${nwa}')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;">✏️</button>
+        <button onclick="deleteSmartNote('${nid}','${nwa}')" style="background:none;border:1px solid #fca5a5;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;color:#dc2626;">🗑️</button>
       </div>
     </div>
   </div>`;
@@ -2611,7 +2611,7 @@ async function doneNote(noteId, noWa) {
   if (!noteId) return;
   try {
     const res = await apiPost({ action: 'doneSmartNote', noteId, noWa });
-    if (res.ok || res.success) { showToast('â Catatan ditandai selesai'); loadNotes(noWa || window._snNoWa); }
+    if (res.ok || res.success) { showToast('✅ Catatan ditandai selesai'); loadNotes(noWa || window._snNoWa); }
     else { showToast('Gagal: ' + (res.msg || '')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
@@ -2624,7 +2624,7 @@ async function editSmartNote(noteId, noWa) {
   const newDeadline = prompt('Tanggal expired (YYYY-MM-DD, kosongkan kalau tidak ada):', '');
   try {
     const res = await apiPost({ action: 'editSmartNote', noteId, text: newText.trim(), deadline: newDeadline || null });
-    if (res.ok || res.success) { showToast('â Catatan diupdate!'); loadNotes(noWa); loadTicker(); }
+    if (res.ok || res.success) { showToast('✅ Catatan diupdate!'); loadNotes(noWa); loadTicker(); }
     else showToast('Gagal: ' + (res.msg || ''));
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
@@ -2633,7 +2633,7 @@ async function deleteSmartNote(noteId, noWa) {
   if (!confirm('Hapus catatan ini permanen?')) return;
   try {
     const res = await apiPost({ action: 'deleteSmartNote', noteId });
-    if (res.ok || res.success) { showToast('ðï¸ Catatan dihapus!'); loadNotes(noWa); loadTicker(); }
+    if (res.ok || res.success) { showToast('🗑️ Catatan dihapus!'); loadNotes(noWa); loadTicker(); }
     else showToast('Gagal: ' + (res.msg || ''));
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
@@ -2663,7 +2663,7 @@ async function loadHargaData() {
     loading.style.display = 'none';
     const sel = document.getElementById('h-country');
     const countries = [...new Set(hargaData.map(r => r[0]))].sort();
-    sel.innerHTML = '<option value="">â Pilih negara â</option>';
+    sel.innerHTML = '<option value="">— Pilih negara —</option>';
     countries.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
     result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, paket, dan durasi</div>';
   } catch(e) {
@@ -2676,8 +2676,8 @@ function hargaUpdateDay() {
   const c = document.getElementById('h-country').value;
   const selD = document.getElementById('h-day');
   const selP = document.getElementById('h-pkg');
-  selD.innerHTML = '<option value="">â Pilih durasi â</option>';
-  selP.innerHTML = '<option value="">â Pilih paket â</option>';
+  selD.innerHTML = '<option value="">— Pilih durasi —</option>';
+  selP.innerHTML = '<option value="">— Pilih paket —</option>';
   selD.disabled = !c; selP.disabled = true;
   document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi dan paket</div>';
   if (!c) return;
@@ -2689,7 +2689,7 @@ function hargaUpdatePkg() {
   const c = document.getElementById('h-country').value;
   const d = parseInt(document.getElementById('h-day').value);
   const selP = document.getElementById('h-pkg');
-  selP.innerHTML = '<option value="">â Pilih paket â</option>';
+  selP.innerHTML = '<option value="">— Pilih paket —</option>';
   selP.disabled = !d;
   document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih paket</div>';
   if (!d) return;
@@ -2706,12 +2706,12 @@ function hargaShowResult() {
   const row = hargaData.find(r => r[0] === c && r[1] === p && r[2] === d);
   if (!row) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Data tidak tersedia untuk kombinasi ini</div>'; return; }
   const [,, day, simPub, simPar, esimPub, esimPar] = row;
-  const fmt = v => v ? 'Rp ' + Number(v).toLocaleString('id-ID') : 'â';
+  const fmt = v => v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—';
   resultEl.innerHTML = `
     <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${d} hari &bull; ${escH(p)}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">ð³ SIM Card</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">💳 SIM Card</div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
           <span style="font-size:12px;color:var(--text-muted);">Publish <span style="background:#dbeafe;color:#1d4ed8;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Customer</span></span>
           <span style="font-size:15px;font-weight:600;color:#1d4ed8;">${fmt(simPub)}</span>
@@ -2722,7 +2722,7 @@ function hargaShowResult() {
         </div>
       </div>
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">ð± eSIM</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">📱 eSIM</div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
           <span style="font-size:12px;color:var(--text-muted);">Publish <span style="background:#dbeafe;color:#1d4ed8;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Customer</span></span>
           <span style="font-size:15px;font-weight:600;color:#1d4ed8;">${fmt(esimPub)}</span>
@@ -2834,7 +2834,7 @@ function searchPaxMdac(query) {
           '<div class="mpx-result-foto" id="mdac-foto-' + p.passengerId + '" onclick="event.stopPropagation();showFotoPopup(event,\'mdac-foto-' + p.passengerId + '\')" onmouseenter="showFotoPopup(event,\'mdac-foto-' + p.passengerId + '\')" onmouseleave="hideFotoPopup()">' + getInitials(p.namaLengkap) + '</div>' +
           '<div class="mpx-result-info">' +
             '<div class="mpx-result-nama">' + escH(p.namaLengkap) + '</div>' +
-            '<div class="mpx-result-paspor">' + (p.noPaspor || '-') + ' Â· ' + (p.tglLahir || '-') + '</div>' +
+            '<div class="mpx-result-paspor">' + (p.noPaspor || '-') + ' · ' + (p.tglLahir || '-') + '</div>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -2876,7 +2876,7 @@ function renderMdacPaxList() {
   list.innerHTML = mdacPaxList.map(function(p, i) {
     return '<div class="mdac-pax-card"><b>' + (i+1) + '.</b> ' + escH(p.namaLengkap) +
       ' <span style="color:var(--text-muted);font-size:11px;">(' + (p.noPaspor||'-') + ')</span>' +
-      '<button onclick="hapusPaxMdac(' + i + ')" title="Hapus">â</button></div>';
+      '<button onclick="hapusPaxMdac(' + i + ')" title="Hapus">✕</button></div>';
   }).join('');
 }
 
@@ -2892,7 +2892,7 @@ function prosesMdac() {
   var kontak        = document.getElementById('mdac-kontak').value.trim();
   if (!alamat || !email || !kontak) { showToast('Lengkapi alamat, email, dan nomor kontak'); return; }
 
-  // v33 MDAC: tanggal kembali (Date of Departure) â diisi staff di field
+  // v33 MDAC: tanggal kembali (Date of Departure) — diisi staff di field
   // mdac-tgl-pulang (lihat HTML baru), karena belum ada kolom one-way/PP
   // di Form Responses 1. Field ini WAJIB untuk form MDAC asli.
   var tglPulang = document.getElementById('mdac-tgl-pulang').value.trim();
@@ -2945,7 +2945,7 @@ function prosesMdac() {
   _mdacSend();
 
   window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
-  showToast('â Data dikirim ke extension â form MDAC dibuka otomatis');
+  showToast('✅ Data dikirim ke extension — form MDAC dibuka otomatis');
   }
 
 // ===================== TICKER REMINDER =====================
@@ -2959,13 +2959,13 @@ async function loadTicker() {
       return;
     }
     _tickerReminders = res.reminders;
-    const tagEmoji = { TODO: 'ð', INFO: 'â¹ï¸', PENTING: 'â ï¸', DONE: 'â' };
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
     const parts = res.reminders.map(r => {
-      const emoji = tagEmoji[r.tag] || 'ð';
-      const tgl = r.deadline ? ' Â· ' + formatDeadline(r.deadline) : '';
+      const emoji = tagEmoji[r.tag] || '📌';
+      const tgl = r.deadline ? ' · ' + formatDeadline(r.deadline) : '';
       return emoji + ' ' + escH(r.namaCustomer) + ': ' + escH(r.text) + tgl;
     });
-    document.getElementById('ticker-text').innerHTML = parts.join('<span style="color:#f59e0b; margin:0 30px; font-weight:900;">â</span>');
+    document.getElementById('ticker-text').innerHTML = parts.join('<span style="color:#f59e0b; margin:0 30px; font-weight:900;">┃</span>');
     const bar = document.getElementById('ticker-bar');
 const track = document.getElementById('ticker-track');
 bar.style.display = 'block';
@@ -2981,21 +2981,21 @@ function formatDeadline(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
     const today = new Date(); today.setHours(0,0,0,0);
     const diff = Math.round((d - today) / 86400000);
-    if (diff === 0) return 'â¡ HARI INI';
-    if (diff === 1) return 'â° Besok';
-    if (diff <= 3) return 'â³ ' + diff + ' hari lagi';
+    if (diff === 0) return '⚡ HARI INI';
+    if (diff === 1) return '⏰ Besok';
+    if (diff <= 3) return '⏳ ' + diff + ' hari lagi';
     return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short' });
   } catch(e) { return dateStr; }
 }
 
 function openReminderModal() {
   if (!_tickerReminders.length) return;
-  const tagEmoji = { TODO: 'ð', INFO: 'â¹ï¸', PENTING: 'â ï¸', DONE: 'â' };
+  const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
   const tagColor = { TODO: '#854d0e', INFO: '#1e3a5f', PENTING: '#7f1d1d', DONE: '#14532d' };
   const html = _tickerReminders.map(r => `
     <div style="padding:10px 12px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-bottom:8px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-        <span style="background:${tagColor[r.tag]||'#333'};color:white;font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;">${tagEmoji[r.tag]||'ð'} ${r.tag}</span>
+        <span style="background:${tagColor[r.tag]||'#333'};color:white;font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;">${tagEmoji[r.tag]||'📌'} ${r.tag}</span>
         <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(r.namaCustomer)}</span>
         <span style="margin-left:auto;font-size:10px;color:${r.deadline?'#c05c00':'var(--text-muted)'};">${formatDeadline(r.deadline)}</span>
       </div>
@@ -3008,7 +3008,7 @@ function openReminderModal() {
     modal.className = 'modal';
     modal.style.display = 'none';
     modal.innerHTML = `<div class="modal-box modal-sm">
-      <div class="modal-header"><h3>ð Reminder Aktif</h3><button onclick="closeModal('modal-reminders')">â</button></div>
+      <div class="modal-header"><h3>🔔 Reminder Aktif</h3><button onclick="closeModal('modal-reminders')">✕</button></div>
       <div class="modal-body" id="modal-reminders-body" style="max-height:400px;overflow-y:auto;"></div>
     </div>`;
     document.body.appendChild(modal);
@@ -3079,7 +3079,7 @@ function selectGrContact(noWa, nama) {
   document.getElementById('gr-customer-search').value = nama + ' (' + noWa + ')';
   document.getElementById('gr-customer-results').style.display = 'none';
   const sel = document.getElementById('gr-customer-selected');
-  sel.textContent = 'â ' + nama + ' Â· ' + noWa;
+  sel.textContent = '✅ ' + nama + ' · ' + noWa;
   sel.style.display = 'block';
 }
 
@@ -3092,7 +3092,7 @@ async function submitGlobalReminder() {
   try {
     const res = await apiPost({ action: 'saveSmartNote', noWa, text, tag: _grTag, staffName: currentStaff?.nama || 'STAFF', deadline });
     if (res.ok || res.success) {
-      showToast('â Reminder disimpan!');
+      showToast('✅ Reminder disimpan!');
       document.getElementById('gr-text').value = '';
       document.getElementById('gr-deadline').value = '';
       _grSelectedNoWa = '';
@@ -3114,18 +3114,18 @@ async function loadGrList() {
     const all = res.reminders || [];
     countEl.textContent = all.length + ' aktif';
     if (!all.length) { el.innerHTML = '<div style="font-size:11px;color:var(--text-hint);text-align:center;padding:16px;">Belum ada reminder aktif</div>'; return; }
-    const tagEmoji = { TODO: 'ð', INFO: 'â¹ï¸', PENTING: 'â ï¸' };
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️' };
     const tagColor = { TODO: '#854d0e', INFO: '#1e3a5f', PENTING: '#7f1d1d' };
     el.innerHTML = all.map(r => `
       <div style="padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-bottom:6px;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
-          <span style="background:${tagColor[r.tag]||'#333'};color:white;font-size:9px;padding:1px 6px;border-radius:4px;font-weight:700;">${tagEmoji[r.tag]||'ð'} ${r.tag}</span>
-          <span style="font-size:10px;font-weight:600;color:var(--text);">${escH(r.namaCustomer === 'GLOBAL' ? 'ð Internal' : r.namaCustomer)}</span>
+          <span style="background:${tagColor[r.tag]||'#333'};color:white;font-size:9px;padding:1px 6px;border-radius:4px;font-weight:700;">${tagEmoji[r.tag]||'📌'} ${r.tag}</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text);">${escH(r.namaCustomer === 'GLOBAL' ? '🌐 Internal' : r.namaCustomer)}</span>
           ${r.deadline ? `<span style="margin-left:auto;font-size:10px;color:#c05c00;">${formatDeadline(r.deadline)}</span>` : ''}
         </div>
         <div style="font-size:11px;color:var(--text);margin-bottom:4px;">${escH(r.text)}</div>
         <div style="display:flex;gap:4px;justify-content:flex-end;">
-          <button onclick="deleteGrReminder(${r.noteId})" style="background:none;border:1px solid #fca5a5;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#dc2626;">ðï¸ Hapus</button>
+          <button onclick="deleteGrReminder(${r.noteId})" style="background:none;border:1px solid #fca5a5;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#dc2626;">🗑️ Hapus</button>
         </div>
       </div>`).join('');
   } catch(e) { el.innerHTML = '<div style="font-size:11px;color:var(--red);padding:8px;">Gagal memuat</div>'; }
@@ -3135,7 +3135,7 @@ async function deleteGrReminder(noteId) {
   if (!confirm('Hapus reminder ini?')) return;
   try {
     const res = await apiPost({ action: 'deleteSmartNote', noteId: String(noteId) });
-    if (res.ok || res.success) { showToast('ðï¸ Reminder dihapus!'); loadGrList(); loadTicker(); }
+    if (res.ok || res.success) { showToast('🗑️ Reminder dihapus!'); loadGrList(); loadTicker(); }
     else showToast('Gagal: ' + (res.msg || ''));
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
