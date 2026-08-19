@@ -993,8 +993,8 @@ async function runDocOcr(docId, fileId, namaFile) {
       docId,
       fileId,
       namaFile,
-      fileData: base64,
-      fileType,
+      base64Image: base64,
+      mediaType: fileType,
       noWa: currentDocNoWa || (currentRoom ? currentRoom.noWa : ''),
       staffName: currentStaff ? currentStaff.nama : ''
     });
