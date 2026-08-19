@@ -989,7 +989,7 @@ async function runDocOcr(docId, fileId, namaFile) {
   try {
     const { base64, fileType } = await getBase64FromFileId(fileId);
     const res = await apiPostWithRetry({
-      action: 'ocrPassport',
+      action: 'ocrPaspor',
       docId,
       fileId,
       namaFile,
