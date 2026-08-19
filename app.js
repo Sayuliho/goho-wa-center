@@ -537,7 +537,20 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
         const _fna = el.dataset.nama || 'dokumen.pdf';
         el.style.cssText = 'width:200px;min-height:60px;border-radius:8px;background:#fff3f3;border:1px solid #ffcccc;display:flex;align-items:center;padding:8px;gap:8px;cursor:pointer;height:auto;overflow:hidden;';
         el.innerHTML = '<div style="font-size:24px;flex-shrink:0;">[PDF]</div><div style="overflow:hidden;"><div style="font-size:11px;font-weight:600;color:#c0392b;word-break:break-all;">' + escH(_fna) + '</div><div style="font-size:10px;color:#888;margin-top:2px;">Klik untuk buka</div></div>';
-        el.onclick = function() { window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank'); };
+        el.onclick = async function() {
+              try {
+                const r = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getImageBase64&fileId=' + encodeURIComponent(fileId));
+                const data = await r.json();
+                if (data.base64) {
+                  const src = 'data:application/pdf;base64,' + data.base64;
+                  openPdfModal(src, _fna);
+                } else {
+                  window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank');
+                }
+              } catch(e) {
+                window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank');
+              }
+            };
         imgObserver.unobserve(el);
         return;
       }
