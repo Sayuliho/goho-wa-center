@@ -1002,7 +1002,12 @@ async function runDocOcr(docId, fileId, namaFile) {
       showToast('✅ OCR selesai! Data masuk ke Penumpang.');
       // Set ocrStatus done di D1
       try { await apiPost({ action: 'setDocOcrStatus', fileId, status: 'done' }); } catch(_) {}
-      // Reload doc panel supaya badge update
+      // Update local cache langsung supaya badge berubah instan
+      const cachedDoc = allDocsCache.find(d => d.fileId === fileId);
+      if (cachedDoc) cachedDoc.ocrStatus = 'done';
+      if (docPanelOpen) renderDocList(currentDocTab === 'semua' ? allDocsCache : allDocsCache.filter(d => d.kategori === currentDocTab));
+      // Reload dari server setelah delay
+      await new Promise(r => setTimeout(r, 1000));
       if (docPanelOpen && currentRoom) loadDocPanel(currentRoom.noWa);
     } else {
       showToast('❌ OCR gagal: ' + (res.msg || 'Error'));
