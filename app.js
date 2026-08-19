@@ -975,13 +975,13 @@ async function runDocOcr(docId, fileId, namaFile) {
   if (!confirm('Scan OCR paspor "' + namaFile + '"?\nData akan otomatis masuk ke PASSENGER_LIST.\nPastikan foto sudah jelas sebelum scan.')) return;
   showToast('⏳ Sedang scan OCR...');
   // Retry helper untuk handle GAS cold start
-  async function apiPostWithRetry(body, maxRetry = 2) {
+  async function apiPostWithRetry(body, maxRetry = 4) {
     for (let i = 0; i <= maxRetry; i++) {
       try {
         const res = await apiPost(body);
         if (res && typeof res === 'object') return res;
       } catch(e) {
-        if (i < maxRetry) { await new Promise(r => setTimeout(r, 2000)); continue; }
+        if (i < maxRetry) { await new Promise(r => setTimeout(r, 4000)); continue; }
         throw e;
       }
     }
