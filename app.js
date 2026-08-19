@@ -532,6 +532,16 @@ const imgObserver = typeof IntersectionObserver !== 'undefined' ? new Intersecti
       el.dataset.loaded = '1';
       imgObserver.unobserve(el);
 
+      // Kalau PDF, tampilkan icon langsung tanpa fetch
+      if (mimeType === 'application/pdf') {
+        const _fna = el.dataset.nama || 'dokumen.pdf';
+        el.style.cssText = 'width:200px;min-height:60px;border-radius:8px;background:#fff3f3;border:1px solid #ffcccc;display:flex;align-items:center;padding:8px;gap:8px;cursor:pointer;height:auto;overflow:hidden;';
+        el.innerHTML = '<div style="font-size:24px;flex-shrink:0;">[PDF]</div><div style="overflow:hidden;"><div style="font-size:11px;font-weight:600;color:#c0392b;word-break:break-all;">' + escH(_fna) + '</div><div style="font-size:10px;color:#888;margin-top:2px;">Klik untuk buka</div></div>';
+        el.onclick = function() { openDocBlob(fileId, _fna, false); };
+        imgObserver.unobserve(el);
+        return;
+      }
+
       // Tampil spinner saat loading
       el.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;">⏳</div>';
 
