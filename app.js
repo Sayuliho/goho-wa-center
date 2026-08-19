@@ -974,9 +974,21 @@ function markDocOcrPending(docId, namaFile) {
 async function runDocOcr(docId, fileId, namaFile) {
   if (!confirm('Scan OCR paspor "' + namaFile + '"?\nData akan otomatis masuk ke PASSENGER_LIST.\nPastikan foto sudah jelas sebelum scan.')) return;
   showToast('⏳ Sedang scan OCR...');
+  // Retry helper untuk handle GAS cold start
+  async function apiPostWithRetry(body, maxRetry = 2) {
+    for (let i = 0; i <= maxRetry; i++) {
+      try {
+        const res = await apiPost(body);
+        if (res && typeof res === 'object') return res;
+      } catch(e) {
+        if (i < maxRetry) { await new Promise(r => setTimeout(r, 2000)); continue; }
+        throw e;
+      }
+    }
+  }
   try {
     const { base64, fileType } = await getBase64FromFileId(fileId);
-    const res = await apiPost({
+    const res = await apiPostWithRetry({
       action: 'ocrPassport',
       docId,
       fileId,
