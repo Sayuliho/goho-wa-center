@@ -688,6 +688,80 @@
     </div>
   </div>
 </div>
+<!-- Modal Dream Cruises -->
+<div id="modal-cruise" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeCruiseModal()">
+  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header">
+      <span>🚢 Dream Cruises — Cek Harga</span>
+      <button class="modal-close" onclick="closeCruiseModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;">
+
+      <!-- Step 1: Rute -->
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">RUTE</label>
+        <select id="cruise-rute" onchange="onCruiseRuteChange()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+          <option value="">-- Pilih Rute --</option>
+        </select>
+      </div>
+
+      <!-- Step 2: Tanggal Sailing -->
+      <div class="form-group" style="margin-bottom:12px;display:none;" id="cruise-tgl-group">
+        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TANGGAL SAILING</label>
+        <select id="cruise-tgl" onchange="onCruiseTglChange()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+          <option value="">-- Pilih Tanggal --</option>
+        </select>
+      </div>
+
+      <!-- Step 3: Kabin -->
+      <div class="form-group" style="margin-bottom:12px;display:none;" id="cruise-kabin-group">
+        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE KABIN</label>
+        <select id="cruise-kabin" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+          <option value="">-- Pilih Kabin --</option>
+        </select>
+      </div>
+
+      <!-- Step 4: Pax -->
+      <div id="cruise-pax-group" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">DEWASA (1st/2nd pax)</label>
+            <input type="number" id="cruise-pax1" min="1" max="4" value="2"
+              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">3rd/4th pax</label>
+            <input type="number" id="cruise-pax3" min="0" max="2" value="0"
+              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE 3rd/4th pax</label>
+            <select id="cruise-paxtype" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+              <option value="dewasa">Dewasa (13+)</option>
+              <option value="kids">Kids (3-12 thn)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">INFANT (0-2 thn)</label>
+            <input type="number" id="cruise-infant" min="0" max="2" value="0"
+              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+          </div>
+        </div>
+        <button onclick="hitungHargaCruise()"
+          style="width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+          🔍 Cek Harga
+        </button>
+      </div>
+
+      <!-- Hasil -->
+      <div id="cruise-hasil" style="display:none;margin-top:16px;background:var(--bg-secondary);border-radius:10px;padding:14px;font-size:13px;">
+      </div>
+
+    </div>
+  </div>
+</div>  
 <div class="modal" id="modal-smart-notes" style="display:none;">
   <div class="modal-box modal-sm">
     <div class="modal-header"><h3>📝 Smart Notes</h3><button onclick="closeModal('modal-smart-notes')">✕</button></div>
