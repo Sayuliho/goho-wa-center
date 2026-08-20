@@ -2763,7 +2763,7 @@ async function onCruiseRuteChange() {
   sel.innerHTML = '<option value="">-- Memuat tanggal... --</option>';
 
   try {
-    const res = await apiGet('getHargaCruise', { mode: 'tanggal', rute });
+    const res = await apiGet({ action: 'getHargaCruise', mode: 'tanggal', rute });
     if (res.ok && res.data) {
       sel.innerHTML = '<option value="">-- Pilih Tanggal --</option>';
       res.data.forEach(t => {
@@ -2788,7 +2788,7 @@ async function onCruiseTglChange() {
   sel.innerHTML = '<option value="">-- Memuat kabin... --</option>';
 
   try {
-    const res = await apiGet('getHargaCruise', { mode: 'kabin', rute, tgl });
+    const res = await apiGet({ action: 'getHargaCruise', mode: 'kabin', rute, tgl });
     if (res.ok && res.data) {
       sel.innerHTML = '<option value="">-- Pilih Kabin --</option>';
       res.data.forEach(k => {
@@ -2821,7 +2821,7 @@ async function hitungHargaCruise() {
   hasilEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Menghitung harga...</div>';
 
   try {
-    const res = await apiGet('getHargaCruise', {
+    const res = await apiGet({ action: 'getHargaCruise',
       mode: 'harga', rute, tgl, kabin,
       pax1st, pax3rd, paxType: paxtype, infant
     });
