@@ -138,9 +138,11 @@ function pilihLayanan(type) {
     openMdacModal();
   } else if (type === 'harga') {
     openHargaModal();
-  } else if (type === 'alli') {
-    quickArrivalIndonesia('','','','', currentRoom ? currentRoom.nama : '');
-  } else {
+      } else if (type === 'alli') {
+      quickArrivalIndonesia('','','','', currentRoom ? currentRoom.nama : '');
+    } else if (type === 'cruise') {
+      openCruiseModal();
+    } else {
     showToast('🚧 ' + (labels[type] || type) + ' — coming soon');
   }
 }
