@@ -2733,7 +2733,7 @@ async function openCruiseModal() {
   document.getElementById('cruise-rute').innerHTML = '<option value="">-- Memuat rute... --</option>';
 
   try {
-    const res = await apiGet('getHargaCruise', { mode: 'rute' });
+    const res = await apiGet({ action: 'getHargaCruise', mode: 'rute' });
     if (res.ok && res.data) {
       const sel = document.getElementById('cruise-rute');
       sel.innerHTML = '<option value="">-- Pilih Rute --</option>';
