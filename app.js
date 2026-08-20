@@ -2720,6 +2720,166 @@ async function loadHargaData() {
     result.innerHTML = '<div style="color:var(--red);font-size:12px;">Gagal memuat: ' + e.toString() + '</div>';
   }
 }
+// ============================================================
+// DREAM CRUISES — Price Tool
+// ============================================================
+async function openCruiseModal() {
+  document.getElementById('modal-cruise').style.display = 'flex';
+  // Reset semua
+  document.getElementById('cruise-tgl-group').style.display = 'none';
+  document.getElementById('cruise-kabin-group').style.display = 'none';
+  document.getElementById('cruise-pax-group').style.display = 'none';
+  document.getElementById('cruise-hasil').style.display = 'none';
+  document.getElementById('cruise-rute').innerHTML = '<option value="">-- Memuat rute... --</option>';
+
+  try {
+    const res = await apiGet('getHargaCruise', { mode: 'rute' });
+    if (res.ok && res.data) {
+      const sel = document.getElementById('cruise-rute');
+      sel.innerHTML = '<option value="">-- Pilih Rute --</option>';
+      res.data.forEach(r => {
+        sel.innerHTML += `<option value="${r}">${r}</option>`;
+      });
+    }
+  } catch(e) {
+    showToast('Gagal memuat rute cruise');
+  }
+}
+
+function closeCruiseModal() {
+  document.getElementById('modal-cruise').style.display = 'none';
+}
+
+async function onCruiseRuteChange() {
+  const rute = document.getElementById('cruise-rute').value;
+  if (!rute) return;
+
+  document.getElementById('cruise-tgl-group').style.display = 'block';
+  document.getElementById('cruise-kabin-group').style.display = 'none';
+  document.getElementById('cruise-pax-group').style.display = 'none';
+  document.getElementById('cruise-hasil').style.display = 'none';
+
+  const sel = document.getElementById('cruise-tgl');
+  sel.innerHTML = '<option value="">-- Memuat tanggal... --</option>';
+
+  try {
+    const res = await apiGet('getHargaCruise', { mode: 'tanggal', rute });
+    if (res.ok && res.data) {
+      sel.innerHTML = '<option value="">-- Pilih Tanggal --</option>';
+      res.data.forEach(t => {
+        sel.innerHTML += `<option value="${t}">${t}</option>`;
+      });
+    }
+  } catch(e) {
+    showToast('Gagal memuat tanggal');
+  }
+}
+
+async function onCruiseTglChange() {
+  const rute = document.getElementById('cruise-rute').value;
+  const tgl  = document.getElementById('cruise-tgl').value;
+  if (!tgl) return;
+
+  document.getElementById('cruise-kabin-group').style.display = 'block';
+  document.getElementById('cruise-pax-group').style.display = 'none';
+  document.getElementById('cruise-hasil').style.display = 'none';
+
+  const sel = document.getElementById('cruise-kabin');
+  sel.innerHTML = '<option value="">-- Memuat kabin... --</option>';
+
+  try {
+    const res = await apiGet('getHargaCruise', { mode: 'kabin', rute, tgl });
+    if (res.ok && res.data) {
+      sel.innerHTML = '<option value="">-- Pilih Kabin --</option>';
+      res.data.forEach(k => {
+        sel.innerHTML += `<option value="${k}">${k}</option>`;
+      });
+      // Tampilkan pax group setelah kabin muncul
+      document.getElementById('cruise-pax-group').style.display = 'block';
+    }
+  } catch(e) {
+    showToast('Gagal memuat kabin');
+  }
+}
+
+async function hitungHargaCruise() {
+  const rute    = document.getElementById('cruise-rute').value;
+  const tgl     = document.getElementById('cruise-tgl').value;
+  const kabin   = document.getElementById('cruise-kabin').value;
+  const pax1st  = document.getElementById('cruise-pax1').value;
+  const pax3rd  = document.getElementById('cruise-pax3').value;
+  const paxtype = document.getElementById('cruise-paxtype').value;
+  const infant  = document.getElementById('cruise-infant').value;
+
+  if (!rute || !tgl || !kabin) {
+    showToast('Lengkapi rute, tanggal, dan kabin dulu');
+    return;
+  }
+
+  const hasilEl = document.getElementById('cruise-hasil');
+  hasilEl.style.display = 'block';
+  hasilEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Menghitung harga...</div>';
+
+  try {
+    const res = await apiGet('getHargaCruise', {
+      mode: 'harga', rute, tgl, kabin,
+      pax1st, pax3rd, paxType: paxtype, infant
+    });
+
+    if (!res.ok) {
+      hasilEl.innerHTML = `<div style="color:red;text-align:center;">${res.msg || 'Data tidak ditemukan'}</div>`;
+      return;
+    }
+
+    const d = res.data;
+    const fmt = n => Number(n).toLocaleString('en-SG');
+    const fmtIDR = n => 'Rp ' + Number(n).toLocaleString('id-ID');
+    const totalPax = parseInt(pax1st) + parseInt(pax3rd) + parseInt(infant);
+
+    let paxDetail = '';
+    if (parseInt(pax1st) > 0)
+      paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${pax1st}x Dewasa (1st/2nd)</span><span>SGD ${fmt(d.harga1stJual)} × ${pax1st} = <b>SGD ${fmt(d.harga1stJual * parseInt(pax1st))}</b></span></div>`;
+    if (parseInt(pax3rd) > 0)
+      paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${pax3rd}x ${paxtype === 'kids' ? 'Kids' : 'Dewasa'} (3rd/4th)</span><span>SGD ${fmt(d.harga3rdJual)} × ${pax3rd} = <b>SGD ${fmt(d.harga3rdJual * parseInt(pax3rd))}</b></span></div>`;
+    if (parseInt(infant) > 0)
+      paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${infant}x Infant</span><span>SGD ${fmt(d.hargaInfant)} × ${infant} = <b>SGD ${fmt(d.hargaInfant * parseInt(infant))}</b></span></div>`;
+
+    const diskonInfo = d.diskonCabin ? `<div style="display:flex;justify-content:space-between;color:#0a7;"><span>Diskon Kabin</span><span>SGD ${fmt(d.diskonCabin)}</span></div>` : '';
+    const eventBadge = d.eventOverride ? '<span style="background:#e07b00;color:white;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:6px;">PROMO EVENT</span>' : '';
+    const catatanInfo = d.catatan ? `<div style="margin-top:8px;font-size:11px;color:#e07b00;">📌 ${d.catatan}</div>` : '';
+
+    hasilEl.innerHTML = `
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--text-muted);">PROMO</div>
+        <div style="font-size:13px;font-weight:700;">${d.promo}${eventBadge}</div>
+        <div style="font-size:10px;color:var(--text-muted);">${d.rute} | ${d.tgl} | ${d.kabin} | ${d.malam} malam | Season: ${d.season}</div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px;font-size:12px;display:flex;flex-direction:column;gap:6px;">
+        ${paxDetail}
+        <div style="display:flex;justify-content:space-between;"><span>Port Charges (${totalPax}x)</span><span>SGD ${fmt(d.portCharges)} × ${totalPax} = <b>SGD ${fmt(d.portCharges * totalPax)}</b></span></div>
+        ${diskonInfo}
+      </div>
+      <div style="border-top:2px solid var(--primary);padding-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+          <span>Harga Publish</span><span>SGD ${fmt(d.totalPublishSGD)}</span>
+        </div>
+        ${d.discPct > 0 ? `<div style="font-size:10px;color:#0a7;text-align:right;">Disc agen ${d.discPct}% sudah termasuk</div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--primary);margin-top:4px;">
+          <span>Total Harga Jual</span><span>SGD ${fmt(d.totalJualSGD)}</span>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:2px;">
+          ≈ ${fmtIDR(d.totalJualIDR)} <span style="font-size:10px;">(kurs SGD 1 = IDR ${fmt(d.kurs)})</span>
+        </div>
+        <div style="margin-top:8px;padding:8px;background:#fff8e1;border-radius:6px;font-size:11px;color:#7a5c00;">
+          ⚠️ Harga IDR untuk referensi saja. Harga final dikonfirmasi saat booking.<br>
+          💳 Gratuity: SGD ${fmt(d.gratuityPerMalam)}/pax/malam (bayar di kapal) ≈ SGD ${fmt(d.totalGratuity)} total
+        </div>
+        ${catatanInfo}
+      </div>`;
+  } catch(e) {
+    hasilEl.innerHTML = `<div style="color:red;text-align:center;">Error: ${e.toString()}</div>`;
+  }
+}
 
 function hargaUpdateDay() {
   const c = document.getElementById('h-country').value;
