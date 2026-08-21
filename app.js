@@ -1656,7 +1656,7 @@ async function submitNewChat() {
   const btn = document.getElementById('nc-send-btn'); btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader spin"></i> Mengirim...';
   try {
     const res = await apiPost({action: 'startNewChat', noWa: newChatTarget.noWa, nama: newChatTarget.nama, message: pesan, staffName: currentStaff.nama});
-    if (res.ok) { closeModal('modal-new-chat'); showToast('✅ Pesan terkirim ke ' + newChatTarget.nama); if (currentStaff.role === 'OWNER') switchMainTab('chat'); currentTab = 'aktif'; setActiveTab('aktif'); await loadChats(false); if (res.roomId) setTimeout(() => openChat(res.roomId), 600); }
+    if (res.ok) { closeModal('modal-new-chat'); showToast('✅ Pesan terkirim ke ' + newChatTarget.nama); switchMainTab('chat'); currentTab = 'aktif'; setActiveTab('aktif'); await loadChats(false); if (res.roomId) setTimeout(() => openChat(res.roomId), 600); }
     else { showToast('Gagal kirim: ' + (res.msg || 'Error')); }
   } catch(e) { showToast('Error: ' + e.toString()); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Kirim'; }
