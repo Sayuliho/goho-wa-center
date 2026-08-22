@@ -2730,6 +2730,14 @@ async function openCruiseModal() {
   document.getElementById('cruise-kabin-group').style.display = 'none';
   document.getElementById('cruise-pax-group').style.display = 'none';
   document.getElementById('cruise-hasil').style.display = 'none';
+  document.getElementById('cruise-promo-info').style.display = 'none';
+  document.getElementById('cruise-promo-info').innerHTML = '';
+  document.getElementById('cruise-toggle-termurah').style.display = 'none';
+  document.getElementById('cruise-termurah-panel').style.display = 'none';
+  document.getElementById('cruise-termurah-hasil').style.display = 'none';
+  if (document.getElementById('cruise-mode-termurah'))
+    document.getElementById('cruise-mode-termurah').checked = false;
+  document.getElementById('cruise-rute').value = '';
   document.getElementById('cruise-rute').innerHTML = '<option value="">-- Memuat rute... --</option>';
 
   try {
