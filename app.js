@@ -2857,7 +2857,11 @@ async function cariCruiseTermurah() {
   try {
     const res = await apiGet({
       action: 'getHargaCruise', mode: 'termurah',
-      rute, kabin, pax1st, pax3rd, paxType: paxtype
+      rute, kabin,
+      paxDewasa: pax1st,
+      paxAnak: paxtype === 'kids' ? pax3rd : '0',
+      paxInfant: '0',
+      pax1st, pax3rd, paxType: paxtype
     });
 
     if (!res.ok || !res.data || res.data.length === 0) {
@@ -2932,6 +2936,9 @@ async function hitungHargaCruise() {
   try {
     const res = await apiGet({ action: 'getHargaCruise',
       mode: 'harga', rute, tgl, kabin,
+      paxDewasa: pax1st,
+      paxAnak: paxtype === 'kids' ? pax3rd : '0',
+      paxInfant: infant,
       pax1st, pax3rd, paxType: paxtype, infant
     });
 
@@ -2946,12 +2953,22 @@ async function hitungHargaCruise() {
     const totalPax = parseInt(pax1st) + parseInt(pax3rd) + parseInt(infant);
 
     let paxDetail = '';
-    if (parseInt(pax1st) > 0)
-      paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${pax1st}x Dewasa (1st/2nd)</span><span>SGD ${fmt(d.harga1stJual)} × ${pax1st} = <b>SGD ${fmt(d.harga1stJual * parseInt(pax1st))}</b></span></div>`;
-    if (parseInt(pax3rd) > 0)
-      paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${pax3rd}x ${paxtype === 'kids' ? 'Kids' : 'Dewasa'} (3rd/4th)</span><span>SGD ${fmt(d.harga3rdJual)} × ${pax3rd} = <b>SGD ${fmt(d.harga3rdJual * parseInt(pax3rd))}</b></span></div>`;
-    if (parseInt(infant) > 0)
-      paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${infant}x Infant</span><span>SGD ${fmt(d.hargaInfant)} × ${infant} = <b>SGD ${fmt(d.hargaInfant * parseInt(infant))}</b></span></div>`;
+    if (d.breakdown && d.breakdown.length > 0) {
+      d.breakdown.forEach(b => {
+        const noteStr = b.note ? ` <span style="color:#0a7;font-size:10px;">(${b.note})</span>` : '';
+        paxDetail += `<div style="display:flex;justify-content:space-between;">
+          <span>${b.label}${noteStr}</span>
+          <span>SGD ${fmt(b.hargaJual)}</span>
+        </div>`;
+      });
+    } else {
+      if (parseInt(pax1st) > 0)
+        paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${pax1st}x Dewasa (1st/2nd)</span><span>SGD ${fmt(d.harga1stJual)} × ${pax1st} = <b>SGD ${fmt(d.harga1stJual * parseInt(pax1st))}</b></span></div>`;
+      if (parseInt(pax3rd) > 0)
+        paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${pax3rd}x ${paxtype === 'kids' ? 'Kids' : 'Dewasa'} (3rd/4th)</span><span>SGD ${fmt(d.harga3rdJual)} × ${pax3rd} = <b>SGD ${fmt(d.harga3rdJual * parseInt(pax3rd))}</b></span></div>`;
+      if (parseInt(infant) > 0)
+        paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${infant}x Infant</span><span>SGD ${fmt(d.hargaInfant)} × ${infant} = <b>SGD ${fmt(d.hargaInfant * parseInt(infant))}</b></span></div>`;
+    }
 
     const diskonInfo = d.diskonCabin ? `<div style="display:flex;justify-content:space-between;color:#0a7;"><span>Diskon Kabin</span><span>SGD ${fmt(d.diskonCabin)}</span></div>` : '';
     const eventBadge = d.eventOverride ? '<span style="background:#e07b00;color:white;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:6px;">PROMO EVENT</span>' : '';
