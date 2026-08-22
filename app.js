@@ -2780,9 +2780,15 @@ async function onCruiseTglChange() {
   const tgl  = document.getElementById('cruise-tgl').value;
   if (!tgl) return;
 
-  document.getElementById('cruise-kabin-group').style.display = 'block';
+  document.getElementById('cruise-kabin-group').style.display = 'none';
   document.getElementById('cruise-pax-group').style.display = 'none';
   document.getElementById('cruise-hasil').style.display = 'none';
+  document.getElementById('cruise-promo-info').style.display = 'none';
+  document.getElementById('cruise-toggle-termurah').style.display = 'none';
+  document.getElementById('cruise-termurah-panel').style.display = 'none';
+  document.getElementById('cruise-termurah-hasil').style.display = 'none';
+  if (document.getElementById('cruise-mode-termurah'))
+    document.getElementById('cruise-mode-termurah').checked = false;
 
   const sel = document.getElementById('cruise-kabin');
   sel.innerHTML = '<option value="">-- Memuat kabin... --</option>';
@@ -2791,14 +2797,117 @@ async function onCruiseTglChange() {
     const res = await apiGet({ action: 'getHargaCruise', mode: 'kabin', rute, tgl });
     if (res.ok && res.data) {
       sel.innerHTML = '<option value="">-- Pilih Kabin --</option>';
-      res.data.forEach(k => {
-        sel.innerHTML += `<option value="${k}">${k}</option>`;
-      });
-      // Tampilkan pax group setelah kabin muncul
+      res.data.forEach(k => { sel.innerHTML += `<option value="${k}">${k}</option>`; });
+
+      // Populate ct-kabin untuk mode Cari Termurah
+      const ctKabin = document.getElementById('ct-kabin');
+      ctKabin.innerHTML = '<option value="">-- Pilih Kabin --</option>';
+      res.data.forEach(k => { ctKabin.innerHTML += `<option value="${k}">${k}</option>`; });
+
+      document.getElementById('cruise-kabin-group').style.display = 'block';
       document.getElementById('cruise-pax-group').style.display = 'block';
+      document.getElementById('cruise-toggle-termurah').style.display = 'block';
     }
+  } catch(e) { showToast('Gagal memuat kabin'); }
+
+  // Load info promo aktif untuk tanggal ini (silent)
+  try {
+    const rp = await apiGet({ action: 'getHargaCruise', mode: 'promo', rute, tgl });
+    if (rp.ok && rp.data) {
+      const d = rp.data;
+      const evBadge = d.isEvent
+        ? '<span style="background:#e07b00;color:white;font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px;font-weight:600;">PROMO EVENT</span>'
+        : '';
+      const discInfo = d.disc ? `<span style="color:#0a7;font-size:11px;margin-left:8px;">Disc agen ${d.disc}</span>` : '';
+      const catatanInfo = d.catatan ? `<div style="color:#e07b00;font-size:11px;margin-top:3px;">📌 ${d.catatan}</div>` : '';
+      document.getElementById('cruise-promo-info').innerHTML = `
+        <div style="background:#fff8e1;border:1px solid #f0d060;border-radius:8px;padding:9px 12px;">
+          <div style="font-size:11px;color:#7a5c00;font-weight:600;margin-bottom:2px;">🎫 PROMO BERLAKU${evBadge}${discInfo}</div>
+          <div style="font-size:13px;font-weight:700;color:#5a4200;">${d.promo}</div>
+          ${catatanInfo}
+        </div>`;
+      document.getElementById('cruise-promo-info').style.display = 'block';
+    }
+  } catch(e) { /* silent */ }
+}
+
+function onCruiseModeToggle() {
+  const checked = document.getElementById('cruise-mode-termurah').checked;
+  document.getElementById('cruise-kabin-group').style.display = checked ? 'none' : 'block';
+  document.getElementById('cruise-pax-group').style.display   = checked ? 'none' : 'block';
+  document.getElementById('cruise-hasil').style.display       = 'none';
+  document.getElementById('cruise-termurah-panel').style.display = checked ? 'block' : 'none';
+  document.getElementById('cruise-termurah-hasil').style.display = 'none';
+}
+
+async function cariCruiseTermurah() {
+  const rute    = document.getElementById('cruise-rute').value;
+  const kabin   = document.getElementById('ct-kabin').value;
+  const pax1st  = document.getElementById('ct-pax1').value;
+  const pax3rd  = document.getElementById('ct-pax3').value;
+  const paxtype = document.getElementById('ct-paxtype').value;
+
+  if (!rute) { showToast('Pilih rute dulu'); return; }
+  if (!kabin) { showToast('Pilih tipe kabin dulu'); return; }
+
+  const hasilEl = document.getElementById('cruise-termurah-hasil');
+  hasilEl.style.display = 'block';
+  hasilEl.innerHTML = '<div style="text-align:center;padding:14px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Scanning semua tanggal...</div>';
+
+  try {
+    const res = await apiGet({
+      action: 'getHargaCruise', mode: 'termurah',
+      rute, kabin, pax1st, pax3rd, paxType: paxtype
+    });
+
+    if (!res.ok || !res.data || res.data.length === 0) {
+      hasilEl.innerHTML = '<div style="color:var(--text-muted);text-align:center;font-size:12px;padding:12px;">Tidak ada data untuk kombinasi ini</div>';
+      return;
+    }
+
+    const fmt    = n => Number(n).toLocaleString('en-SG');
+    const fmtIDR = n => {
+      const jt = n / 1000000;
+      return jt >= 1 ? 'Rp ' + jt.toFixed(1).replace('.0','') + 'jt' : 'Rp ' + Number(n).toLocaleString('id-ID');
+    };
+
+    const paxDesc = parseInt(pax1st) + (parseInt(pax3rd) > 0 ? `+${pax3rd} ${paxtype}` : '') + ' pax';
+
+    const rows = res.data.map((d, i) => {
+      const medal   = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="display:inline-block;width:20px;text-align:center;font-size:11px;color:var(--text-muted);">${i+1}</span>`;
+      const evBadge = d.isEvent ? '<span style="background:#e07b00;color:white;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:4px;">EVENT</span>' : '';
+      return `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 6px;font-size:12px;white-space:nowrap;">${medal}</td>
+          <td style="padding:8px 6px;">
+            <div style="font-size:12px;font-weight:600;">${d.tgl}${evBadge}</div>
+            <div style="font-size:10px;color:var(--text-muted);">${d.promo} · ${d.malam} malam</div>
+          </td>
+          <td style="padding:8px 6px;text-align:right;">
+            <div style="font-size:13px;font-weight:700;color:var(--primary);">SGD ${fmt(d.totalJualSGD)}</div>
+            <div style="font-size:10px;color:var(--text-muted);">${fmtIDR(d.totalJualIDR)}</div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    hasilEl.innerHTML = `
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">
+        ${rute} · ${kabin} · ${paxDesc} — Top ${res.data.length} termurah
+      </div>
+      <div style="background:var(--bg-secondary);border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--bg);border-bottom:1px solid var(--border);">
+              <th style="padding:6px;font-size:10px;color:var(--text-muted);font-weight:600;text-align:left;">#</th>
+              <th style="padding:6px;font-size:10px;color:var(--text-muted);font-weight:600;text-align:left;">TANGGAL · PROMO</th>
+              <th style="padding:6px;font-size:10px;color:var(--text-muted);font-weight:600;text-align:right;">HARGA</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
   } catch(e) {
-    showToast('Gagal memuat kabin');
+    hasilEl.innerHTML = `<div style="color:red;text-align:center;font-size:12px;">Error: ${e.toString()}</div>`;
   }
 }
 
