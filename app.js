@@ -2820,20 +2820,21 @@ async function cariCruiseTermurahBaru() {
 
     const fmt = n => Number(n).toLocaleString('id-ID');
     const fmtIDR = n => 'Rp ' + Math.round(n/1000000*10)/10 + 'jt';
+    const minHarga = res.data[0].totalJualSGD;
+
+    // Simpan data untuk dipakai saat klik expand
+    window._tmData = { res: res.data, paxDewasa, paxAnak };
 
     let html = `<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">
       📋 ${res.data.length} hasil — sorted termurah</div>`;
-
-    // Group by harga untuk highlight termurah
-    const minHarga = res.data[0].totalJualSGD;
 
     res.data.forEach((d, idx) => {
       const isCheapest = d.totalJualSGD === minHarga;
       const badge = isCheapest ? '<span style="background:#10b981;color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px;">TERMURAH</span>' : '';
       const eventBadge = d.isEvent ? '<span style="background:#f59e0b;color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px;">EVENT</span>' : '';
 
-      html += `<div style="border:1px solid ${isCheapest ? '#10b981' : 'var(--border)'};border-radius:8px;padding:10px 12px;margin-bottom:8px;background:${isCheapest ? '#f0fdf4' : 'var(--bg)'};">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      html += `<div style="border:1px solid ${isCheapest ? '#10b981' : 'var(--border)'};border-radius:8px;margin-bottom:8px;overflow:hidden;background:${isCheapest ? '#f0fdf4' : 'var(--bg)'};">
+        <div onclick="toggleTmDetail(${idx})" style="padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;">
           <div>
             <div style="font-weight:700;font-size:13px;">${d.tgl} ${badge}${eventBadge}</div>
             <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${d.rute} · ${d.malam}N · ${d.kabin}</div>
@@ -2842,7 +2843,11 @@ async function cariCruiseTermurahBaru() {
           <div style="text-align:right;">
             <div style="font-weight:800;font-size:15px;color:var(--primary);">SGD ${fmt(d.totalJualSGD)}</div>
             <div style="font-size:11px;color:var(--text-muted);">≈ ${fmtIDR(d.totalJualIDR)}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">▼ detail</div>
           </div>
+        </div>
+        <div id="tm-detail-${idx}" style="display:none;border-top:1px solid var(--border);padding:10px 12px;background:var(--bg-secondary);">
+          <div style="color:var(--text-muted);font-size:11px;">⏳ Memuat...</div>
         </div>
       </div>`;
     });
@@ -2853,6 +2858,80 @@ async function cariCruiseTermurahBaru() {
     hasilEl.innerHTML = '<div style="color:red;font-size:12px;">Error: ' + e.message + '</div>';
   }
 }
+
+async function toggleTmDetail(idx) {
+  const detailEl = document.getElementById(`tm-detail-${idx}`);
+  if (!detailEl) return;
+
+  // Toggle
+  if (detailEl.style.display === 'block') {
+    detailEl.style.display = 'none';
+    return;
+  }
+
+  detailEl.style.display = 'block';
+
+  // Kalau sudah ada isi (bukan loading), skip fetch
+  if (!detailEl.innerHTML.includes('Memuat')) return;
+
+  // Ambil data dari cache
+  const d = window._tmData.res[idx];
+  const paxDewasa = window._tmData.paxDewasa;
+  const paxAnak   = window._tmData.paxAnak;
+
+  try {
+    const res = await apiGet({
+      action: 'getHargaCruise', mode: 'harga',
+      rute: d.rute, tgl: d.tgl, kabin: d.kabin,
+      paxDewasa, paxAnak, paxInfant: '0'
+    });
+
+    if (!res.ok || !res.data) {
+      detailEl.innerHTML = '<div style="color:red;font-size:11px;">Gagal memuat detail</div>';
+      return;
+    }
+
+    const dd = res.data;
+    const fmt = n => Number(n).toLocaleString('id-ID');
+    const fmtIDR = n => 'Rp ' + Math.round(n/1000000*10)/10 + 'jt';
+
+    let html = `<div style="font-size:12px;">`;
+
+    // Breakdown per pax
+    dd.breakdown.forEach(b => {
+      const note = b.note ? ` <span style="color:#10b981;font-size:10px;">(${b.note})</span>` : '';
+      html += `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--text-secondary);">${b.label}${note}</span>
+        <span>SGD ${fmt(b.hargaJual)}</span>
+      </div>`;
+    });
+
+    // Port charges
+    html += `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
+      <span style="color:var(--text-secondary);">Port Charges (${parseInt(paxDewasa)+parseInt(paxAnak)}×SGD ${fmt(dd.portCharges)})</span>
+      <span>SGD ${fmt(dd.portTotal)}</span>
+    </div>`;
+
+    // Total
+    html += `<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;font-size:13px;">
+      <span>Total Harga Jual</span>
+      <span style="color:var(--primary);">SGD ${fmt(dd.totalJualSGD)}</span>
+    </div>`;
+    html += `<div style="text-align:right;font-size:11px;color:var(--text-muted);">≈ ${fmtIDR(dd.totalJualIDR)}</div>`;
+
+    // Gratuity
+    if (dd.totalGratuity > 0) {
+      html += `<div style="margin-top:6px;font-size:11px;color:#f59e0b;">⚠️ Gratuity: SGD ${fmt(dd.gratuityPerMalam)}/org/malam ≈ SGD ${fmt(dd.totalGratuity)} total</div>`;
+    }
+
+    html += `</div>`;
+    detailEl.innerHTML = html;
+
+  } catch(e) {
+    detailEl.innerHTML = '<div style="color:red;font-size:11px;">Error: ' + e.message + '</div>';
+  }
+}
+
 
 async function onCruiseRuteChange() {
   const rute = document.getElementById('cruise-rute').value;
