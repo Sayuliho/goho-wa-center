@@ -2835,6 +2835,11 @@ async function onCruiseTglChange() {
           ${catatanInfo}
         </div>`;
       document.getElementById('cruise-promo-info').style.display = 'block';
+      // Show/hide field paxtype berdasarkan Tipe promo
+      const paxtypeRow = document.getElementById('cruise-paxtype-row');
+      if (paxtypeRow) {
+        paxtypeRow.style.display = d.tipeHarga === 'B' ? 'block' : 'none';
+      }
     }
   } catch(e) { /* silent */ }
 }
@@ -2867,7 +2872,7 @@ async function cariCruiseTermurah() {
       action: 'getHargaCruise', mode: 'termurah',
       rute, kabin,
       paxDewasa: pax1st,
-      paxAnak: paxtype === 'kids' ? pax3rd : '0',
+      paxAnak: pax3rd,
       paxInfant: '0',
       pax1st, pax3rd, paxType: paxtype
     });
@@ -2945,7 +2950,7 @@ async function hitungHargaCruise() {
     const res = await apiGet({ action: 'getHargaCruise',
       mode: 'harga', rute, tgl, kabin,
       paxDewasa: pax1st,
-      paxAnak: paxtype === 'kids' ? pax3rd : '0',
+      paxAnak: pax3rd,
       paxInfant: infant,
       pax1st, pax3rd, paxType: paxtype, infant
     });
