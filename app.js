@@ -2725,18 +2725,21 @@ async function loadHargaData() {
 // ============================================================
 async function openCruiseModal() {
   document.getElementById('modal-cruise').style.display = 'flex';
-  // Reset semua
+  // Reset mode selector
+  document.getElementById('cruise-mode-selector').style.display = 'block';
+  document.getElementById('cruise-termurah-mode').style.display = 'none';
+  document.getElementById('cruise-spesifik-mode').style.display = 'none';
+  document.getElementById('btn-mode-termurah').style.background = 'var(--bg)';
+  document.getElementById('btn-mode-termurah').style.borderColor = 'var(--border)';
+  document.getElementById('btn-mode-spesifik').style.background = 'var(--bg)';
+  document.getElementById('btn-mode-spesifik').style.borderColor = 'var(--border)';
+  // Reset spesifik mode
   document.getElementById('cruise-tgl-group').style.display = 'none';
   document.getElementById('cruise-kabin-group').style.display = 'none';
   document.getElementById('cruise-pax-group').style.display = 'none';
   document.getElementById('cruise-hasil').style.display = 'none';
   document.getElementById('cruise-promo-info').style.display = 'none';
   document.getElementById('cruise-promo-info').innerHTML = '';
-  document.getElementById('cruise-toggle-termurah').style.display = 'none';
-  document.getElementById('cruise-termurah-panel').style.display = 'none';
-  document.getElementById('cruise-termurah-hasil').style.display = 'none';
-  if (document.getElementById('cruise-mode-termurah'))
-    document.getElementById('cruise-mode-termurah').checked = false;
   document.getElementById('cruise-rute').value = '';
   document.getElementById('cruise-rute').innerHTML = '<option value="">-- Memuat rute... --</option>';
 
@@ -2756,6 +2759,99 @@ async function openCruiseModal() {
 
 function closeCruiseModal() {
   document.getElementById('modal-cruise').style.display = 'none';
+}
+
+function setCruiseMode(mode) {
+  // Sembunyikan mode selector
+  document.getElementById('cruise-mode-selector').style.display = 'none';
+  document.getElementById('cruise-termurah-mode').style.display = 'none';
+  document.getElementById('cruise-spesifik-mode').style.display = 'none';
+
+  if (mode === 'termurah') {
+    document.getElementById('cruise-termurah-mode').style.display = 'block';
+    document.getElementById('tm-hasil').style.display = 'none';
+    document.getElementById('tm-hasil').innerHTML = '';
+  } else {
+    document.getElementById('cruise-spesifik-mode').style.display = 'block';
+    // Load rute kalau belum ada
+    const sel = document.getElementById('cruise-rute');
+    if (sel.options.length <= 1) {
+      loadCruiseRute();
+    }
+  }
+}
+
+async function loadCruiseRute() {
+  const sel = document.getElementById('cruise-rute');
+  sel.innerHTML = '<option value="">-- Memuat rute... --</option>';
+  try {
+    const res = await apiGet({ action: 'getHargaCruise', mode: 'rute' });
+    if (res.ok && res.data) {
+      sel.innerHTML = '<option value="">-- Pilih Rute --</option>';
+      res.data.forEach(r => { sel.innerHTML += `<option value="${r}">${r}</option>`; });
+    }
+  } catch(e) { showToast('Gagal memuat rute cruise'); }
+}
+
+async function cariCruiseTermurahBaru() {
+  const cruiseLine = document.getElementById('tm-cruise-line').value;
+  const bulanDari  = document.getElementById('tm-bulan-dari').value;
+  const bulanSampai= document.getElementById('tm-bulan-sampai').value;
+  const malam      = document.getElementById('tm-malam').value;
+  const kabin      = document.getElementById('tm-kabin').value;
+  const paxDewasa  = document.getElementById('tm-pax1').value;
+  const paxAnak    = document.getElementById('tm-pax3').value;
+
+  const hasilEl = document.getElementById('tm-hasil');
+  hasilEl.style.display = 'block';
+  hasilEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);">🔍 Mencari harga termurah...</div>';
+
+  try {
+    const res = await apiGet({
+      action: 'getHargaCruise', mode: 'termurah',
+      cruiseLine, bulanDari, bulanSampai, malam, kabin,
+      paxDewasa, paxAnak, paxInfant: '0'
+    });
+
+    if (!res.ok || !res.data || res.data.length === 0) {
+      hasilEl.innerHTML = '<div style="color:var(--text-muted);text-align:center;font-size:12px;padding:12px;">Tidak ada data untuk filter ini</div>';
+      return;
+    }
+
+    const fmt = n => Number(n).toLocaleString('id-ID');
+    const fmtIDR = n => 'Rp ' + Math.round(n/1000000*10)/10 + 'jt';
+
+    let html = `<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">
+      📋 ${res.data.length} hasil — sorted termurah</div>`;
+
+    // Group by harga untuk highlight termurah
+    const minHarga = res.data[0].totalJualSGD;
+
+    res.data.forEach((d, idx) => {
+      const isCheapest = d.totalJualSGD === minHarga;
+      const badge = isCheapest ? '<span style="background:#10b981;color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px;">TERMURAH</span>' : '';
+      const eventBadge = d.isEvent ? '<span style="background:#f59e0b;color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px;">EVENT</span>' : '';
+
+      html += `<div style="border:1px solid ${isCheapest ? '#10b981' : 'var(--border)'};border-radius:8px;padding:10px 12px;margin-bottom:8px;background:${isCheapest ? '#f0fdf4' : 'var(--bg)'};">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-weight:700;font-size:13px;">${d.tgl} ${badge}${eventBadge}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${d.rute} · ${d.malam}N · ${d.kabin}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${d.promo}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:800;font-size:15px;color:var(--primary);">SGD ${fmt(d.totalJualSGD)}</div>
+            <div style="font-size:11px;color:var(--text-muted);">≈ ${fmtIDR(d.totalJualIDR)}</div>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    hasilEl.innerHTML = html;
+
+  } catch(e) {
+    hasilEl.innerHTML = '<div style="color:red;font-size:12px;">Error: ' + e.message + '</div>';
+  }
 }
 
 async function onCruiseRuteChange() {
