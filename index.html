@@ -697,115 +697,186 @@
     </div>
     <div class="modal-body" style="padding:16px;">
 
-      <!-- Step 1: Rute -->
-      <div class="form-group" style="margin-bottom:12px;">
-        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">RUTE</label>
-        <select id="cruise-rute" onchange="onCruiseRuteChange()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
-          <option value="">-- Pilih Rute --</option>
-        </select>
-      </div>
-
-      <!-- Step 2: Tanggal Sailing -->
-      <div class="form-group" style="margin-bottom:12px;display:none;" id="cruise-tgl-group">
-        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TANGGAL SAILING</label>
-        <select id="cruise-tgl" onchange="onCruiseTglChange()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
-          <option value="">-- Pilih Tanggal --</option>
-        </select>
-      </div>
-
-      <!-- Promo Info Banner -->
-      <div id="cruise-promo-info" style="display:none;margin-bottom:12px;"></div>
-
-      <!-- Toggle: Mode Cari Termurah -->
-      <div id="cruise-toggle-termurah" style="display:none;margin-bottom:12px;">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text);">
-          <input type="checkbox" id="cruise-mode-termurah" onchange="onCruiseModeToggle()"
-            style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary);">
-          🔍 Cari tanggal termurah
-        </label>
-      </div>
-
-      <!-- Step 3: Kabin -->
-      <div class="form-group" style="margin-bottom:12px;display:none;" id="cruise-kabin-group">
-        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE KABIN</label>
-        <select id="cruise-kabin" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
-          <option value="">-- Pilih Kabin --</option>
-        </select>
-      </div>
-
-      <!-- Step 4: Pax -->
-      <div id="cruise-pax-group" style="display:none;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-          <div>
-            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">DEWASA (1st/2nd pax)</label>
-            <input type="number" id="cruise-pax1" min="1" max="4" value="2"
-              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
-          </div>
-          <div>
-            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">3rd/4th pax</label>
-            <input type="number" id="cruise-pax3" min="0" max="2" value="0"
-              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
-          </div>
+      <!-- Step 1: Pilih Mode -->
+      <div id="cruise-mode-selector" style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">PILIH MODE</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button onclick="setCruiseMode('termurah')" id="btn-mode-termurah"
+            style="padding:10px;border:2px solid var(--border);border-radius:10px;background:var(--bg);font-size:13px;cursor:pointer;transition:all 0.2s;">
+            🔍 Cari Termurah
+          </button>
+          <button onclick="setCruiseMode('spesifik')" id="btn-mode-spesifik"
+            style="padding:10px;border:2px solid var(--border);border-radius:10px;background:var(--bg);font-size:13px;cursor:pointer;transition:all 0.2s;">
+            📅 Tanggal Spesifik
+          </button>
         </div>
+      </div>
+
+      <!-- ===== MODE: CARI TERMURAH ===== -->
+      <div id="cruise-termurah-mode" style="display:none;">
+
+        <!-- Filter Cruise Line -->
+        <div class="form-group" style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">CRUISE LINE</label>
+          <select id="tm-cruise-line" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+            <option value="">Semua Cruise Line</option>
+            <option value="DREAM CRUISES">Dream Cruises</option>
+            <option value="ROYAL CARIBBEAN">Royal Caribbean</option>
+            <option value="DISNEY CRUISE">Disney Cruise</option>
+          </select>
+        </div>
+
+        <!-- Filter Bulan -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-          <div id="cruise-paxtype-row">
-            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE 3rd/4th pax</label>
-            <select id="cruise-paxtype" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
-              <option value="dewasa">Dewasa (13+)</option>
-              <option value="kids">Kids (3-12 thn)</option>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">BULAN DARI</label>
+            <select id="tm-bulan-dari" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+              <option value="">Semua</option>
+              <option value="2026-08">Agu 2026</option>
+              <option value="2026-09">Sep 2026</option>
+              <option value="2026-10">Okt 2026</option>
+              <option value="2026-11">Nov 2026</option>
+              <option value="2026-12">Des 2026</option>
+              <option value="2027-01">Jan 2027</option>
+              <option value="2027-02">Feb 2027</option>
+              <option value="2027-03">Mar 2027</option>
+              <option value="2027-04">Apr 2027</option>
             </select>
           </div>
           <div>
-            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">INFANT (0-2 thn)</label>
-            <input type="number" id="cruise-infant" min="0" max="2" value="0"
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">BULAN SAMPAI</label>
+            <select id="tm-bulan-sampai" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+              <option value="">Semua</option>
+              <option value="2026-08">Agu 2026</option>
+              <option value="2026-09">Sep 2026</option>
+              <option value="2026-10">Okt 2026</option>
+              <option value="2026-11">Nov 2026</option>
+              <option value="2026-12">Des 2026</option>
+              <option value="2027-01">Jan 2027</option>
+              <option value="2027-02">Feb 2027</option>
+              <option value="2027-03">Mar 2027</option>
+              <option value="2027-04">Apr 2027</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Malam -->
+        <div class="form-group" style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">DURASI</label>
+          <select id="tm-malam" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+            <option value="">Semua Durasi</option>
+            <option value="2">2 Malam</option>
+            <option value="3">3 Malam</option>
+            <option value="4">4 Malam</option>
+            <option value="5">5 Malam</option>
+          </select>
+        </div>
+
+        <!-- Filter Kabin -->
+        <div class="form-group" style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE KABIN</label>
+          <select id="tm-kabin" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+            <option value="Interior Stateroom (ISS/ISA)">Interior Stateroom (ISS/ISA)</option>
+            <option value="Oceanview Stateroom (OSS/OSA)">Oceanview Stateroom (OSS/OSA)</option>
+            <option value="Balcony Stateroom (BSS)">Balcony Stateroom (BSS)</option>
+            <option value="Balcony Stateroom (BSS/BSA)">Balcony Stateroom (BSS/BSA)</option>
+            <option value="Balcony Deluxe (BDS)">Balcony Deluxe (BDS)</option>
+          </select>
+        </div>
+
+        <!-- Pax -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">PAX 1/2</label>
+            <input type="number" id="tm-pax1" min="1" max="2" value="2"
+              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">PAX 3/4</label>
+            <input type="number" id="tm-pax3" min="0" max="2" value="0"
               style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
           </div>
         </div>
-        <button onclick="hitungHargaCruise()"
-          style="width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
-          🔍 Cek Harga
+
+        <!-- Tombol Cari -->
+        <button onclick="cariCruiseTermurahBaru()"
+          style="width:100%;padding:12px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">
+          🔍 Cari Harga Termurah
         </button>
+
+        <!-- Hasil -->
+        <div id="tm-hasil" style="display:none;margin-top:16px;"></div>
+
       </div>
 
-      <!-- Mode Cari Termurah -->
-      <div id="cruise-termurah-panel" style="display:none;margin-bottom:4px;">
-        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;">CARI TANGGAL TERMURAH</div>
+      <!-- ===== MODE: TANGGAL SPESIFIK ===== -->
+      <div id="cruise-spesifik-mode" style="display:none;">
+
+        <!-- Rute -->
+        <div class="form-group" style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">RUTE</label>
+          <select id="cruise-rute" onchange="onCruiseRuteChange()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+            <option value="">-- Pilih Rute --</option>
+          </select>
+        </div>
+
+        <!-- Tanggal -->
+        <div class="form-group" style="margin-bottom:12px;display:none;" id="cruise-tgl-group">
+          <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TANGGAL SAILING</label>
+          <select id="cruise-tgl" onchange="onCruiseTglChange()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+            <option value="">-- Pilih Tanggal --</option>
+          </select>
+        </div>
+
+        <!-- Promo Info -->
+        <div id="cruise-promo-info" style="display:none;margin-bottom:12px;"></div>
+
+        <!-- Kabin -->
+        <div class="form-group" style="margin-bottom:12px;display:none;" id="cruise-kabin-group">
+          <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE KABIN</label>
+          <select id="cruise-kabin" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+            <option value="">-- Pilih Kabin --</option>
+          </select>
+        </div>
+
+        <!-- Pax -->
+        <div id="cruise-pax-group" style="display:none;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
             <div>
               <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">DEWASA (1st/2nd pax)</label>
-              <input type="number" id="ct-pax1" min="1" max="4" value="2"
+              <input type="number" id="cruise-pax1" min="1" max="4" value="2"
                 style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
             </div>
             <div>
               <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">3rd/4th pax</label>
-              <input type="number" id="ct-pax3" min="0" max="2" value="0"
+              <input type="number" id="cruise-pax3" min="0" max="2" value="0"
                 style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
             </div>
           </div>
-          <div style="margin-bottom:12px;">
-            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE KABIN</label>
-            <select id="ct-kabin" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
-              <option value="">-- Pilih Kabin --</option>
-            </select>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div id="cruise-paxtype-row">
+              <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE 3rd/4th pax</label>
+              <select id="cruise-paxtype" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+                <option value="dewasa">Dewasa (13+)</option>
+                <option value="kids">Kids (3-12 thn)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">INFANT (0-2 thn)</label>
+              <input type="number" id="cruise-infant" min="0" max="2" value="0"
+                style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
+            </div>
           </div>
-          <div style="margin-bottom:14px;">
-            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);">TIPE 3rd/4th pax</label>
-            <select id="ct-paxtype" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;">
-              <option value="dewasa">Dewasa (13+)</option>
-              <option value="kids">Kids (3-12 thn)</option>
-            </select>
-          </div>
-          <button onclick="cariCruiseTermurah()"
-            style="width:100%;padding:10px;background:#0a8a6e;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
-            🔍 Cari Tanggal Termurah
+          <button onclick="hitungHargaCruise()"
+            style="width:100%;padding:10px;background:none;border:2px solid var(--primary);color:var(--primary);border-radius:8px;font-size:13px;cursor:pointer;margin-bottom:12px;">
+            🔍
           </button>
-          <div id="cruise-termurah-hasil" style="display:none;margin-top:14px;"></div>
         </div>
-      </div>
 
-      <!-- Hasil -->
-      <div id="cruise-hasil" style="display:none;margin-top:16px;background:var(--bg-secondary);border-radius:10px;padding:14px;font-size:13px;">
+        <!-- Hasil -->
+        <div id="cruise-hasil" style="display:none;margin-top:16px;background:var(--bg-secondary);border-radius:10px;padding:14px;font-size:13px;">
+        </div>
+
       </div>
 
     </div>
