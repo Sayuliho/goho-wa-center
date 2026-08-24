@@ -3204,6 +3204,13 @@ async function hitungHargaCruise() {
     hasilEl.innerHTML = `<div style="color:red;text-align:center;">Error: ${e.toString()}</div>`;
   }
 }
+function onCruisePromoChange() {
+  const selected = document.querySelector('input[name="cruise-promo-select"]:checked');
+  if (!selected) return;
+  // Reset hasil kalau promo diganti
+  const hasilEl = document.getElementById('cruise-hasil');
+  if (hasilEl) hasilEl.style.display = 'none';
+}
 
 function hargaUpdateDay() {
   const c = document.getElementById('h-country').value;
