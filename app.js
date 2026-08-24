@@ -3127,13 +3127,9 @@ async function hitungHargaCruise() {
   hasilEl.style.display = 'block';
   hasilEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Menghitung harga...</div>';
 
-  const selectedPromo = document.querySelector('input[name="cruise-promo-select"]:checked');
-  const promoVal = selectedPromo ? selectedPromo.value : '';
-
   try {
     const res = await apiGet({ action: 'getHargaCruise',
       mode: 'harga', rute, tgl, kabin,
-      promo: promoVal,
       paxDewasa: pax1st,
       paxAnak: pax3rd,
       paxInfant: infant,
@@ -3145,72 +3141,159 @@ async function hitungHargaCruise() {
       return;
     }
 
-    const d = res.data;
-    const fmt = n => Number(n).toLocaleString('en-SG');
+    const fmt    = n => Number(n).toLocaleString('en-SG');
     const fmtIDR = n => 'Rp ' + Number(n).toLocaleString('id-ID');
     const totalPax = parseInt(pax1st) + parseInt(pax3rd) + parseInt(infant);
 
-    let paxDetail = '';
-    if (d.breakdown && d.breakdown.length > 0) {
-      d.breakdown.forEach(b => {
-        const noteStr = b.note ? ` <span style="color:#0a7;font-size:10px;">(${b.note})</span>` : '';
-        paxDetail += `<div style="display:flex;justify-content:space-between;">
-          <span>${b.label}${noteStr}</span>
-          <span>SGD ${fmt(b.hargaJual)}</span>
+    // ── MULTI PROMO: tampilkan card pilihan dulu ──────────────
+    if (res.multiPromo && Array.isArray(res.data)) {
+      const promos = res.data;
+      const lowestSGD = Math.min(...promos.map(p => p.totalJualSGD));
+      let cardsHTML = `
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--text-muted);">${rute} | ${tgl} | ${kabin} | ${parseInt(pax1st)+parseInt(pax3rd)+parseInt(infant)} pax</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-top:4px;">Pilih promo yang akan digunakan:</div>
         </div>`;
+      promos.forEach((p, i) => {
+        const isLowest = p.totalJualSGD === lowestSGD;
+        const evBadge  = p.prioritas === 'EVENT'
+          ? '<span style="background:#e07b00;color:white;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:6px;">EVENT</span>' : '';
+        const lowestBadge = isLowest
+          ? '<span style="background:#0a7;color:white;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:6px;">TERMURAH</span>' : '';
+        cardsHTML += `
+          <div onclick="showDetailPromo(${i})" style="cursor:pointer;border:2px solid ${isLowest?'#0a7':'var(--border)'};border-radius:10px;padding:12px 14px;margin-bottom:8px;background:${isLowest?'#f0fff8':'var(--surface)'};display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:700;">${p.promo}${evBadge}${lowestBadge}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Booking s/d: ${p.bookingSampai || '-'}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:16px;font-weight:700;color:${isLowest?'#0a7':'var(--primary)'};">SGD ${fmt(p.totalJualSGD)}</div>
+              <div style="font-size:10px;color:var(--text-muted);">≈ ${fmtIDR(p.totalJualIDR)}</div>
+            </div>
+          </div>`;
       });
-    } else {
-      if (parseInt(pax1st) > 0)
-        paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${pax1st}x Dewasa (1st/2nd)</span><span>SGD ${fmt(d.harga1stJual)} × ${pax1st} = <b>SGD ${fmt(d.harga1stJual * parseInt(pax1st))}</b></span></div>`;
-      if (parseInt(pax3rd) > 0)
-        paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${pax3rd}x ${paxtype === 'kids' ? 'Kids' : 'Dewasa'} (3rd/4th)</span><span>SGD ${fmt(d.harga3rdJual)} × ${pax3rd} = <b>SGD ${fmt(d.harga3rdJual * parseInt(pax3rd))}</b></span></div>`;
-      if (parseInt(infant) > 0)
-        paxDetail += `<div style="display:flex;justify-content:space-between;"><span>${infant}x Infant</span><span>SGD ${fmt(d.hargaInfant)} × ${infant} = <b>SGD ${fmt(d.hargaInfant * parseInt(infant))}</b></span></div>`;
+      cardsHTML += `<div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px;">Klik promo untuk lihat breakdown lengkap</div>`;
+      hasilEl.innerHTML = cardsHTML;
+
+      // Simpan data promo untuk diakses saat klik
+      hasilEl._promoData = promos;
+      hasilEl._paxInfo   = { pax1st, pax3rd, paxtype, infant, totalPax, fmt, fmtIDR };
+      return;
     }
 
-    const diskonInfo = d.diskonCabin ? `<div style="display:flex;justify-content:space-between;color:#0a7;"><span>Diskon Kabin</span><span>SGD ${fmt(d.diskonCabin)}</span></div>` : '';
-    const eventBadge = d.eventOverride ? '<span style="background:#e07b00;color:white;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:6px;">PROMO EVENT</span>' : '';
-    const catatanInfo = d.catatan ? `<div style="margin-top:8px;font-size:11px;color:#e07b00;">📌 ${d.catatan}</div>` : '';
+    // ── SINGLE PROMO: tampilkan breakdown langsung ────────────
+    renderBreakdownCruise(hasilEl, res.data, { pax1st, pax3rd, paxtype, infant, totalPax, fmt, fmtIDR });
 
-    hasilEl.innerHTML = `
-      <div style="margin-bottom:10px;">
-        <div style="font-size:11px;color:var(--text-muted);">PROMO</div>
-        <div style="font-size:13px;font-weight:700;">${d.promo}${eventBadge}</div>
-        <div style="font-size:10px;color:var(--text-muted);">${d.rute} | ${d.tgl} | ${d.kabin} | ${d.malam} malam</div>
-      </div>
-      <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px;font-size:12px;display:flex;flex-direction:column;gap:6px;">
-        ${paxDetail}
-        <div style="display:flex;justify-content:space-between;"><span>Port Charges (${totalPax}×)</span><span>SGD ${fmt(d.portCharges/totalPax)} × ${totalPax} = <b>SGD ${fmt(d.portCharges)}</b></span></div>
-        ${diskonInfo}
-      </div>
-      <div style="border-top:2px solid var(--primary);padding-top:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
-          <span>Harga Publish</span><span>SGD ${fmt(d.totalPublishSGD)}</span>
-        </div>
-        ${d.discPct > 0 ? `<div style="font-size:10px;color:#0a7;text-align:right;">Disc agen ${d.discPct}% sudah termasuk</div>` : ''}
-        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--primary);margin-top:4px;">
-          <span>Total Harga Jual</span><span>SGD ${fmt(d.totalJualSGD)}</span>
-        </div>
-        <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:2px;">
-          ≈ ${fmtIDR(d.totalJualIDR)} <span style="font-size:10px;">(kurs SGD 1 = IDR ${fmt(d.kurs)})</span>
-        </div>
-        <div style="margin-top:8px;padding:8px;background:#fff8e1;border-radius:6px;font-size:11px;color:#7a5c00;">
-          ⚠️ Harga IDR untuk referensi saja. Harga final dikonfirmasi saat booking.<br>
-          💳 Gratuity: SGD ${fmt(d.gratuityPerMalam)}/pax/malam (bayar di kapal) ≈ SGD ${fmt(d.totalGratuity)} total
-        </div>
-        ${catatanInfo}
-      </div>`;
   } catch(e) {
     hasilEl.innerHTML = `<div style="color:red;text-align:center;">Error: ${e.toString()}</div>`;
   }
 }
-function onCruisePromoChange() {
-  const selected = document.querySelector('input[name="cruise-promo-select"]:checked');
-  if (!selected) return;
-  // Reset hasil kalau promo diganti
+
+function showDetailPromo(idx) {
   const hasilEl = document.getElementById('cruise-hasil');
-  if (hasilEl) hasilEl.style.display = 'none';
+  const promos  = hasilEl._promoData;
+  const info    = hasilEl._paxInfo;
+  if (!promos || !promos[idx]) return;
+
+  // Tombol back
+  const backBtn = `<div onclick="renderPromoCards()" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--primary);margin-bottom:12px;">
+    <i class="ti ti-arrow-left"></i> Kembali ke pilihan promo
+  </div>`;
+  hasilEl.innerHTML = backBtn;
+
+  const container = document.createElement('div');
+  hasilEl.appendChild(container);
+  renderBreakdownCruise(container, promos[idx], info);
 }
+
+function renderPromoCards() {
+  const hasilEl = document.getElementById('cruise-hasil');
+  const promos  = hasilEl._promoData;
+  const info    = hasilEl._paxInfo;
+  if (!promos) return;
+
+  const fmt    = info.fmt;
+  const fmtIDR = info.fmtIDR;
+  const lowestSGD = Math.min(...promos.map(p => p.totalJualSGD));
+  const rute  = document.getElementById('cruise-rute').value;
+  const tgl   = document.getElementById('cruise-tgl').value;
+  const kabin = document.getElementById('cruise-kabin').value;
+
+  let cardsHTML = `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text-muted);">${rute} | ${tgl} | ${kabin} | ${info.totalPax} pax</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-top:4px;">Pilih promo yang akan digunakan:</div>
+    </div>`;
+  promos.forEach((p, i) => {
+    const isLowest = p.totalJualSGD === lowestSGD;
+    const evBadge  = p.prioritas === 'EVENT'
+      ? '<span style="background:#e07b00;color:white;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:6px;">EVENT</span>' : '';
+    const lowestBadge = isLowest
+      ? '<span style="background:#0a7;color:white;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:6px;">TERMURAH</span>' : '';
+    cardsHTML += `
+      <div onclick="showDetailPromo(${i})" style="cursor:pointer;border:2px solid ${isLowest?'#0a7':'var(--border)'};border-radius:10px;padding:12px 14px;margin-bottom:8px;background:${isLowest?'#f0fff8':'var(--surface)'};display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:13px;font-weight:700;">${p.promo}${evBadge}${lowestBadge}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Booking s/d: ${p.bookingSampai || '-'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:16px;font-weight:700;color:${isLowest?'#0a7':'var(--primary)'};">SGD ${fmt(p.totalJualSGD)}</div>
+          <div style="font-size:10px;color:var(--text-muted);">≈ ${fmtIDR(p.totalJualIDR)}</div>
+        </div>
+      </div>`;
+  });
+  cardsHTML += `<div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px;">Klik promo untuk lihat breakdown lengkap</div>`;
+  hasilEl.innerHTML = cardsHTML;
+  hasilEl._promoData = promos;
+  hasilEl._paxInfo   = info;
+}
+
+function renderBreakdownCruise(container, d, info) {
+  const { pax1st, pax3rd, paxtype, infant, totalPax, fmt, fmtIDR } = info;
+  let paxDetail = '';
+  if (d.breakdown && d.breakdown.length > 0) {
+    d.breakdown.forEach(b => {
+      const noteStr = b.note ? ` <span style="color:#0a7;font-size:10px;">(${b.note})</span>` : '';
+      paxDetail += `<div style="display:flex;justify-content:space-between;">
+        <span>${b.label}${noteStr}</span>
+        <span>SGD ${fmt(b.hargaJual)}</span>
+      </div>`;
+    });
+  }
+  const diskonInfo  = d.diskonCabin ? `<div style="display:flex;justify-content:space-between;color:#0a7;"><span>Diskon Kabin</span><span>SGD ${fmt(d.diskonCabin)}</span></div>` : '';
+  const evBadge     = d.prioritas === 'EVENT' ? '<span style="background:#e07b00;color:white;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:6px;">PROMO EVENT</span>' : '';
+  const catatanInfo = d.catatan ? `<div style="margin-top:8px;font-size:11px;color:#e07b00;">📌 ${d.catatan}</div>` : '';
+
+  container.innerHTML = `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text-muted);">PROMO</div>
+      <div style="font-size:13px;font-weight:700;">${d.promo}${evBadge}</div>
+      <div style="font-size:10px;color:var(--text-muted);">${d.rute} | ${d.tgl} | ${d.kabin} | ${d.malam} malam</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px;font-size:12px;display:flex;flex-direction:column;gap:6px;">
+      ${paxDetail}
+      <div style="display:flex;justify-content:space-between;"><span>Port Charges (${totalPax}×)</span><span>SGD ${fmt(d.portCharges/totalPax)} × ${totalPax} = <b>SGD ${fmt(d.portCharges)}</b></span></div>
+      ${diskonInfo}
+    </div>
+    <div style="border-top:2px solid var(--primary);padding-top:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+        <span>Harga Publish</span><span>SGD ${fmt(d.totalPublishSGD)}</span>
+      </div>
+      ${d.discPct > 0 ? `<div style="font-size:10px;color:#0a7;text-align:right;">Disc agen ${d.discPct}% sudah termasuk</div>` : ''}
+      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--primary);margin-top:4px;">
+        <span>Total Harga Jual</span><span>SGD ${fmt(d.totalJualSGD)}</span>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:2px;">
+        ≈ ${fmtIDR(d.totalJualIDR)} <span style="font-size:10px;">(kurs SGD 1 = IDR ${fmt(d.kurs)})</span>
+      </div>
+      <div style="margin-top:8px;padding:8px;background:#fff8e1;border-radius:6px;font-size:11px;color:#7a5c00;">
+        ⚠️ Harga IDR untuk referensi saja. Harga final dikonfirmasi saat booking.<br>
+        💳 Gratuity: SGD ${fmt(d.gratuityPerMalam)}/pax/malam (bayar di kapal) ≈ SGD ${fmt(d.totalGratuity)} total
+      </div>
+      ${catatanInfo}
+    </div>`;
+}
+
 
 function hargaUpdateDay() {
   const c = document.getElementById('h-country').value;
