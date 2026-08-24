@@ -3127,9 +3127,13 @@ async function hitungHargaCruise() {
   hasilEl.style.display = 'block';
   hasilEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Menghitung harga...</div>';
 
+  const selectedPromo = document.querySelector('input[name="cruise-promo-select"]:checked');
+  const promoVal = selectedPromo ? selectedPromo.value : '';
+
   try {
     const res = await apiGet({ action: 'getHargaCruise',
       mode: 'harga', rute, tgl, kabin,
+      promo: promoVal,
       paxDewasa: pax1st,
       paxAnak: pax3rd,
       paxInfant: infant,
