@@ -2999,30 +2999,9 @@ async function onCruiseTglChange() {
     }
   } catch(e) { showToast('Gagal memuat kabin'); }
 
-  // Load info promo aktif untuk tanggal ini (silent)
-  try {
-    const rp = await apiGet({ action: 'getHargaCruise', mode: 'promo', rute, tgl });
-    if (rp.ok && rp.data) {
-      const promos = Array.isArray(rp.data) ? rp.data : [rp.data];
-      let promoHTML = '<div style="font-size:11px;color:#7a5c00;font-weight:600;margin-bottom:6px;">🎫 PILIH PROMO</div>';
-      promos.forEach((p, i) => {
-        const evBadge = p.prioritas === 'EVENT'
-          ? '<span style="background:#e07b00;color:white;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:6px;">EVENT</span>' : '';
-        const discInfo = p.disc ? `<span style="color:#0a7;font-size:10px;margin-left:6px;">Disc ${p.disc}</span>` : '';
-        promoHTML += `<label style="display:flex;align-items:flex-start;gap:8px;padding:7px 8px;border:1px solid #f0d060;border-radius:6px;margin-bottom:5px;cursor:pointer;background:${i===0?'#fff8e1':'#fffef5'};">
-          <input type="radio" name="cruise-promo-select" value="${p.promo}" ${i===0?'checked':''} onchange="onCruisePromoChange()" style="margin-top:2px;">
-          <div><div style="font-size:12px;font-weight:700;color:#5a4200;">${p.promo}${evBadge}${discInfo}</div>
-          ${p.catatan?`<div style="font-size:10px;color:#e07b00;">📌 ${p.catatan}</div>`:''}</div>
-        </label>`;
-      });
-      document.getElementById('cruise-promo-info').innerHTML = `<div style="background:#fff8e1;border:1px solid #f0d060;border-radius:8px;padding:9px 12px;">${promoHTML}</div>`;
-      document.getElementById('cruise-promo-info').style.display = 'block';
-      // Show/hide paxtype berdasarkan promo pertama
-      const firstTipe = promos[0].tipeHarga;
-      const paxtypeRow = document.getElementById('cruise-paxtype-row');
-      if (paxtypeRow) paxtypeRow.style.display = firstTipe === 'B' ? 'block' : 'none';
-    }
-  } catch(e) { /* silent */ }
+  // Show/hide paxtype — default tampil (hide kalau tidak perlu)
+  const paxtypeRow = document.getElementById('cruise-paxtype-row');
+  if (paxtypeRow) paxtypeRow.style.display = 'block';
 }
 
 function onCruiseModeToggle() {
