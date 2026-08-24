@@ -3176,7 +3176,7 @@ async function hitungHargaCruise() {
       </div>
       <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px;font-size:12px;display:flex;flex-direction:column;gap:6px;">
         ${paxDetail}
-        <div style="display:flex;justify-content:space-between;"><span>Port Charges (${totalPax}x)</span><span>SGD ${fmt(d.portCharges)} × ${totalPax} = <b>SGD ${fmt(d.portCharges * totalPax)}</b></span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Port Charges (${totalPax}×)</span><span>SGD ${fmt(d.portCharges/totalPax)} × ${totalPax} = <b>SGD ${fmt(d.portCharges)}</b></span></div>
         ${diskonInfo}
       </div>
       <div style="border-top:2px solid var(--primary);padding-top:10px;">
