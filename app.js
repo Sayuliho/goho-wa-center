@@ -3176,7 +3176,7 @@ async function hitungHargaCruise() {
       <div style="margin-bottom:10px;">
         <div style="font-size:11px;color:var(--text-muted);">PROMO</div>
         <div style="font-size:13px;font-weight:700;">${d.promo}${eventBadge}</div>
-        <div style="font-size:10px;color:var(--text-muted);">${d.rute} | ${d.tgl} | ${d.kabin} | ${d.malam} malam | Season: ${d.season}</div>
+        <div style="font-size:10px;color:var(--text-muted);">${d.rute} | ${d.tgl} | ${d.kabin} | ${d.malam} malam</div>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px;font-size:12px;display:flex;flex-direction:column;gap:6px;">
         ${paxDetail}
