@@ -2987,12 +2987,15 @@ async function onCruiseTglChange() {
 
       // Populate ct-kabin untuk mode Cari Termurah
       const ctKabin = document.getElementById('ct-kabin');
-      ctKabin.innerHTML = '<option value="">-- Pilih Kabin --</option>';
-      res.data.forEach(k => { ctKabin.innerHTML += `<option value="${k}">${k}</option>`; });
+      if (ctKabin) {
+        ctKabin.innerHTML = '<option value="">-- Pilih Kabin --</option>';
+        res.data.forEach(k => { ctKabin.innerHTML += `<option value="${k}">${k}</option>`; });
+      }
 
       document.getElementById('cruise-kabin-group').style.display = 'block';
       document.getElementById('cruise-pax-group').style.display = 'block';
-      document.getElementById('cruise-toggle-termurah').style.display = 'block';
+      const elTgl = document.getElementById('cruise-toggle-termurah');
+      if (elTgl) elTgl.style.display = 'block';
     }
   } catch(e) { showToast('Gagal memuat kabin'); }
 
