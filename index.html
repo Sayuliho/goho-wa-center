@@ -873,6 +873,21 @@
           </button>
         </div>
 
+        <!-- Toggle Cari Termurah -->
+        <div id="cruise-toggle-termurah" style="display:none;margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);cursor:pointer;">
+            <input type="checkbox" id="cruise-mode-termurah" onchange="onToggleModeTermurah()" style="width:14px;height:14px;">
+            Tampilkan semua tanggal termurah untuk kabin ini
+          </label>
+        </div>
+        <div id="cruise-termurah-panel" style="display:none;margin-bottom:10px;">
+          <button onclick="cariCruiseTermurahBaru()"
+            style="width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer;">
+            🔍 Cari Tanggal Termurah
+          </button>
+        </div>
+        <div id="cruise-termurah-hasil" style="display:none;margin-bottom:12px;"></div>
+
         <!-- Hasil -->
         <div id="cruise-hasil" style="display:none;margin-top:16px;background:var(--bg-secondary);border-radius:10px;padding:14px;font-size:13px;">
         </div>
