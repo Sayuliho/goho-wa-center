@@ -2967,11 +2967,14 @@ async function onCruiseTglChange() {
   document.getElementById('cruise-pax-group').style.display = 'none';
   document.getElementById('cruise-hasil').style.display = 'none';
   document.getElementById('cruise-promo-info').style.display = 'none';
-  document.getElementById('cruise-toggle-termurah').style.display = 'none';
-  document.getElementById('cruise-termurah-panel').style.display = 'none';
-  document.getElementById('cruise-termurah-hasil').style.display = 'none';
-  if (document.getElementById('cruise-mode-termurah'))
-    document.getElementById('cruise-mode-termurah').checked = false;
+  const elToggle = document.getElementById('cruise-toggle-termurah');
+  const elPanel  = document.getElementById('cruise-termurah-panel');
+  const elHasil  = document.getElementById('cruise-termurah-hasil');
+  const elMode   = document.getElementById('cruise-mode-termurah');
+  if (elToggle) elToggle.style.display = 'none';
+  if (elPanel)  elPanel.style.display  = 'none';
+  if (elHasil)  elHasil.style.display  = 'none';
+  if (elMode)   elMode.checked = false;
 
   const sel = document.getElementById('cruise-kabin');
   sel.innerHTML = '<option value="">-- Memuat kabin... --</option>';
