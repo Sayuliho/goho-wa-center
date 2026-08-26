@@ -1614,15 +1614,16 @@ async function sendPasteImage() {
     const ext = fileToSend.type.split('/')[1] || 'png';
     const fileName = 'screenshot-' + Date.now() + '.' + ext;
 
-    const res = await apiPost({
-      action: 'sendFile',
-      roomId: currentRoom.roomId,
-      staffName: currentStaff.nama,
-      noWa: currentRoom.noWa,
-      fileName,
-      fileType: fileToSend.type,
-      fileData: base64
-    });
+  const res = await apiPost({
+    action: 'sendFile',
+    roomId: currentRoom.roomId,
+    staffName: currentStaff.nama,
+    noWa: currentRoom.noWa,
+    fileName,
+    fileType: fileToSend.type,
+    fileData: base64,
+    deviceLabel: currentRoom.deviceLabel || 'WA2'
+   });
 
     if (res.ok) {
       status.textContent = '✅ Screenshot berhasil dikirim!';
