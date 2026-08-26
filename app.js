@@ -2995,10 +2995,14 @@ async function toggleTmDetail(idx) {
   const paxAnak   = window._tmData.paxAnak;
 
   try {
+    const konfieAktif = getKonfieAktif();
+    const konfieFilter = konfieAktif ? Object.keys(konfieAktif).filter(k => konfieAktif[k]).join('||') : '';
+
     const res = await apiGet({
       action: 'getHargaCruise', mode: 'harga',
       rute: d.rute, tgl: d.tgl, kabin: d.kabin,
-      paxDewasa, paxAnak, paxInfant: '0'
+      paxDewasa, paxAnak, paxInfant: '0',
+      konfieAktif: konfieFilter
     });
 
     if (!res.ok || !res.data) {
