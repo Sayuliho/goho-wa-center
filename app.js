@@ -2892,12 +2892,10 @@ async function toggleTmDetail(idx) {
       return;
     }
 
-    const dd = res.data;
+    const dd = Array.isArray(res.data) ? res.data[0] : res.data;
     const fmt = n => Number(n).toLocaleString('id-ID');
     const fmtIDR = n => 'Rp ' + Math.round(n/1000000*10)/10 + 'jt';
-
     let html = `<div style="font-size:12px;">`;
-
     // Breakdown per pax
     (dd.breakdown || []).forEach(b => {
       const note = b.note ? ` <span style="color:#10b981;font-size:10px;">(${b.note})</span>` : '';
@@ -2906,11 +2904,10 @@ async function toggleTmDetail(idx) {
         <span>SGD ${fmt(b.hargaJual)}</span>
       </div>`;
     });
-
     // Port charges
     html += `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
-      <span style="color:var(--text-secondary);">Port Charges (${parseInt(paxDewasa)+parseInt(paxAnak)}×SGD ${fmt(dd.portCharges)})</span>
-      <span>SGD ${fmt(dd.portTotal)}</span>
+      <span style="color:var(--text-secondary);">Port Charges (${parseInt(paxDewasa)+parseInt(paxAnak)}×)</span>
+      <span>SGD ${fmt(dd.portCharges)}</span>
     </div>`;
 
     // Total
