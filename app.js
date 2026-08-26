@@ -2748,6 +2748,22 @@ function toggleKonfie(namaPromo, isAktif) {
   } catch(e) {}
 }
 
+function getKonfieHidden() {
+  try { return JSON.parse(localStorage.getItem('cruise_konfie_hidden') || '[]'); } catch(e) { return []; }
+}
+
+function hideKonfie(namaPromo) {
+  const hidden = getKonfieHidden();
+  if (!hidden.includes(namaPromo)) hidden.push(namaPromo);
+  localStorage.setItem('cruise_konfie_hidden', JSON.stringify(hidden));
+  loadKonfieList();
+}
+
+function unhideAllKonfie() {
+  localStorage.removeItem('cruise_konfie_hidden');
+  loadKonfieList();
+}
+
 async function loadKonfieList() {
   const el = document.getElementById('cruise-konfie-list');
   if (!el) return;
@@ -2759,6 +2775,8 @@ async function loadKonfieList() {
     }
     const today = new Date().toISOString().split('T')[0];
     const saved = getKonfieAktif();
+    const hidden = getKonfieHidden();
+
     const defaultAktif = {};
     res.data.forEach(k => {
       const exp = k.bookingSampai ? parseDateDMY(k.bookingSampai) : null;
@@ -2767,8 +2785,11 @@ async function loadKonfieList() {
     const aktifMap = saved || defaultAktif;
     if (!saved) localStorage.setItem('cruise_konfie_aktif', JSON.stringify(aktifMap));
 
+    const visible = res.data.filter(k => !hidden.includes(k.nama_promo));
+    const hiddenCount = res.data.length - visible.length;
+
     let html = '';
-    res.data.forEach(k => {
+    visible.forEach(k => {
       const exp = k.bookingSampai ? parseDateDMY(k.bookingSampai) : null;
       const isExpired = exp && exp < today;
       const daysLeft = exp ? Math.ceil((new Date(exp) - new Date(today)) / 86400000) : null;
@@ -2781,16 +2802,31 @@ async function loadKonfieList() {
         statusBadge = '<span style="background:#dcfce7;color:#16a34a;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">✅ Aktif</span>';
       }
       const checked = aktifMap[k.nama_promo] !== false ? 'checked' : '';
-      html += `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;${isExpired ? 'opacity:0.6;' : ''}">
+      const hideBtn = isExpired
+        ? `<button onclick="hideKonfie('${k.nama_promo}')" title="Sembunyikan"
+            style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-muted);padding:0 4px;flex-shrink:0;">🗑</button>`
+        : '';
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);${isExpired ? 'opacity:0.6;' : ''}">
         <input type="checkbox" ${checked} onchange="toggleKonfie('${k.nama_promo}', this.checked)"
-          style="width:16px;height:16px;accent-color:var(--primary);flex-shrink:0;">
-        <div style="flex:1;min-width:0;">
+          style="width:16px;height:16px;accent-color:var(--primary);flex-shrink:0;cursor:pointer;">
+        <div style="flex:1;min-width:0;cursor:pointer;" onclick="this.previousElementSibling.click()">
           <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.nama_promo}</div>
           <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${k.cruise_line} · s/d ${k.bookingSampai || '-'}</div>
         </div>
         <div style="flex-shrink:0;">${statusBadge}</div>
-      </label>`;
+        ${hideBtn}
+      </div>`;
     });
+
+    if (hiddenCount > 0) {
+      html += `<div style="padding:8px 12px;text-align:center;">
+        <button onclick="unhideAllKonfie()"
+          style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-muted);text-decoration:underline;">
+          Tampilkan ${hiddenCount} konfie tersembunyi
+        </button>
+      </div>`;
+    }
+
     el.innerHTML = html;
   } catch(e) {
     el.innerHTML = '<div style="padding:10px;font-size:11px;color:red;">Gagal memuat konfie</div>';
