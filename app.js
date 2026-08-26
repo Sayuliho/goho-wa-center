@@ -2899,7 +2899,7 @@ async function toggleTmDetail(idx) {
     let html = `<div style="font-size:12px;">`;
 
     // Breakdown per pax
-    dd.breakdown.forEach(b => {
+    (dd.breakdown || []).forEach(b => {
       const note = b.note ? ` <span style="color:#10b981;font-size:10px;">(${b.note})</span>` : '';
       html += `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
         <span style="color:var(--text-secondary);">${b.label}${note}</span>
