@@ -699,6 +699,15 @@
 
       <!-- Step 1: Pilih Mode -->
       <div id="cruise-mode-selector" style="margin-bottom:16px;">
+
+        <!-- Kelola Konfie -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">KONFIE AKTIF</div>
+          <div id="cruise-konfie-list" style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+            <div style="padding:12px;text-align:center;font-size:12px;color:var(--text-muted);">⏳ Memuat konfie...</div>
+          </div>
+        </div>
+
         <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">PILIH MODE</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <button onclick="setCruiseMode('termurah')" id="btn-mode-termurah"
