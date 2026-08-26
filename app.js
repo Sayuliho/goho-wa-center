@@ -2724,8 +2724,83 @@ async function loadHargaData() {
 // ============================================================
 // DREAM CRUISES — Price Tool
 // ============================================================
+function getKonfieAktif() {
+  try {
+    const saved = localStorage.getItem('cruise_konfie_aktif');
+    return saved ? JSON.parse(saved) : null;
+  } catch(e) { return null; }
+}
+
+function parseDateDMY(s) {
+  const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
+                  Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  const m = s.trim().match(/^(\d+)-([A-Za-z]+)-(\d{4})$/);
+  if (!m) return null;
+  const mo = months[m[2]];
+  return mo ? `${m[3]}-${mo}-${m[1].padStart(2,'0')}` : null;
+}
+
+function toggleKonfie(namaPromo, isAktif) {
+  try {
+    const saved = JSON.parse(localStorage.getItem('cruise_konfie_aktif') || '{}');
+    saved[namaPromo] = isAktif;
+    localStorage.setItem('cruise_konfie_aktif', JSON.stringify(saved));
+  } catch(e) {}
+}
+
+async function loadKonfieList() {
+  const el = document.getElementById('cruise-konfie-list');
+  if (!el) return;
+  try {
+    const res = await apiGet({ action: 'getHargaCruise', mode: 'konfie' });
+    if (!res.ok || !res.data || res.data.length === 0) {
+      el.innerHTML = '<div style="padding:10px;font-size:11px;color:var(--text-muted);">Tidak ada konfie ditemukan</div>';
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const saved = getKonfieAktif();
+    const defaultAktif = {};
+    res.data.forEach(k => {
+      const exp = k.bookingSampai ? parseDateDMY(k.bookingSampai) : null;
+      defaultAktif[k.nama_promo] = exp ? exp >= today : true;
+    });
+    const aktifMap = saved || defaultAktif;
+    if (!saved) localStorage.setItem('cruise_konfie_aktif', JSON.stringify(aktifMap));
+
+    let html = '';
+    res.data.forEach(k => {
+      const exp = k.bookingSampai ? parseDateDMY(k.bookingSampai) : null;
+      const isExpired = exp && exp < today;
+      const daysLeft = exp ? Math.ceil((new Date(exp) - new Date(today)) / 86400000) : null;
+      let statusBadge = '';
+      if (isExpired) {
+        statusBadge = '<span style="background:#fee2e2;color:#dc2626;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">❌ Expired</span>';
+      } else if (daysLeft !== null && daysLeft <= 7) {
+        statusBadge = `<span style="background:#fef3c7;color:#d97706;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">⚠️ ${daysLeft}hr lagi</span>`;
+      } else {
+        statusBadge = '<span style="background:#dcfce7;color:#16a34a;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">✅ Aktif</span>';
+      }
+      const checked = aktifMap[k.nama_promo] !== false ? 'checked' : '';
+      html += `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;${isExpired ? 'opacity:0.6;' : ''}">
+        <input type="checkbox" ${checked} onchange="toggleKonfie('${k.nama_promo}', this.checked)"
+          style="width:16px;height:16px;accent-color:var(--primary);flex-shrink:0;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.nama_promo}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${k.cruise_line} · s/d ${k.bookingSampai || '-'}</div>
+        </div>
+        <div style="flex-shrink:0;">${statusBadge}</div>
+      </label>`;
+    });
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="padding:10px;font-size:11px;color:red;">Gagal memuat konfie</div>';
+  }
+}
+
 async function openCruiseModal() {
   document.getElementById('modal-cruise').style.display = 'flex';
+  // Load konfie list
+  loadKonfieList();
   // Reset mode selector
   document.getElementById('cruise-mode-selector').style.display = 'block';
   document.getElementById('cruise-termurah-mode').style.display = 'none';
@@ -2743,7 +2818,6 @@ async function openCruiseModal() {
   document.getElementById('cruise-promo-info').innerHTML = '';
   document.getElementById('cruise-rute').value = '';
   document.getElementById('cruise-rute').innerHTML = '<option value="">-- Memuat rute... --</option>';
-
   try {
     const res = await apiGet({ action: 'getHargaCruise', mode: 'rute' });
     if (res.ok && res.data) {
