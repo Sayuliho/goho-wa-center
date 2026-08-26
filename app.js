@@ -2881,11 +2881,15 @@ async function cariCruiseTermurahBaru() {
   hasilEl.style.display = 'block';
   hasilEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);">🔍 Mencari harga termurah...</div>';
 
+  const konfieAktif = getKonfieAktif();
+  const konfieFilter = konfieAktif ? Object.keys(konfieAktif).filter(k => konfieAktif[k]).join('||') : '';
+
   try {
     const res = await apiGet({
       action: 'getHargaCruise', mode: 'termurah',
       cruiseLine, bulanDari, bulanSampai, malam, kabin,
-      paxDewasa, paxAnak, paxInfant: '0'
+      paxDewasa, paxAnak, paxInfant: '0',
+      konfieAktif: konfieFilter
     });
 
     if (!res.ok || !res.data || res.data.length === 0) {
