@@ -2047,9 +2047,12 @@ function openAlliModal() {
         <div class="modal-body">
           <div id="alli-step1">
             <div class="form-group">
-              <label>Kode PNR Booking</label>
-              <input type="text" id="alli-pnr" placeholder="Contoh: ABC123" style="text-transform:uppercase" onblur="cariPnrAlli()">
-            </div>
+  <label>Kode PNR Booking</label>
+  <div style="position:relative;">
+    <input type="text" id="alli-pnr" placeholder="Contoh: ABC123 atau ketik nama untuk cari..." style="text-transform:uppercase" onblur="cariPnrAlli()" oninput="searchPnrByNama(this.value,'arrival','alli-pnr-name-dropdown','alli-pnr')" autocomplete="off">
+    <div id="alli-pnr-name-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:200;max-height:220px;overflow-y:auto;"></div>
+  </div>
+</div>
             <div id="alli-pnr-notfound" style="display:none;color:#b3261e;font-size:12px;margin-top:-8px;margin-bottom:8px;">❌ PNR tidak ditemukan di sistem.</div>
             <div id="alli-pnr-result" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px;font-size:12px;margin-bottom:12px;">
               ✅ <b id="alli-result-nama"></b> — <span id="alli-result-maskapai"></span> <span id="alli-result-flight"></span><br>
