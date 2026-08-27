@@ -3251,7 +3251,8 @@ async function hitungHargaCruise() {
       paxAnak: pax3rd,
       paxInfant: infant,
       pax1st, pax3rd, paxType: paxtype, infant,
-      konfieAktif: konfieFilter
+      konfieAktif: konfieFilter,
+      discAgen: getCruiseDiscAgen()
     });
 
     if (!res.ok) {
