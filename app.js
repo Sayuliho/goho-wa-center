@@ -3898,9 +3898,11 @@ async function searchPnrByNama(keyword, mode, dropdownId, pnrFieldId) {
 function pilihPnrResult(pnr, pnrFieldId, dropdownId) {
   document.getElementById(pnrFieldId).value = pnr;
   document.getElementById(dropdownId).style.display = 'none';
-  // Trigger lookup otomatis setelah pilih PNR
-  if (pnrFieldId === 'mdac-pnr')  cariPnrMdac();
-  if (pnrFieldId === 'alli-pnr')  cariPnrAlli();
+  // Delay supaya onblur tidak bentrok dengan trigger manual
+  setTimeout(function() {
+    if (pnrFieldId === 'mdac-pnr')  cariPnrMdac();
+    if (pnrFieldId === 'alli-pnr')  cariPnrAlli();
+  }, 150);
 }
 
 // Tutup dropdown kalau klik di luar
