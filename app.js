@@ -2842,6 +2842,15 @@ async function loadKonfieList() {
     el.innerHTML = '<div style="padding:10px;font-size:11px;color:red;">Gagal memuat konfie</div>';
   }
 }
+function saveCruiseDiscAgen(val) {
+  const v = parseFloat(val) || 0;
+  localStorage.setItem('cruise_disc_agen_pct', String(v));
+  showToast('Disc agen disimpan: ' + v + '%');
+}
+
+function getCruiseDiscAgen() {
+  return parseFloat(localStorage.getItem('cruise_disc_agen_pct') || '0');
+}
 
 async function openCruiseModal() {
   document.getElementById('modal-cruise').style.display = 'flex';
