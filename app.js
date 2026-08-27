@@ -3909,6 +3909,8 @@ function pilihPnrResult(pnr, pnrFieldId, dropdownId) {
 document.addEventListener('click', function(e) {
   ['mdac-pnr-name-dropdown','alli-pnr-name-dropdown'].forEach(function(id) {
     var dd = document.getElementById(id);
-    if (dd && !dd.contains(e.target)) dd.style.display = 'none';
+    var inputId = id === 'mdac-pnr-name-dropdown' ? 'mdac-pnr' : 'alli-pnr';
+    var inp = document.getElementById(inputId);
+    if (dd && !dd.contains(e.target) && e.target !== inp) dd.style.display = 'none';
   });
 });
