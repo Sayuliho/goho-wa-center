@@ -2944,7 +2944,8 @@ async function cariCruiseTermurahBaru() {
       action: 'getHargaCruise', mode: 'termurah',
       cruiseLine, bulanDari, bulanSampai, malam, kabin,
       paxDewasa, paxAnak, paxInfant: '0',
-      konfieAktif: konfieFilter
+      konfieAktif: konfieFilter,
+      discAgen: getCruiseDiscAgen()
     });
 
     if (!res.ok || !res.data || res.data.length === 0) {
