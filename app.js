@@ -3892,7 +3892,7 @@ async function searchPnrByNama(keyword, mode, dropdownId, pnrFieldId) {
     } catch(e) {
       dd.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:red;">Error: ' + e.toString() + '</div>';
     }
-  }, 400);
+  }, 600);
 }
 
 function pilihPnrResult(pnr, pnrFieldId, dropdownId) {
