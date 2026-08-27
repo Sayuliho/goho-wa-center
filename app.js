@@ -3857,3 +3857,53 @@ async function deleteGrReminder(noteId) {
     else showToast('Gagal: ' + (res.msg || ''));
   } catch(e) { showToast('Error: ' + e.toString()); }
 }
+
+// ===================== PNR SEARCH BY NAMA =====================
+var _pnrSearchTimer = null;
+
+async function searchPnrByNama(keyword, mode, dropdownId, pnrFieldId) {
+  clearTimeout(_pnrSearchTimer);
+  var dd = document.getElementById(dropdownId);
+  if (!keyword || keyword.trim().length < 2) { dd.style.display = 'none'; return; }
+  _pnrSearchTimer = setTimeout(async function() {
+    dd.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:var(--text-muted);">Mencari...</div>';
+    dd.style.display = 'block';
+    try {
+      var res = await apiGet({ action: 'cariPnrByNama', nama: keyword.trim(), mode: mode });
+      if (!res.ok || !res.results || res.results.length === 0) {
+        dd.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:var(--text-muted);">Tidak ada hasil</div>';
+        return;
+      }
+      dd.innerHTML = res.results.map(function(r, i) {
+        var tglInfo = mode === 'arrival' && r.tglPulang ? r.tglPulang : r.tglTerbang;
+        var label   = mode === 'arrival' && r.tglPulang ? '🛬 Pulang: ' : '🛫 Terbang: ';
+        return '<div onclick="pilihPnrResult(\'' + escH(r.pnr) + '\',\'' + escH(pnrFieldId) + '\',\'' + escH(dropdownId) + '\')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'white\'">' +
+          '<div style="display:flex;justify-content:space-between;">' +
+            '<span style="font-weight:700;color:var(--primary);">' + escH(r.pnr) + '</span>' +
+            '<span style="font-size:10px;background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;">' + escH(r.jenisTiket) + '</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text);">' + escH(r.namaTamu) + '</div>' +
+          '<div style="font-size:10px;color:var(--text-muted);">' + escH(r.rute) + ' · ' + label + escH(tglInfo) + '</div>' +
+        '</div>';
+      }).join('');
+    } catch(e) {
+      dd.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:red;">Error: ' + e.toString() + '</div>';
+    }
+  }, 400);
+}
+
+function pilihPnrResult(pnr, pnrFieldId, dropdownId) {
+  document.getElementById(pnrFieldId).value = pnr;
+  document.getElementById(dropdownId).style.display = 'none';
+  // Trigger lookup otomatis setelah pilih PNR
+  if (pnrFieldId === 'mdac-pnr')  cariPnrMdac();
+  if (pnrFieldId === 'alli-pnr')  cariPnrAlli();
+}
+
+// Tutup dropdown kalau klik di luar
+document.addEventListener('click', function(e) {
+  ['mdac-pnr-name-dropdown','alli-pnr-name-dropdown'].forEach(function(id) {
+    var dd = document.getElementById(id);
+    if (dd && !dd.contains(e.target)) dd.style.display = 'none';
+  });
+});
