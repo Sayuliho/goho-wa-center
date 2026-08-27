@@ -2851,6 +2851,46 @@ function saveCruiseDiscAgen(val) {
 function getCruiseDiscAgen() {
   return parseFloat(localStorage.getItem('cruise_disc_agen_pct') || '0');
 }
+async function lihatRuteCruise(rute, btnEl) {
+  // Toggle — kalau sudah tampil, tutup
+  const existing = btnEl.parentElement.parentElement.querySelector('.rute-panel');
+  if (existing) { existing.remove(); btnEl.textContent = '🗺 rute'; return; }
+
+  btnEl.textContent = '⏳';
+  try {
+    const res = await apiGet({ action: 'getItineraryCruise', rute });
+    if (!res.ok || !res.data.length) { btnEl.textContent = '🗺 rute'; return; }
+
+    let html = `<div class="rute-panel" style="margin-top:6px;background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:11px;">`;
+    html += `<div style="padding:6px 10px;background:#f0fdf4;font-weight:600;color:#0F6E56;font-size:11px;">🗺 ${rute}</div>`;
+    html += `<table style="width:100%;border-collapse:collapse;">`;
+    html += `<tr style="background:#f8f9fa;"><th style="padding:4px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Hari</th><th style="padding:4px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Tujuan</th><th style="padding:4px 8px;text-align:center;color:var(--text-muted);font-weight:600;">ETA</th><th style="padding:4px 8px;text-align:center;color:var(--text-muted);font-weight:600;">ETD</th></tr>`;
+
+    res.data.forEach(r => {
+      const note = r.note ? `<span style="color:#f59e0b;font-size:9px;"> *</span>` : '';
+      html += `<tr style="border-top:1px solid #f0f0f0;">
+        <td style="padding:4px 8px;color:var(--text-muted);">${r.day_name}</td>
+        <td style="padding:4px 8px;font-weight:500;">${r.destination}${note}</td>
+        <td style="padding:4px 8px;text-align:center;color:var(--text-muted);">${r.eta || '-'}</td>
+        <td style="padding:4px 8px;text-align:center;color:var(--text-muted);">${r.etd || '-'}</td>
+      </tr>`;
+    });
+
+    // Catatan khusus
+    const notes = res.data.filter(r => r.note);
+    if (notes.length) {
+      notes.forEach(r => {
+        html += `<tr><td colspan="4" style="padding:3px 8px;font-size:9px;color:#f59e0b;">* ${r.note}</td></tr>`;
+      });
+    }
+
+    html += `</table></div>`;
+    btnEl.textContent = '🗺 rute';
+    btnEl.insertAdjacentHTML('afterend', html);
+  } catch(e) {
+    btnEl.textContent = '🗺 rute';
+  }
+}
 
 async function openCruiseModal() {
   document.getElementById('modal-cruise').style.display = 'flex';
