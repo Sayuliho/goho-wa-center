@@ -2049,7 +2049,7 @@ function openAlliModal() {
             <div class="form-group">
   <label>Kode PNR Booking</label>
   <div style="position:relative;">
-    <input type="text" id="alli-pnr" placeholder="Contoh: ABC123 atau ketik nama untuk cari..." style="text-transform:uppercase" onblur="cariPnrAlli()" oninput="searchPnrByNama(this.value,'arrival','alli-pnr-name-dropdown','alli-pnr')" autocomplete="off">
+    <input type="text" id="alli-pnr" placeholder="Contoh: ABC123 atau ketik nama untuk cari..." style="text-transform:uppercase" onblur="if(!document.getElementById('alli-pnr-name-dropdown').matches(':hover'))cariPnrAlli()" oninput="searchPnrByNama(this.value,'arrival','alli-pnr-name-dropdown','alli-pnr')" autocomplete="off">
     <div id="alli-pnr-name-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:200;max-height:220px;overflow-y:auto;"></div>
   </div>
 </div>
