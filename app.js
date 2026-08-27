@@ -2830,6 +2830,13 @@ async function loadKonfieList() {
       </div>`;
     }
 
+    const discAgen = localStorage.getItem('cruise_disc_agen_pct') || '0';
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f8fafc;border-top:2px solid var(--border);">
+      <span style="font-size:12px;font-weight:600;color:var(--text);flex:1;">💰 Disc Agen (%)</span>
+      <input type="number" id="cruise-disc-agen-input" value="${discAgen}" min="0" max="30" step="0.5"
+        style="width:70px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;"
+        onchange="saveCruiseDiscAgen(this.value)">
+    </div>`;
     el.innerHTML = html;
   } catch(e) {
     el.innerHTML = '<div style="padding:10px;font-size:11px;color:red;">Gagal memuat konfie</div>';
