@@ -2979,6 +2979,7 @@ async function cariCruiseTermurahBaru() {
             <div style="font-weight:800;font-size:15px;color:var(--primary);">SGD ${fmt(d.totalJualSGD)}</div>
             <div style="font-size:11px;color:var(--text-muted);">≈ ${fmtIDR(d.totalJualIDR)}</div>
             <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">▼ detail</div>
+            <div onclick="event.stopPropagation();lihatRuteCruise('${d.rute}',this)" style="font-size:10px;color:var(--blue);margin-top:3px;cursor:pointer;">🗺 rute</div>
           </div>
         </div>
         <div id="tm-detail-${idx}" style="display:none;border-top:1px solid var(--border);padding:10px 12px;background:var(--bg-secondary);">
