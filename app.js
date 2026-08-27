@@ -3226,12 +3226,15 @@ async function hitungHargaCruise() {
   hasilEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Menghitung harga...</div>';
 
   try {
+    const konfieAktif = getKonfieAktif();
+    const konfieFilter = konfieAktif ? Object.keys(konfieAktif).filter(k => konfieAktif[k]).join('||') : '';
     const res = await apiGet({ action: 'getHargaCruise',
       mode: 'harga', rute, tgl, kabin,
       paxDewasa: pax1st,
       paxAnak: pax3rd,
       paxInfant: infant,
-      pax1st, pax3rd, paxType: paxtype, infant
+      pax1st, pax3rd, paxType: paxtype, infant,
+      konfieAktif: konfieFilter
     });
 
     if (!res.ok) {
