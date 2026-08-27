@@ -562,9 +562,12 @@
     <div class="modal-header"><h3>🇲🇾 MDAC — Malaysia Digital Arrival Card</h3><button onclick="closeModal('modal-mdac')">✕</button></div>
     <div class="modal-body">
       <div class="form-group">
-        <label>Kode PNR</label>
-        <input type="text" id="mdac-pnr" placeholder="Contoh: ABC123" style="text-transform:uppercase" onblur="cariPnrMdac()">
-      </div>
+  <label>Kode PNR</label>
+  <div style="position:relative;">
+    <input type="text" id="mdac-pnr" placeholder="Contoh: ABC123 atau ketik nama untuk cari..." style="text-transform:uppercase" onblur="cariPnrMdac()" oninput="searchPnrByNama(this.value,'mdac','mdac-pnr-name-dropdown','mdac-pnr')" autocomplete="off">
+    <div id="mdac-pnr-name-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:200;max-height:220px;overflow-y:auto;"></div>
+  </div>
+</div>
       <div class="mdac-pnr-notfound" id="mdac-pnr-notfound">❌ PNR tidak ditemukan di sistem.</div>
       <div class="mdac-pnr-result" id="mdac-pnr-result">
         ✅ <b id="mdac-result-nama"></b> — <span id="mdac-result-maskapai"></span> <span id="mdac-result-flight"></span><br>
