@@ -2778,8 +2778,9 @@ function hargaFilterCountry(query) {
 }
 
 function hargaSelectCountry(country) {
-  document.getElementById('h-country-search').value = country;
-  document.getElementById('h-country').value = country;
+  const clean = (country || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  document.getElementById('h-country-search').value = clean;
+  document.getElementById('h-country').value = clean;
   document.getElementById('h-country-dropdown').style.display = 'none';
   hargaUpdateDay();
 }
