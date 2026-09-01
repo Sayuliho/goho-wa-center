@@ -2785,8 +2785,30 @@ async function loadKonfieList() {
       const exp = k.bookingSampai ? parseDateDMY(k.bookingSampai) : null;
       defaultAktif[k.nama_promo] = exp ? exp >= today : true;
     });
-    const aktifMap = saved || defaultAktif;
-    if (!saved) localStorage.setItem('cruise_konfie_aktif', JSON.stringify(aktifMap));
+    // Validasi: hapus konfie lama yang sudah tidak ada di D1
+const validPromos = new Set(res.data.map(k => k.nama_promo));
+let aktifMap = saved || defaultAktif;
+if (saved) {
+  // Hapus entry yang tidak ada di D1 lagi
+  let changed = false;
+  Object.keys(aktifMap).forEach(promo => {
+    if (!validPromos.has(promo)) {
+      delete aktifMap[promo];
+      changed = true;
+    }
+  });
+  // Tambah konfie baru yang belum ada di localStorage
+  res.data.forEach(k => {
+    if (!(k.nama_promo in aktifMap)) {
+      const exp = k.bookingSampai ? parseDateDMY(k.bookingSampai) : null;
+      aktifMap[k.nama_promo] = exp ? exp >= today : true;
+      changed = true;
+    }
+  });
+  if (changed) localStorage.setItem('cruise_konfie_aktif', JSON.stringify(aktifMap));
+} else {
+  localStorage.setItem('cruise_konfie_aktif', JSON.stringify(aktifMap));
+}
 
     const visible = res.data.filter(k => !hidden.includes(k.nama_promo));
     const hiddenCount = res.data.length - visible.length;
