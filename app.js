@@ -2769,12 +2769,20 @@ function hargaFilterCountry(query) {
   const q = (query || '').toLowerCase().trim();
   const filtered = q ? countries.filter(c => c.toLowerCase().includes(q)) : countries;
   if (!filtered.length || !hargaLoaded) { dd.style.display = 'none'; return; }
-  // Simpan filtered list untuk diakses by index
-  window._hargaFiltered = filtered;
-  dd.innerHTML = filtered.slice(0, 30).map((c, i) =>
-    `<div onclick="hargaSelectCountry(window._hargaFiltered[${i}])" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">${c}</div>`
+  window._hargaFiltered = filtered.slice(0, 30);
+  dd.innerHTML = window._hargaFiltered.map((c, i) =>
+    `<div onclick="hargaSelectByIndex(${i})" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">${c}</div>`
   ).join('');
   dd.style.display = 'block';
+}
+
+function hargaSelectByIndex(i) {
+  const country = window._hargaFiltered[i];
+  if (!country) return;
+  document.getElementById('h-country-search').value = country;
+  document.getElementById('h-country').value = country;
+  document.getElementById('h-country-dropdown').style.display = 'none';
+  hargaUpdateDay();
 }
 
 function hargaSelectCountry(country) {
