@@ -2770,7 +2770,7 @@ function hargaFilterCountry(query) {
   const filtered = q ? countries.filter(c => c.toLowerCase().includes(q)) : countries;
   if (!filtered.length || !hargaLoaded) { dd.style.display = 'none'; return; }
   dd.innerHTML = filtered.slice(0, 30).map(c =>
-    `<div onmousedown="event.preventDefault();hargaSelectCountry('${escH(c)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">${escH(c)}</div>`
+    `<div onclick="hargaSelectCountry('${escH(c)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">${escH(c)}</div>`
   ).join('');
   dd.style.display = 'block';
 }
@@ -2781,6 +2781,14 @@ function hargaSelectCountry(country) {
   document.getElementById('h-country-dropdown').style.display = 'none';
   hargaUpdateDay();
 }
+
+// Tutup dropdown dengan delay supaya klik item sempat terjadi dulu
+document.getElementById('h-country-search') && document.getElementById('h-country-search').addEventListener('blur', function() {
+  setTimeout(() => {
+    const dd = document.getElementById('h-country-dropdown');
+    if (dd) dd.style.display = 'none';
+  }, 200);
+});
 
 document.addEventListener('click', function(e) {
   const dd = document.getElementById('h-country-dropdown');
