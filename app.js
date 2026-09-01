@@ -2769,8 +2769,10 @@ function hargaFilterCountry(query) {
   const q = (query || '').toLowerCase().trim();
   const filtered = q ? countries.filter(c => c.toLowerCase().includes(q)) : countries;
   if (!filtered.length || !hargaLoaded) { dd.style.display = 'none'; return; }
-  dd.innerHTML = filtered.slice(0, 30).map(c =>
-    `<div onclick="hargaSelectCountry('${escH(c)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">${escH(c)}</div>`
+  // Simpan filtered list untuk diakses by index
+  window._hargaFiltered = filtered;
+  dd.innerHTML = filtered.slice(0, 30).map((c, i) =>
+    `<div onclick="hargaSelectCountry(window._hargaFiltered[${i}])" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">${c}</div>`
   ).join('');
   dd.style.display = 'block';
 }
