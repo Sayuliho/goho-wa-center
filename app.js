@@ -2746,7 +2746,10 @@ async function loadHargaData() {
       result.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">Data harga belum tersedia. Jalankan Sync Harga di Apps Script dulu.</div>';
       return;
     }
-    hargaData = res.data;
+    hargaData = res.data.map(r => {
+      r[0] = (r[0] || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      return r;
+    });
     hargaLoaded = true;
     loading.style.display = 'none';
     // FIX 3: populate searchable country list
