@@ -651,44 +651,115 @@
     </div>
   </div>
 </div>
-<!-- MODAL HARGA SIM/ESIM -->
-<div class="modal" id="modal-harga" style="display:none;">
-  <div class="modal-box modal-wide">
-    <div class="modal-header">
-      <h3>📶 Harga SIM Card & eSIM Aviroam</h3>
-      <button onclick="closeModal('modal-harga')">✕</button>
+<!-- FLOATING PANEL HARGA SIM/ESIM -->
+<div id="panel-harga" style="
+  display:none;
+  position:fixed;
+  width:480px;
+  background:white;
+  border-radius:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  border:1px solid var(--border);
+  z-index:8500;
+  overflow:hidden;
+  flex-direction:column;
+  top:80px;
+  right:24px;
+">
+  <!-- Header drag area -->
+  <div id="panel-harga-header" style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 16px;
+    background:#0a2e2a;
+    cursor:grab;
+    user-select:none;
+  ">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:16px;">📶</span>
+      <span style="font-size:13px;font-weight:600;color:white;">Harga SIM Card & eSIM Aviroam</span>
     </div>
-    <div class="modal-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
-        <div class="form-group" style="margin:0;">
-          <label>Negara / Region</label>
-          <select id="h-country" onchange="hargaUpdateDay()" style="width:100%;">
-            <option value="">— Pilih negara —</option>
-          </select>
+    <button onclick="closeHargaPanel()" style="
+      background:rgba(255,255,255,0.15);
+      border:none;
+      color:white;
+      width:24px;height:24px;
+      border-radius:50%;
+      cursor:pointer;
+      font-size:14px;
+      display:flex;align-items:center;justify-content:center;
+      line-height:1;
+    ">✕</button>
+  </div>
+  
+  <!-- Body -->
+  <div style="padding:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
+      
+      <!-- Negara dengan search -->
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);">Negara / Region</label>
+        <div style="position:relative;margin-top:4px;">
+          <input type="text" id="h-country-search" 
+            placeholder="Ketik negara..."
+            oninput="hargaFilterCountry(this.value)"
+            onfocus="hargaShowCountryDropdown()"
+            autocomplete="off"
+            style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;box-sizing:border-box;">
+          <div id="h-country-dropdown" style="
+            display:none;
+            position:absolute;
+            top:100%;left:0;right:0;
+            background:white;
+            border:1px solid var(--border);
+            border-radius:8px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.12);
+            z-index:100;
+            max-height:200px;
+            overflow-y:auto;
+          "></div>
         </div>
-        <div class="form-group" style="margin:0;">
-          <label>Durasi (hari)</label>
-          <select id="h-day" onchange="hargaUpdatePkg()" disabled style="width:100%;">
-            <option value="">— Pilih durasi —</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin:0;">
-          <label>Paket data</label>
-          <select id="h-pkg" onchange="hargaShowResult()" disabled style="width:100%;">
-            <option value="">— Pilih paket —</option>
-          </select>
-        </div>
+        <input type="hidden" id="h-country">
       </div>
-      <div id="h-loading" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text-muted);">
-        <i class="ti ti-loader spin"></i> Memuat data harga...
+
+      <!-- Durasi -->
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);">Durasi (hari)</label>
+        <select id="h-day" onchange="hargaUpdatePkg()" disabled style="width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;">
+          <option value="">— Pilih durasi —</option>
+        </select>
       </div>
-      <div id="h-result" style="text-align:center;padding:2rem;font-size:13px;color:var(--text-muted);">
-        Pilih negara, paket, dan durasi untuk melihat harga
+
+      <!-- Paket data -->
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);">Paket data</label>
+        <select id="h-pkg" onchange="hargaShowResult()" disabled style="width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;">
+          <option value="">— Pilih paket —</option>
+        </select>
       </div>
+
     </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('modal-harga')">Tutup</button>
+
+    <div id="h-loading" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text-muted);">
+      <i class="ti ti-loader spin"></i> Memuat data harga...
     </div>
+    <div id="h-result" style="text-align:center;padding:2rem;font-size:13px;color:var(--text-muted);">
+      Pilih negara, durasi, dan paket untuk melihat harga
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="padding:10px 16px;border-top:1px solid var(--border);text-align:right;">
+    <button onclick="closeHargaPanel()" style="
+      padding:6px 16px;
+      border:1px solid var(--border);
+      border-radius:6px;
+      background:white;
+      font-size:12px;
+      cursor:pointer;
+      font-family:var(--font);
+    ">Tutup</button>
   </div>
 </div>
 <!-- Modal Dream Cruises -->
