@@ -2694,9 +2694,44 @@ async function deleteSmartNote(noteId, noWa) {
 let hargaData = [];
 let hargaLoaded = false;
 
+// FIX 1: openHargaModal → floating panel (bisa chat sambil lihat harga)
 function openHargaModal() {
-  document.getElementById('modal-harga').style.display = 'flex';
+  const panel = document.getElementById('panel-harga');
+  if (!panel) return;
+  panel.style.display = 'flex';
+  panel.style.flexDirection = 'column';
   if (!hargaLoaded) loadHargaData();
+  initHargaPanelDrag();
+}
+
+function closeHargaPanel() {
+  const panel = document.getElementById('panel-harga');
+  if (panel) panel.style.display = 'none';
+}
+
+function initHargaPanelDrag() {
+  const panel = document.getElementById('panel-harga');
+  const header = document.getElementById('panel-harga-header');
+  if (!panel || !header || header._dragInit) return;
+  header._dragInit = true;
+  let isDragging = false, startX, startY, origLeft, origTop;
+  header.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.clientX; startY = e.clientY;
+    const rect = panel.getBoundingClientRect();
+    origLeft = rect.left; origTop = rect.top;
+    header.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    panel.style.left = (origLeft + e.clientX - startX) + 'px';
+    panel.style.top  = (origTop  + e.clientY - startY) + 'px';
+    panel.style.right = 'auto';
+  });
+  document.addEventListener('mouseup', () => {
+    if (isDragging) { isDragging = false; header.style.cursor = 'grab'; }
+  });
 }
 
 async function loadHargaData() {
@@ -2714,16 +2749,44 @@ async function loadHargaData() {
     hargaData = res.data;
     hargaLoaded = true;
     loading.style.display = 'none';
-    const sel = document.getElementById('h-country');
-    const countries = [...new Set(hargaData.map(r => r[0]))].sort();
-    sel.innerHTML = '<option value="">— Pilih negara —</option>';
-    countries.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
-    result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, paket, dan durasi</div>';
+    // FIX 3: populate searchable country list
+    window._hargaCountries = [...new Set(hargaData.map(r => r[0]))].sort();
+    result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
   } catch(e) {
     loading.style.display = 'none';
     result.innerHTML = '<div style="color:var(--red);font-size:12px;">Gagal memuat: ' + e.toString() + '</div>';
   }
 }
+
+// FIX 3: Searchable country dropdown
+function hargaShowCountryDropdown() {
+  hargaFilterCountry(document.getElementById('h-country-search').value);
+}
+
+function hargaFilterCountry(query) {
+  const dd = document.getElementById('h-country-dropdown');
+  const countries = window._hargaCountries || [];
+  const q = (query || '').toLowerCase().trim();
+  const filtered = q ? countries.filter(c => c.toLowerCase().includes(q)) : countries;
+  if (!filtered.length || !hargaLoaded) { dd.style.display = 'none'; return; }
+  dd.innerHTML = filtered.slice(0, 30).map(c =>
+    `<div onclick="hargaSelectCountry('${escH(c)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">${escH(c)}</div>`
+  ).join('');
+  dd.style.display = 'block';
+}
+
+function hargaSelectCountry(country) {
+  document.getElementById('h-country-search').value = country;
+  document.getElementById('h-country').value = country;
+  document.getElementById('h-country-dropdown').style.display = 'none';
+  hargaUpdateDay();
+}
+
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('h-country-dropdown');
+  const inp = document.getElementById('h-country-search');
+  if (dd && inp && !dd.contains(e.target) && e.target !== inp) dd.style.display = 'none';
+});
 // ============================================================
 // DREAM CRUISES — Price Tool
 // ============================================================
@@ -3478,6 +3541,7 @@ function renderBreakdownCruise(container, d, info) {
 }
 
 
+// FIX 2: hargaUpdateDay — filter durasi by negara
 function hargaUpdateDay() {
   const c = document.getElementById('h-country').value;
   const selD = document.getElementById('h-day');
@@ -3491,6 +3555,7 @@ function hargaUpdateDay() {
   days.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d + ' hari'; selD.appendChild(o); });
 }
 
+// FIX 2: hargaUpdatePkg — hanya tampil paket yang tersedia untuk negara + durasi ini
 function hargaUpdatePkg() {
   const c = document.getElementById('h-country').value;
   const d = parseInt(document.getElementById('h-day').value);
