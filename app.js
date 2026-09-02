@@ -39,6 +39,7 @@ function initApp(staff) {
 loadTicker();
 setInterval(loadTicker, 5 * 60 * 1000);
   initClipboardPaste();
+  setTimeout(() => loadHargaData(), 3000);
 }
 function doLogout() {
   if (!confirm('Logout dari GOHO WA Center?')) return;
