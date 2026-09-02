@@ -762,14 +762,51 @@
     ">Tutup</button>
   </div>
 </div>
-<!-- Modal Dream Cruises -->
-<div id="modal-cruise" class="modal" style="display:none;" onclick="if(event.target===this)closeCruiseModal()">
-  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto;">
-    <div class="modal-header">
-      <span>🚢 Dream Cruises — Cek Harga</span>
-      <button class="modal-close" onclick="closeCruiseModal()">✕</button>
+<!-- FLOATING PANEL DREAM CRUISES -->
+<div id="modal-cruise" style="
+  display:none;
+  position:fixed;
+  width:540px;
+  max-height:88vh;
+  background:white;
+  border-radius:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  border:1px solid var(--border);
+  z-index:8500;
+  overflow:hidden;
+  flex-direction:column;
+  top:72px;
+  right:24px;
+">
+  <!-- Header drag area -->
+  <div id="cruise-panel-header" style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 16px;
+    background:#0a2e2a;
+    cursor:grab;
+    user-select:none;
+    flex-shrink:0;
+  ">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:16px;">🚢</span>
+      <span style="font-size:13px;font-weight:600;color:white;">Dream Cruises — Cek Harga</span>
     </div>
-    <div class="modal-body" style="padding:16px;">
+    <button onclick="closeCruiseModal()" style="
+      background:rgba(255,255,255,0.15);
+      border:none;
+      color:white;
+      width:24px;height:24px;
+      border-radius:50%;
+      cursor:pointer;
+      font-size:14px;
+      display:flex;align-items:center;justify-content:center;
+      line-height:1;
+    ">✕</button>
+  </div>
+  <!-- Body scrollable -->
+  <div style="padding:16px;overflow-y:auto;flex:1;">
 
       <!-- Step 1: Pilih Mode -->
       <div id="cruise-mode-selector" style="margin-bottom:16px;">
@@ -979,9 +1016,8 @@
 
       </div>
 
-    </div>
   </div>
-</div>  
+</div>
 <div class="modal" id="modal-smart-notes" style="display:none;">
   <div class="modal-box modal-sm">
     <div class="modal-header"><h3>📝 Smart Notes</h3><button onclick="closeModal('modal-smart-notes')">✕</button></div>
