@@ -3000,7 +3000,10 @@ async function lihatRuteCruise(rute, btnEl) {
 }
 
 async function openCruiseModal() {
-  document.getElementById('modal-cruise').style.display = 'flex';
+  const panel = document.getElementById('modal-cruise');
+  panel.style.display = 'flex';
+  panel.style.flexDirection = 'column';
+  initCruisePanelDrag();
   // Load konfie list
   loadKonfieList();
   // Reset mode selector
@@ -3036,6 +3039,55 @@ async function openCruiseModal() {
 
 function closeCruiseModal() {
   document.getElementById('modal-cruise').style.display = 'none';
+}
+
+// ===================== CRUISE PANEL DRAG =====================
+let _cruisePanelDragInit = false;
+function initCruisePanelDrag() {
+  const panel = document.getElementById('modal-cruise');
+  const header = document.getElementById('cruise-panel-header');
+  if (!panel || !header) return;
+  if (_cruisePanelDragInit) {
+    // Reset posisi setiap kali dibuka
+    panel.style.top = '72px';
+    panel.style.right = '24px';
+    panel.style.left = '';
+    panel.style.transform = '';
+    return;
+  }
+  _cruisePanelDragInit = true;
+
+  let isDragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+  header.addEventListener('mousedown', (e) => {
+    if (e.target.tagName === 'BUTTON') return;
+    isDragging = true;
+    const rect = panel.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+    panel.style.right = '';
+    panel.style.left = startLeft + 'px';
+    panel.style.top = startTop + 'px';
+    header.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    panel.style.left = (startLeft + dx) + 'px';
+    panel.style.top  = (startTop  + dy) + 'px';
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      header.style.cursor = 'grab';
+    }
+  });
 }
 
 function setCruiseMode(mode) {
