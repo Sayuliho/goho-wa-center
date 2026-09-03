@@ -813,17 +813,18 @@
       <span style="font-size:16px;">🚢</span>
       <span style="font-size:13px;font-weight:600;color:white;">Dream Cruises — Cek Harga</span>
     </div>
-    <button onclick="closeCruiseModal()" style="
-      background:rgba(255,255,255,0.15);
-      border:none;
-      color:white;
-      width:24px;height:24px;
-      border-radius:50%;
-      cursor:pointer;
-      font-size:14px;
-      display:flex;align-items:center;justify-content:center;
-      line-height:1;
-    ">✕</button>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button onclick="cruiseReset()" title="Reset pencarian" style="
+        background:rgba(255,255,255,0.12);border:none;color:white;
+        padding:3px 10px;border-radius:10px;cursor:pointer;
+        font-size:11px;font-weight:600;font-family:var(--font);white-space:nowrap;
+      ">↺ Reset</button>
+      <button onclick="closeCruiseModal()" style="
+        background:rgba(255,255,255,0.15);border:none;color:white;
+        width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;
+        display:flex;align-items:center;justify-content:center;line-height:1;
+      ">✕</button>
+    </div>
   </div>
   <!-- Body scrollable -->
   <div style="padding:16px;overflow-y:auto;flex:1;">
