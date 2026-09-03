@@ -3827,8 +3827,9 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
   const el = document.getElementById('esim-access-result');
   if (!el) return;
   try {
-    // Kalau esimMatch belum ada (locations belum load), coba sekali lagi
-    if (!esimMatch && !esimLocationsLoaded) {
+    // Tunggu locations selesai load kalau belum
+    if (!esimLocationsLoaded) {
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Memuat data negara...</div>';
       await loadEsimLocations();
       esimMatch = findEsimCode(country);
     }
@@ -3935,7 +3936,16 @@ async function fetchAndRenderEsimPackages(el, code, day, kurs, markup, aviroamPa
     const diff = Math.abs(d - day);
     if (diff < minDiff) { minDiff = diff; bestDay = d; }
   }
-  const list = packages.filter(p => parseInt(p.duration || p.day || 0) === bestDay).slice(0, 5);
+  let list = packages.filter(p => parseInt(p.duration || p.day || 0) === bestDay);
+
+  // Sort: paket single-country (locationNetworkList.length === 1) duluan, baru regional/global
+  list.sort((a, b) => {
+    const aLen = a.locationNetworkList?.length || 99;
+    const bLen = b.locationNetworkList?.length || 99;
+    if (aLen !== bLen) return aLen - bLen; // fewer countries = more specific = first
+    return (a.price || 0) - (b.price || 0); // then by price ascending
+  });
+  list = list.slice(0, 5);
 
   const matchLabel = minDiff === 0 ? '' :
     `<div style="font-size:10px;color:#e07b00;background:#fef3c7;border-radius:4px;padding:3px 8px;margin-bottom:8px;">
