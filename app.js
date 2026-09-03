@@ -2732,12 +2732,35 @@ function findEsimCode(aviroamCountryName) {
   if (!esimLocations.length) return null;
   const text = aviroamCountryName.toLowerCase().replace(/\n/g, ' ');
 
-  // Coba exact match dulu
+  // 1. Kamus alias (Indonesia + common variations) — paling presisi, cek duluan
+  const INDO_MAP = {
+    'arab saudi': 'SA', 'korea selatan': 'KR', 'jepang': 'JP', 'belanda': 'NL',
+    'jerman': 'DE', 'prancis': 'FR', 'inggris': 'GB', 'tiongkok': 'CN',
+    'filipina': 'PH', 'kamboja': 'KH', 'maladewa': 'MV', 'maroko': 'MA',
+    'turki': 'TR', 'rusia': 'RU', 'mesir': 'EG', 'dubai': 'AE',
+    'china': 'CN', 'hongkong': 'HK', 'hong kong': 'HK', 'macao': 'MO',
+    'macau': 'MO', 'taiwan': 'TW', 'vietnam': 'VN', 'malaysia': 'MY',
+    'singapore': 'SG', 'thailand': 'TH', 'india': 'IN', 'australia': 'AU',
+    'japan': 'JP', 'korea': 'KR', 'russia': 'RU', 'turkey': 'TR',
+    'usa': 'US', 'united states': 'US', 'america': 'US',
+    'phillipines': 'PH', 'philippines': 'PH', 'cambodia': 'KH',
+    'maldives': 'MV', 'morocco': 'MA', 'indonesia': 'ID',
+    'saudi arabia': 'SA', 'uae': 'AE', 'united arab emirates': 'AE',
+    'new zealand': 'NZ', 'south korea': 'KR',
+  };
+  for (const [alias, code] of Object.entries(INDO_MAP)) {
+    if (text.includes(alias)) {
+      const found = esimLocations.find(l => l.code === code && l.type === 1);
+      if (found) return { code, type: 1, name: found.name, subList: null };
+    }
+  }
+
+  // 2. Exact match by eSIM Access name
   for (const loc of esimLocations) {
     if (loc.name.toLowerCase() === text) return { code: loc.code, type: loc.type, name: loc.name, subList: loc.subLocationList };
   }
 
-  // Coba single-country match by name keyword dalam teks Aviroam
+  // 3. Partial match single-country (untuk nama Aviroam yang mengandung daftar negara)
   const singleMatches = [];
   for (const loc of esimLocations) {
     if (loc.type === 1 && text.includes(loc.name.toLowerCase())) {
@@ -2748,22 +2771,7 @@ function findEsimCode(aviroamCountryName) {
     return { code: singleMatches[0].code, type: 1, name: singleMatches[0].name, subList: null };
   }
   if (singleMatches.length > 1) {
-    // Multiple match → return semua sebagai dropdown
     return { code: null, type: 2, name: aviroamCountryName, subList: singleMatches.map(l => ({ code: l.code, name: l.name })) };
-  }
-
-  // Fallback: kamus nama Indonesia → ISO
-  const INDO_MAP = {
-    'arab saudi': 'SA', 'korea selatan': 'KR', 'jepang': 'JP', 'belanda': 'NL',
-    'jerman': 'DE', 'prancis': 'FR', 'inggris': 'GB', 'tiongkok': 'CN',
-    'filipina': 'PH', 'kamboja': 'KH', 'maladewa': 'MV', 'maroko': 'MA',
-    'turki': 'TR', 'rusia': 'RU', 'mesir': 'EG', 'dubai': 'AE',
-  };
-  for (const [indo, code] of Object.entries(INDO_MAP)) {
-    if (text.includes(indo)) {
-      const found = esimLocations.find(l => l.code === code);
-      if (found) return { code, type: 1, name: found.name, subList: null };
-    }
   }
 
   return null;
