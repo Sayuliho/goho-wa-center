@@ -3943,13 +3943,14 @@ async function fetchAndRenderEsimPackages(el, code, day, kurs, markup, aviroamPa
   // Fungsi render satu grup durasi
   const renderGroup = (targetDay, label) => {
     let list = packages.filter(p => parseInt(p.duration || p.day || 0) === targetDay);
+    // Sort: single-country duluan, lalu harga ascending
     list.sort((a, b) => {
       const aLen = a.locationNetworkList?.length || 99;
       const bLen = b.locationNetworkList?.length || 99;
       if (aLen !== bLen) return aLen - bLen;
       return (a.price || 0) - (b.price || 0);
     });
-    list = list.slice(0, 5);
+    // Tidak ada limit — tampilkan semua paket
 
     let html = label ? `<div style="font-size:10px;font-weight:700;color:var(--text-muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:0.4px;">${label}</div>` : '';
     list.forEach(pkg => {
