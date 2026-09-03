@@ -3954,7 +3954,7 @@ async function fetchAndRenderEsimPackages(el, code, day, kurs, markup, aviroamPa
 
   let html = matchLabel;
   list.forEach(pkg => {
-    const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 1000;
+    const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 10000;
     const buyIDR  = Math.round(buyUSD * kurs);
     const sellIDR = Math.round(buyIDR * (1 + markup / 100));
     const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
