@@ -3929,56 +3929,78 @@ async function fetchAndRenderEsimPackages(el, code, day, kurs, markup, aviroamPa
     return;
   }
 
-  // Cari durasi terdekat
   const allDays = [...new Set(packages.map(p => parseInt(p.duration || p.day || 0)))].filter(Boolean).sort((a,b) => a-b);
-  let bestDay = allDays[0], minDiff = Math.abs(allDays[0] - day);
-  for (const d of allDays) {
-    const diff = Math.abs(d - day);
-    if (diff < minDiff) { minDiff = diff; bestDay = d; }
-  }
-  let list = packages.filter(p => parseInt(p.duration || p.day || 0) === bestDay);
 
-  // Sort: paket single-country (locationNetworkList.length === 1) duluan, baru regional/global
-  list.sort((a, b) => {
-    const aLen = a.locationNetworkList?.length || 99;
-    const bLen = b.locationNetworkList?.length || 99;
-    if (aLen !== bLen) return aLen - bLen; // fewer countries = more specific = first
-    return (a.price || 0) - (b.price || 0); // then by price ascending
-  });
-  list = list.slice(0, 5);
+  // Cek exact match dulu
+  const hasExact = allDays.includes(day);
 
-  const matchLabel = minDiff === 0 ? '' :
-    `<div style="font-size:10px;color:#e07b00;background:#fef3c7;border-radius:4px;padding:3px 8px;margin-bottom:8px;">
-       ⚠️ Paket ${day} hari tidak tersedia — terdekat: <b>${bestDay} hari</b>
-     </div>`;
+  // Cari durasi bawah (≤ day) dan atas (≥ day)
+  const below = allDays.filter(d => d <= day);
+  const above = allDays.filter(d => d >= day);
+  const dayBelow = below.length ? below[below.length - 1] : null; // terdekat di bawah
+  const dayAbove = above.length ? above[0] : null;                 // terdekat di atas
 
-  let html = matchLabel;
-  list.forEach(pkg => {
-    const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 10000;
-    const buyIDR  = Math.round(buyUSD * kurs);
-    const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-    const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
-    const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
-    const bg     = isCheaper ? '#f0fdf4' : 'white';
-    const badge  = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
-    const pkgName = escH(pkg.name || pkg.packageName || '-');
-    const pkgDay  = pkg.duration || pkg.day || '-';
-    // Coverage info dari locationNetworkList
-    const coverage = pkg.locationNetworkList?.map(l => l.locationName).join(', ') || '';
-    html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
-      <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${pkgName}${badge}</div>
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">${pkgDay} hari · ${escH(pkg.speed||'')}</div>
-      ${coverage ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">📍 ${escH(coverage)}</div>` : ''}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
-        <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
-        <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
-        <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
-        <span style="font-size:13px;font-weight:700;color:#1d4ed8;">${hargaFmtIDR(sellIDR)}</span>
-      </div>
+  // Fungsi render satu grup durasi
+  const renderGroup = (targetDay, label) => {
+    let list = packages.filter(p => parseInt(p.duration || p.day || 0) === targetDay);
+    list.sort((a, b) => {
+      const aLen = a.locationNetworkList?.length || 99;
+      const bLen = b.locationNetworkList?.length || 99;
+      if (aLen !== bLen) return aLen - bLen;
+      return (a.price || 0) - (b.price || 0);
+    });
+    list = list.slice(0, 5);
+
+    let html = label ? `<div style="font-size:10px;font-weight:700;color:var(--text-muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:0.4px;">${label}</div>` : '';
+    list.forEach(pkg => {
+      const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 10000;
+      const buyIDR  = Math.round(buyUSD * kurs);
+      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+      const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+      const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+      const bg     = isCheaper ? '#f0fdf4' : 'white';
+      const badge  = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+      const pkgName = escH(pkg.name || pkg.packageName || '-');
+      const pkgDay  = pkg.duration || pkg.day || '-';
+      const coverage = pkg.locationNetworkList?.map(l => l.locationName).join(', ') || '';
+      html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${pkgName}${badge}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">${pkgDay} hari · ${escH(pkg.speed||'')}</div>
+        ${coverage ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">📍 ${escH(coverage)}</div>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+          <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+          <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+          <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+          <span style="font-size:13px;font-weight:700;color:#1d4ed8;">${hargaFmtIDR(sellIDR)}</span>
+        </div>
+      </div>`;
+    });
+    return html;
+  };
+
+  let html = '';
+
+  if (hasExact) {
+    // Exact match — tampilkan satu grup tanpa label durasi
+    html = renderGroup(day, '');
+  } else {
+    // Tidak ada exact match — tampilkan dua grup: bawah + atas
+    html = `<div style="font-size:10px;color:#e07b00;background:#fef3c7;border-radius:4px;padding:4px 8px;margin-bottom:10px;">
+      ⚠️ Paket <b>${day} hari</b> tidak tersedia — menampilkan durasi terdekat
     </div>`;
-  });
+    if (dayBelow && dayAbove && dayBelow !== dayAbove) {
+      html += renderGroup(dayBelow, `⬇ ${dayBelow} hari (di bawah)`);
+      html += `<div style="height:1px;background:var(--border);margin:8px 0;"></div>`;
+      html += renderGroup(dayAbove, `⬆ ${dayAbove} hari (di atas)`);
+    } else if (dayBelow) {
+      html += renderGroup(dayBelow, `${dayBelow} hari`);
+    } else if (dayAbove) {
+      html += renderGroup(dayAbove, `${dayAbove} hari`);
+    }
+  }
+
   el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
 }
 // ===================== MDAC =====================
