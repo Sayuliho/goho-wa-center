@@ -3713,36 +3713,65 @@ async function hargaShowResult() {
   loadEsimAccessPrice(c, d, kurs, markup, parseFloat(esimPar) || 0);
 }
 
+// Mapping nama negara Aviroam → ISO code eSIM Access
+const ESIM_COUNTRY_MAP = {
+  'Malaysia': 'MY', 'China': 'CN', 'Singapore': 'SG', 'Thailand': 'TH',
+  'Japan': 'JP', 'South Korea': 'KR', 'Korea': 'KR', 'Hong Kong': 'HK',
+  'Taiwan': 'TW', 'Indonesia': 'ID', 'Philippines': 'PH', 'Vietnam': 'VN',
+  'Cambodia': 'KH', 'Myanmar': 'MM', 'Laos': 'LA', 'Brunei': 'BN',
+  'India': 'IN', 'Australia': 'AU', 'New Zealand': 'NZ', 'United Kingdom': 'GB',
+  'UK': 'GB', 'USA': 'US', 'United States': 'US', 'Europe': 'EU',
+  'Saudi Arabia': 'SA', 'UAE': 'AE', 'United Arab Emirates': 'AE',
+  'Turkey': 'TR', 'Egypt': 'EG', 'France': 'FR', 'Germany': 'DE',
+  'Italy': 'IT', 'Spain': 'ES', 'Netherlands': 'NL', 'Switzerland': 'CH',
+  'Canada': 'CA', 'Mexico': 'MX', 'Brazil': 'BR', 'Argentina': 'AR',
+  'South Africa': 'ZA', 'Kenya': 'KE', 'Morocco': 'MA',
+  'Bangladesh': 'BD', 'Pakistan': 'PK', 'Sri Lanka': 'LK', 'Nepal': 'NP',
+  'Macau': 'MO', 'Macao': 'MO', 'Russia': 'RU', 'Kazakhstan': 'KZ',
+};
+
 async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsim) {
   const el = document.getElementById('esim-access-result');
   if (!el) return;
   try {
+    // Konversi nama negara ke ISO code
+    const code = ESIM_COUNTRY_MAP[country] || country.toUpperCase().substring(0, 2);
+
     const res = await fetch(
-      `https://goho-proxy.gohotravel.workers.dev?action=getEsimPackages&country=${encodeURIComponent(country)}`
+      `https://goho-proxy.gohotravel.workers.dev?action=getEsimPackages&country=${encodeURIComponent(code)}`
     );
     const data = await res.json();
 
-    if (!data.ok || !data.packages || data.packages.length === 0) {
-      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia untuk negara ini</span>';
+    // Cek error dari API (misal: "Not support the location code")
+    if (!data.ok || !data.data || data.data.success === false) {
+      const errMsg = data.data?.errorMsg || 'Negara tidak didukung';
+      el.innerHTML = `<span style="font-size:11px;color:var(--text-muted);">eSIM Access: ${escH(errMsg)}</span>`;
       return;
     }
 
-    // Cari paket yang durasinya paling cocok dengan filter hari
-    const withDiff = data.packages.map(pkg => {
-      const pkgDay = parseInt(pkg.day || pkg.duration || pkg.days || 0);
+    const packages = data.data?.obj || data.packages || [];
+    if (!packages.length) {
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
+      return;
+    }
+
+    // Filter paket yang durasinya paling cocok dengan filter hari
+    const withDiff = packages.map(pkg => {
+      const pkgDay = parseInt(pkg.duration || pkg.day || pkg.days || 0);
       return { pkg, diff: Math.abs(pkgDay - day) };
     });
     withDiff.sort((a, b) => a.diff - b.diff);
     const best = withDiff[0].diff;
-    const list = withDiff.filter(x => x.diff === best).map(x => x.pkg).slice(0, 6);
+    const list = withDiff.filter(x => x.diff === best).map(x => x.pkg).slice(0, 5);
 
     let html = '';
     list.forEach(pkg => {
-      const buyUSD  = parseFloat(pkg.retailPrice || pkg.price || pkg.priceUsd || 0);
+      // Harga dalam miliUSD (102500 = USD 1.025), bagi 1000
+      const rawPrice = parseFloat(pkg.retailPrice || pkg.price || 0);
+      const buyUSD  = rawPrice > 100 ? rawPrice / 1000 : rawPrice; // auto-detect miliUSD vs USD
       const buyIDR  = Math.round(buyUSD * kurs);
       const sellIDR = Math.round(buyIDR * (1 + markup / 100));
 
-      // Highlight kalau lebih murah dari Aviroam partner eSIM
       const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
       const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
       const bg     = isCheaper ? '#f0fdf4' : 'white';
@@ -3750,11 +3779,11 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
         ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>'
         : '';
 
-      const pkgName = escH(pkg.packageName || pkg.name || pkg.package || pkg.slug || '-');
-      const pkgDay  = pkg.day || pkg.duration || pkg.days || '-';
+      const pkgName = escH(pkg.name || pkg.packageName || pkg.slug || '-');
+      const pkgDay  = pkg.duration || pkg.day || '-';
 
       html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
-        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;">${pkgName}${badge}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${pkgName}${badge}</div>
         <div style="font-size:10px;color:var(--text-muted);margin-bottom:5px;">${pkgDay} hari</div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
           <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
@@ -3770,7 +3799,7 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
     el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
 
   } catch(e) {
-    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Gagal load eSIM Access: ${e.message}</span>`;
+    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${e.message}</span>`;
   }
 }
 // ===================== MDAC =====================
