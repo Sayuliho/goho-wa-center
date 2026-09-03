@@ -3643,7 +3643,27 @@ function hargaUpdatePkg() {
   pkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
 }
 
-function hargaShowResult() {
+// ===== HARGA v2: kurs & markup helpers =====
+function hargaGetKurs() {
+  return parseFloat(localStorage.getItem('esim_kurs_usd') || '16000');
+}
+function hargaGetMarkup() {
+  return parseFloat(localStorage.getItem('esim_markup_pct') || '20');
+}
+function hargaFmtIDR(v) {
+  return v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—';
+}
+function hargaRowAviroam(label, value, type) {
+  const color = type === 'customer' ? '#1d4ed8' : '#166534';
+  const bg    = type === 'customer' ? '#dbeafe'  : '#dcfce7';
+  const badge = type === 'customer' ? 'Customer' : 'Agen';
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+    <span style="font-size:11px;color:var(--text-muted);">${label} <span style="background:${bg};color:${color};font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;">${badge}</span></span>
+    <span style="font-size:13px;font-weight:600;color:${color};">${value}</span>
+  </div>`;
+}
+
+async function hargaShowResult() {
   const c = document.getElementById('h-country').value;
   const p = document.getElementById('h-pkg').value;
   const d = parseInt(document.getElementById('h-day').value);
@@ -3651,34 +3671,107 @@ function hargaShowResult() {
   if (!c || !p || !d) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih semua filter</div>'; return; }
   const row = hargaData.find(r => r[0] === c && r[1] === p && r[2] === d);
   if (!row) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Data tidak tersedia untuk kombinasi ini</div>'; return; }
-  const [,, day, simPub, simPar, esimPub, esimPar] = row;
-  const fmt = v => v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—';
+
+  // Kolom sheet: COUNTRY[0] PACKAGE[1] DAY[2] PUBLISH_SIM[3] PUBLISH_ESIM[4] PARTNER_SIM[5] PARTNER_ESIM[6]
+  const [,, day, simPub, esimPub, simPar, esimPar] = row;
+
+  const kurs   = hargaGetKurs();
+  const markup = hargaGetMarkup();
+
+  // Sync input values dari localStorage saat render
+  const kursEl   = document.getElementById('h-kurs-usd');
+  const markupEl = document.getElementById('h-markup-pct');
+  if (kursEl)   kursEl.value   = kurs;
+  if (markupEl) markupEl.value = markup;
+
   resultEl.innerHTML = `
     <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${d} hari &bull; ${escH(p)}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+      <!-- KIRI: Aviroam -->
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">💳 SIM Card</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
-          <span style="font-size:12px;color:var(--text-muted);">Publish <span style="background:#dbeafe;color:#1d4ed8;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Customer</span></span>
-          <span style="font-size:15px;font-weight:600;color:#1d4ed8;">${fmt(simPub)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
-          <span style="font-size:12px;color:var(--text-muted);">Partner <span style="background:#dcfce7;color:#166534;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Agen</span></span>
-          <span style="font-size:15px;font-weight:600;color:var(--text);">${fmt(simPar)}</span>
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">🌐 Aviroam</div>
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
+        ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
+        ${hargaRowAviroam('Partner', hargaFmtIDR(simPar), 'agen')}
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin:10px 0 6px;text-transform:uppercase;letter-spacing:0.4px;">eSIM</div>
+        ${hargaRowAviroam('Publish', hargaFmtIDR(esimPub), 'customer')}
+        ${hargaRowAviroam('Partner', hargaFmtIDR(esimPar), 'agen')}
+      </div>
+
+      <!-- KANAN: eSIM Access -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">📡 eSIM Access</div>
+        <div id="esim-access-result" style="font-size:12px;color:var(--text-muted);">
+          <i class="ti ti-loader spin"></i> Memuat harga...
         </div>
       </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;">📱 eSIM</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
-          <span style="font-size:12px;color:var(--text-muted);">Publish <span style="background:#dbeafe;color:#1d4ed8;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Customer</span></span>
-          <span style="font-size:15px;font-weight:600;color:#1d4ed8;">${fmt(esimPub)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
-          <span style="font-size:12px;color:var(--text-muted);">Partner <span style="background:#dcfce7;color:#166534;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px;">Agen</span></span>
-          <span style="font-size:15px;font-weight:600;color:var(--text);">${fmt(esimPar)}</span>
-        </div>
-      </div>
+
     </div>`;
+
+  // Fetch eSIM Access dari Worker (async, tidak block render Aviroam)
+  loadEsimAccessPrice(c, d, kurs, markup, parseFloat(esimPar) || 0);
+}
+
+async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsim) {
+  const el = document.getElementById('esim-access-result');
+  if (!el) return;
+  try {
+    const res = await fetch(
+      `https://goho-proxy.gohotravel.workers.dev?action=getEsimPackages&country=${encodeURIComponent(country)}`
+    );
+    const data = await res.json();
+
+    if (!data.ok || !data.packages || data.packages.length === 0) {
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia untuk negara ini</span>';
+      return;
+    }
+
+    // Cari paket yang durasinya paling cocok dengan filter hari
+    const withDiff = data.packages.map(pkg => {
+      const pkgDay = parseInt(pkg.day || pkg.duration || pkg.days || 0);
+      return { pkg, diff: Math.abs(pkgDay - day) };
+    });
+    withDiff.sort((a, b) => a.diff - b.diff);
+    const best = withDiff[0].diff;
+    const list = withDiff.filter(x => x.diff === best).map(x => x.pkg).slice(0, 6);
+
+    let html = '';
+    list.forEach(pkg => {
+      const buyUSD  = parseFloat(pkg.retailPrice || pkg.price || pkg.priceUsd || 0);
+      const buyIDR  = Math.round(buyUSD * kurs);
+      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+
+      // Highlight kalau lebih murah dari Aviroam partner eSIM
+      const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+      const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+      const bg     = isCheaper ? '#f0fdf4' : 'white';
+      const badge  = isCheaper
+        ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>'
+        : '';
+
+      const pkgName = escH(pkg.packageName || pkg.name || pkg.package || pkg.slug || '-');
+      const pkgDay  = pkg.day || pkg.duration || pkg.days || '-';
+
+      html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;">${pkgName}${badge}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:5px;">${pkgDay} hari</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+          <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+          <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+          <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+          <span style="font-size:13px;font-weight:700;color:#1d4ed8;">${hargaFmtIDR(sellIDR)}</span>
+        </div>
+      </div>`;
+    });
+
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
+
+  } catch(e) {
+    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Gagal load eSIM Access: ${e.message}</span>`;
+  }
 }
 // ===================== MDAC =====================
 var mdacBookingInfo = null;
