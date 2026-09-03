@@ -3749,7 +3749,7 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
       return;
     }
 
-    const packages = data.data?.obj || data.packages || [];
+    const packages = data.data?.packageList || data.data?.obj || data.packages || [];
     if (!packages.length) {
       el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
       return;
