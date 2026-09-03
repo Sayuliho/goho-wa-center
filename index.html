@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<link rel="stylesheet" href="/styles.css?v=202609030436">
+<link rel="stylesheet" href="/styles.css?v=202609030358">
 <style>
 .mpx-result-foto {
   cursor: zoom-in;
@@ -656,6 +656,7 @@
   display:none;
   position:fixed;
   width:740px;
+  max-height:88vh;
   background:white;
   border-radius:12px;
   box-shadow:0 8px 32px rgba(0,0,0,0.18);
@@ -675,26 +676,28 @@
     background:#0a2e2a;
     cursor:grab;
     user-select:none;
+    flex-shrink:0;
   ">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:16px;">📶</span>
       <span style="font-size:13px;font-weight:600;color:white;">Harga SIM Card & eSIM — Aviroam vs eSIM Access</span>
     </div>
-    <button onclick="closeHargaPanel()" style="
-      background:rgba(255,255,255,0.15);
-      border:none;
-      color:white;
-      width:24px;height:24px;
-      border-radius:50%;
-      cursor:pointer;
-      font-size:14px;
-      display:flex;align-items:center;justify-content:center;
-      line-height:1;
-    ">✕</button>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button onclick="hargaReset()" title="Reset pencarian" style="
+        background:rgba(255,255,255,0.12);border:none;color:white;
+        padding:3px 10px;border-radius:10px;cursor:pointer;
+        font-size:11px;font-weight:600;font-family:var(--font);white-space:nowrap;
+      ">↺ Reset</button>
+      <button onclick="closeHargaPanel()" style="
+        background:rgba(255,255,255,0.15);border:none;color:white;
+        width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;
+        display:flex;align-items:center;justify-content:center;line-height:1;
+      ">✕</button>
+    </div>
   </div>
-  
-  <!-- Body -->
-  <div style="padding:16px;">
+
+  <!-- Body: scrollable -->
+  <div style="padding:16px;overflow-y:auto;flex:1;">
 
     <!-- Kurs USD + Markup eSIM Access -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
@@ -734,16 +737,10 @@
             autocomplete="off"
             style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;box-sizing:border-box;">
           <div id="h-country-dropdown" style="
-            display:none;
-            position:absolute;
-            top:100%;left:0;right:0;
-            background:white;
-            border:1px solid var(--border);
-            border-radius:8px;
-            box-shadow:0 4px 16px rgba(0,0,0,0.12);
-            z-index:100;
-            max-height:200px;
-            overflow-y:auto;
+            display:none;position:absolute;top:100%;left:0;right:0;
+            background:white;border:1px solid var(--border);border-radius:8px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:100;
+            max-height:200px;overflow-y:auto;
           "></div>
         </div>
         <input type="hidden" id="h-country">
@@ -776,15 +773,12 @@
   </div>
 
   <!-- Footer -->
-  <div style="padding:10px 16px;border-top:1px solid var(--border);text-align:right;">
+  <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+    <span style="font-size:10px;color:var(--text-muted);">Drag header untuk pindahkan panel</span>
     <button onclick="closeHargaPanel()" style="
-      padding:6px 16px;
-      border:1px solid var(--border);
-      border-radius:6px;
-      background:white;
-      font-size:12px;
-      cursor:pointer;
-      font-family:var(--font);
+      padding:6px 16px;border:1px solid var(--border);
+      border-radius:6px;background:white;font-size:12px;
+      cursor:pointer;font-family:var(--font);
     ">Tutup</button>
   </div>
 </div>
@@ -1114,6 +1108,6 @@
   </div>
 </div>
 
-<script src="/app.js?v=202609030436" defer></script>
+<script src="/app.js?v=202609030358" defer></script>
 </body>
 </html>

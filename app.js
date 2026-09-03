@@ -2710,6 +2710,20 @@ function closeHargaPanel() {
   if (panel) panel.style.display = 'none';
 }
 
+function hargaReset() {
+  document.getElementById('h-country-search').value = '';
+  document.getElementById('h-country').value = '';
+  document.getElementById('h-country-dropdown').style.display = 'none';
+  const selD = document.getElementById('h-day');
+  const selP = document.getElementById('h-pkg');
+  selD.innerHTML = '<option value="">— Pilih durasi —</option>';
+  selD.disabled = true;
+  selP.innerHTML = '<option value="">— Pilih paket —</option>';
+  selP.disabled = true;
+  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket untuk melihat harga</div>';
+  document.getElementById('h-loading').style.display = 'none';
+}
+
 function initHargaPanelDrag() {
   const panel = document.getElementById('panel-harga');
   const header = document.getElementById('panel-harga-header');
