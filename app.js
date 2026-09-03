@@ -3769,20 +3769,26 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
       return;
     }
 
-    // Filter paket yang durasinya paling cocok dengan filter hari
+    // Gunakan 'price' (harga beli/partner, miliUSD) bukan retailPrice (harga publish)
     const withDiff = packages.map(pkg => {
       const pkgDay = parseInt(pkg.duration || pkg.day || pkg.days || 0);
       return { pkg, diff: Math.abs(pkgDay - day) };
     });
-    withDiff.sort((a, b) => a.diff - b.diff);
+    withDiff.sort((a, b) => {
+      // Sort by: diff dulu, lalu price ascending
+      if (a.diff !== b.diff) return a.diff - b.diff;
+      return (a.pkg.price || 0) - (b.pkg.price || 0);
+    });
     const best = withDiff[0].diff;
     const list = withDiff.filter(x => x.diff === best).map(x => x.pkg).slice(0, 5);
 
-    let html = '';
+    let html = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">
+      ${list[0] ? `Durasi tersedia: ${list[0].duration || list[0].day} hari` : ''}
+      ${best > 0 ? ` <span style="color:#e07b00;">(nearest match, filter: ${day} hari)</span>` : ''}
+    </div>`;
     list.forEach(pkg => {
-      // Harga dalam miliUSD (102500 = USD 1.025), bagi 1000
-      const rawPrice = parseFloat(pkg.retailPrice || pkg.price || 0);
-      const buyUSD  = rawPrice > 100 ? rawPrice / 1000 : rawPrice; // auto-detect miliUSD vs USD
+      // price dalam miliUSD → bagi 1000
+      const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 1000;
       const buyIDR  = Math.round(buyUSD * kurs);
       const sellIDR = Math.round(buyIDR * (1 + markup / 100));
 
