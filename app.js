@@ -3769,23 +3769,22 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
       return;
     }
 
-    // Gunakan 'price' (harga beli/partner, miliUSD) bukan retailPrice (harga publish)
-    const withDiff = packages.map(pkg => {
-      const pkgDay = parseInt(pkg.duration || pkg.day || pkg.days || 0);
-      return { pkg, diff: Math.abs(pkgDay - day) };
-    });
-    withDiff.sort((a, b) => {
-      // Sort by: diff dulu, lalu price ascending
-      if (a.diff !== b.diff) return a.diff - b.diff;
-      return (a.pkg.price || 0) - (b.pkg.price || 0);
-    });
-    const best = withDiff[0].diff;
-    const list = withDiff.filter(x => x.diff === best).map(x => x.pkg).slice(0, 5);
+    // Cari durasi yang tersedia, pilih yang paling mendekati
+    const allDays = [...new Set(packages.map(p => parseInt(p.duration || p.day || 0)))].filter(Boolean).sort((a,b) => a-b);
+    let bestDay = allDays[0];
+    let minDiff = Math.abs(allDays[0] - day);
+    for (const d of allDays) {
+      const diff = Math.abs(d - day);
+      if (diff < minDiff) { minDiff = diff; bestDay = d; }
+    }
+    const list = packages.filter(p => parseInt(p.duration || p.day || 0) === bestDay).slice(0, 5);
 
-    let html = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">
-      ${list[0] ? `Durasi tersedia: ${list[0].duration || list[0].day} hari` : ''}
-      ${best > 0 ? ` <span style="color:#e07b00;">(nearest match, filter: ${day} hari)</span>` : ''}
-    </div>`;
+    const matchLabel = minDiff === 0
+      ? ''
+      : `<div style="font-size:10px;color:#e07b00;background:#fef3c7;border-radius:4px;padding:3px 8px;margin-bottom:8px;">
+           ⚠️ Paket ${day} hari tidak tersedia — menampilkan yang paling dekat: <b>${bestDay} hari</b>
+         </div>`;
+    let html = matchLabel;
     list.forEach(pkg => {
       // price dalam miliUSD → bagi 1000
       const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 1000;
