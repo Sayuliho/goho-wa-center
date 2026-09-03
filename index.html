@@ -655,7 +655,7 @@
 <div id="panel-harga" style="
   display:none;
   position:fixed;
-  width:620px;
+  width:740px;
   background:white;
   border-radius:12px;
   box-shadow:0 8px 32px rgba(0,0,0,0.18);
@@ -678,7 +678,7 @@
   ">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:16px;">📶</span>
-      <span style="font-size:13px;font-weight:600;color:white;">Harga SIM Card & eSIM Aviroam</span>
+      <span style="font-size:13px;font-weight:600;color:white;">Harga SIM Card & eSIM — Aviroam vs eSIM Access</span>
     </div>
     <button onclick="closeHargaPanel()" style="
       background:rgba(255,255,255,0.15);
@@ -695,13 +695,39 @@
   
   <!-- Body -->
   <div style="padding:16px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem;">
-      
+
+    <!-- Kurs USD + Markup eSIM Access -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Kurs USD</label>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+          <input type="number" id="h-kurs-usd"
+            value="16000" min="1000" step="100"
+            style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
+            onchange="localStorage.setItem('esim_kurs_usd',this.value); hargaShowResult();">
+          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">IDR / USD</span>
+        </div>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Markup eSIM Access</label>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+          <input type="number" id="h-markup-pct"
+            value="20" min="0" max="100" step="1"
+            style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
+            onchange="localStorage.setItem('esim_markup_pct',this.value); hargaShowResult();">
+          <span style="font-size:10px;color:var(--text-muted);">%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter negara / durasi / paket -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1rem;">
+
       <!-- Negara dengan search -->
       <div class="form-group" style="margin:0;">
         <label style="font-size:11px;font-weight:600;color:var(--text-muted);">Negara / Region</label>
         <div style="position:relative;margin-top:4px;">
-          <input type="text" id="h-country-search" 
+          <input type="text" id="h-country-search"
             placeholder="Ketik negara..."
             oninput="hargaFilterCountry(this.value)"
             onfocus="hargaShowCountryDropdown()"
@@ -744,7 +770,7 @@
     <div id="h-loading" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text-muted);">
       <i class="ti ti-loader spin"></i> Memuat data harga...
     </div>
-    <div id="h-result" style="text-align:center;padding:2rem;font-size:13px;color:var(--text-muted);">
+    <div id="h-result" style="font-size:13px;color:var(--text-muted);">
       Pilih negara, durasi, dan paket untuk melihat harga
     </div>
   </div>
