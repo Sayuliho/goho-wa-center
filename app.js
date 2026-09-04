@@ -3857,10 +3857,12 @@ function hargaUpdateDay() {
 
   // Cari data Aviroam: match keyword dari GOHO_COUNTRIES.aviroam[]
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
+  console.log('[hargaUpdateDay] displayName:', displayName, '| keywords:', avKeywords, '| hargaData rows:', hargaData.length);
   const aviroamRows = hargaData.filter(r => {
     const name = (r[0] || '').toLowerCase();
     return avKeywords.some(kw => name.includes(kw));
   });
+  console.log('[hargaUpdateDay] aviroamRows found:', aviroamRows.length, aviroamRows.slice(0,3).map(r=>r[0]));
 
   // Kumpulkan durasi dari Aviroam (standar: 3,5,7,10,14,30)
   const avDays = [...new Set(aviroamRows.map(r => r[2]))].sort((a,b) => a-b);
