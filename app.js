@@ -2701,8 +2701,44 @@ function openHargaModal() {
   if (!panel) return;
   panel.style.display = 'flex';
   panel.style.flexDirection = 'column';
-  if (!hargaLoaded) loadHargaData();
+  // Load settings dari D1 dulu, baru load data harga
+  hargaLoadSettings().then(() => {
+    if (!hargaLoaded) loadHargaData();
+  });
   initHargaPanelDrag();
+}
+
+async function hargaLoadSettings() {
+  try {
+    const keys = ['esim_kurs_usd', 'esim_markup_pct'];
+    if (!window._appSettings) window._appSettings = {};
+    for (const key of keys) {
+      const res = await fetch(`${WORKER_URL}?action=getSetting&key=${key}`);
+      const data = await res.json();
+      if (data.ok && data.value !== null) {
+        window._appSettings[key] = data.value;
+        localStorage.setItem(key, data.value);
+      }
+    }
+    // Sync ke input
+    const kursEl   = document.getElementById('h-kurs-usd');
+    const markupEl = document.getElementById('h-markup-pct');
+    if (kursEl)   kursEl.value   = window._appSettings['esim_kurs_usd']   || localStorage.getItem('esim_kurs_usd')   || '16000';
+    if (markupEl) markupEl.value = window._appSettings['esim_markup_pct'] || localStorage.getItem('esim_markup_pct') || '20';
+  } catch(e) { console.warn('[hargaLoadSettings]', e); }
+}
+
+async function hargaSaveSetting(key, value) {
+  if (!window._appSettings) window._appSettings = {};
+  window._appSettings[key] = value;
+  localStorage.setItem(key, value);
+  try {
+    await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveSetting', key, value })
+    });
+  } catch(e) { console.warn('[hargaSaveSetting]', e); }
 }
 
 function closeHargaPanel() {
@@ -3659,10 +3695,10 @@ function hargaUpdatePkg() {
 
 // ===== HARGA v2: kurs & markup helpers =====
 function hargaGetKurs() {
-  return parseFloat(localStorage.getItem('esim_kurs_usd') || '16000');
+  return parseFloat(window._appSettings?.esim_kurs_usd || localStorage.getItem('esim_kurs_usd') || '16000');
 }
 function hargaGetMarkup() {
-  return parseFloat(localStorage.getItem('esim_markup_pct') || '20');
+  return parseFloat(window._appSettings?.esim_markup_pct || localStorage.getItem('esim_markup_pct') || '20');
 }
 function hargaFmtIDR(v) {
   return v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—';
