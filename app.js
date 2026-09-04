@@ -2698,7 +2698,7 @@ let hargaData = [];
 // Format: { display, iroamly, iso, aviroam_keywords[] }
 
 const GOHO_COUNTRIES = [
-  { display: 'Korea', iroamly: 'south-korea', iso: 'KR', aviroam: ['korea'] },
+  { display: 'Korea', iroamly: 'south-korea', iso: 'KR', aviroam: ['korea selatan', 'south korea'] },
   { display: 'United Arab Emirates', iroamly: 'united-arab-emirates', iso: 'AE', aviroam: ['emirates', 'uae', 'dubai'] },
   { display: 'Philippines', iroamly: 'philippines', iso: 'PH', aviroam: ['philippines'] },
   { display: 'United States', iroamly: 'united-states', iso: 'US', aviroam: ['united states', 'usa', 'america'] },
@@ -3881,12 +3881,27 @@ function hargaUpdateDay() {
   document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi dan paket</div>';
   if (!displayName) return;
 
-  // Cari data Aviroam: match keyword dari GOHO_COUNTRIES.aviroam[]
+  // Cari data Aviroam: prioritaskan exact match, fallback ke partial
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
-  const aviroamRows = hargaData.filter(r => {
-    const name = (r[0] || '').toLowerCase();
-    return avKeywords.some(kw => name.includes(kw));
+  // Step 1: cari exact match (nama negara = keyword persis)
+  let aviroamRows = hargaData.filter(r => {
+    const name = (r[0] || '').toLowerCase().trim();
+    return avKeywords.some(kw => name === kw.toLowerCase());
   });
+  // Step 2: kalau tidak ada exact, pakai partial tapi exclude nama regional panjang (>30 karakter)
+  if (!aviroamRows.length) {
+    aviroamRows = hargaData.filter(r => {
+      const name = (r[0] || '').toLowerCase();
+      return avKeywords.some(kw => name.includes(kw)) && name.length <= 35;
+    });
+  }
+  // Step 3: fallback semua partial match
+  if (!aviroamRows.length) {
+    aviroamRows = hargaData.filter(r => {
+      const name = (r[0] || '').toLowerCase();
+      return avKeywords.some(kw => name.includes(kw));
+    });
+  }
 
   // Kumpulkan durasi dari Aviroam (standar: 3,5,7,10,14,30)
   const avDays = [...new Set(aviroamRows.map(r => r[2]))].sort((a,b) => a-b);
@@ -3961,16 +3976,34 @@ async function hargaShowResult() {
 
   const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
 
-  // Cari SEMUA data Aviroam yang match — bisa lebih dari 1 kategori
-  // Kalau paket dipilih dari generic list (bukan nama asli Aviroam), skip Aviroam
+  // Cari SEMUA data Aviroam yang match — prioritaskan exact match
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
   const genericPkgs = ['500MB / day','1GB / day','2GB / day','3GB / day',
     '5GB','10GB','20GB','30GB','50GB','Unlimited'];
   const isGenericPkg = genericPkgs.includes(p);
-  const avRows = isGenericPkg ? [] : (window._aviroamRows || hargaData).filter(r => {
-    const name = (r[0] || '').toLowerCase();
-    return r[2] === d && r[1] === p && avKeywords.some(kw => name.includes(kw));
-  });
+  let avRows = [];
+  if (!isGenericPkg) {
+    const src = window._aviroamRows || hargaData;
+    // Exact match dulu
+    avRows = src.filter(r => {
+      const name = (r[0] || '').toLowerCase().trim();
+      return r[2] === d && r[1] === p && avKeywords.some(kw => name === kw.toLowerCase());
+    });
+    // Partial match exclude regional panjang
+    if (!avRows.length) {
+      avRows = src.filter(r => {
+        const name = (r[0] || '').toLowerCase();
+        return r[2] === d && r[1] === p && avKeywords.some(kw => name.includes(kw)) && name.length <= 35;
+      });
+    }
+    // Fallback semua
+    if (!avRows.length) {
+      avRows = src.filter(r => {
+        const name = (r[0] || '').toLowerCase();
+        return r[2] === d && r[1] === p && avKeywords.some(kw => name.includes(kw));
+      });
+    }
+  }
   // Deduplikasi berdasarkan nama kategori (r[0])
   const avRowsUniq = avRows.filter((r, i, arr) => arr.findIndex(x => x[0] === r[0]) === i);
   // Row pertama untuk referensi harga (untuk perbandingan LEBIH MURAH di eSIM/iRoamly)
