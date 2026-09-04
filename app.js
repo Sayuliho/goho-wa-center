@@ -2701,7 +2701,13 @@ function openHargaModal() {
   if (!panel) return;
   panel.style.display = 'flex';
   panel.style.flexDirection = 'column';
+  // Restore kurs & markup dari localStorage
+  const kursEl   = document.getElementById('h-kurs-usd');
+  const markupEl = document.getElementById('h-markup-pct');
+  if (kursEl)   kursEl.value   = hargaGetKurs();
+  if (markupEl) markupEl.value = hargaGetMarkup();
   if (!hargaLoaded) loadHargaData();
+  if (!esimLocationsLoaded) loadEsimLocations();
   initHargaPanelDrag();
 }
 
