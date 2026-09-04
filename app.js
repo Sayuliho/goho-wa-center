@@ -2694,87 +2694,15 @@ async function deleteSmartNote(noteId, noWa) {
 // ===================== HARGA SIM/ESIM =====================
 let hargaData = [];
 let hargaLoaded = false;
-let esimLocations = []; // cache dari getEsimLocations
-let esimLocationsLoaded = false;
 
+// FIX 1: openHargaModal → floating panel (bisa chat sambil lihat harga)
 function openHargaModal() {
   const panel = document.getElementById('panel-harga');
   if (!panel) return;
   panel.style.display = 'flex';
   panel.style.flexDirection = 'column';
-  // Restore kurs & markup dari localStorage
-  const kursEl   = document.getElementById('h-kurs-usd');
-  const markupEl = document.getElementById('h-markup-pct');
-  if (kursEl)   kursEl.value   = hargaGetKurs();
-  if (markupEl) markupEl.value = hargaGetMarkup();
   if (!hargaLoaded) loadHargaData();
-  if (!esimLocationsLoaded) loadEsimLocations();
   initHargaPanelDrag();
-}
-
-// Load semua negara dari eSIM Access (233 entries) — sekali saja, simpan di memory
-async function loadEsimLocations() {
-  try {
-    const res = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimLocations');
-    const data = await res.json();
-    if (data.ok && data.data?.locationList) {
-      esimLocations = data.data.locationList;
-      esimLocationsLoaded = true;
-    }
-  } catch(e) {
-    console.warn('[loadEsimLocations] error:', e);
-  }
-}
-
-// Cari ISO code eSIM Access dari nama negara Aviroam
-// Pakai locationList yang sudah di-load — match by name (case-insensitive, partial)
-function findEsimCode(aviroamCountryName) {
-  if (!esimLocations.length) return null;
-  const text = aviroamCountryName.toLowerCase().replace(/\n/g, ' ');
-
-  // 1. Kamus alias (Indonesia + common variations) — paling presisi, cek duluan
-  const INDO_MAP = {
-    'arab saudi': 'SA', 'korea selatan': 'KR', 'jepang': 'JP', 'belanda': 'NL',
-    'jerman': 'DE', 'prancis': 'FR', 'inggris': 'GB', 'tiongkok': 'CN',
-    'filipina': 'PH', 'kamboja': 'KH', 'maladewa': 'MV', 'maroko': 'MA',
-    'turki': 'TR', 'rusia': 'RU', 'mesir': 'EG', 'dubai': 'AE',
-    'china': 'CN', 'hongkong': 'HK', 'hong kong': 'HK', 'macao': 'MO',
-    'macau': 'MO', 'taiwan': 'TW', 'vietnam': 'VN', 'malaysia': 'MY',
-    'singapore': 'SG', 'thailand': 'TH', 'india': 'IN', 'australia': 'AU',
-    'japan': 'JP', 'korea': 'KR', 'russia': 'RU', 'turkey': 'TR',
-    'usa': 'US', 'united states': 'US', 'america': 'US',
-    'phillipines': 'PH', 'philippines': 'PH', 'cambodia': 'KH',
-    'maldives': 'MV', 'morocco': 'MA', 'indonesia': 'ID',
-    'saudi arabia': 'SA', 'uae': 'AE', 'united arab emirates': 'AE',
-    'new zealand': 'NZ', 'south korea': 'KR',
-  };
-  for (const [alias, code] of Object.entries(INDO_MAP)) {
-    if (text.includes(alias)) {
-      const found = esimLocations.find(l => l.code === code && l.type === 1);
-      if (found) return { code, type: 1, name: found.name, subList: null };
-    }
-  }
-
-  // 2. Exact match by eSIM Access name
-  for (const loc of esimLocations) {
-    if (loc.name.toLowerCase() === text) return { code: loc.code, type: loc.type, name: loc.name, subList: loc.subLocationList };
-  }
-
-  // 3. Partial match single-country (untuk nama Aviroam yang mengandung daftar negara)
-  const singleMatches = [];
-  for (const loc of esimLocations) {
-    if (loc.type === 1 && text.includes(loc.name.toLowerCase())) {
-      singleMatches.push(loc);
-    }
-  }
-  if (singleMatches.length === 1) {
-    return { code: singleMatches[0].code, type: 1, name: singleMatches[0].name, subList: null };
-  }
-  if (singleMatches.length > 1) {
-    return { code: null, type: 2, name: aviroamCountryName, subList: singleMatches.map(l => ({ code: l.code, name: l.name })) };
-  }
-
-  return null;
 }
 
 function closeHargaPanel() {
@@ -3126,28 +3054,6 @@ async function openCruiseModal() {
 
 function closeCruiseModal() {
   document.getElementById('modal-cruise').style.display = 'none';
-}
-
-function cruiseReset() {
-  // Kembali ke mode selector
-  document.getElementById('cruise-mode-selector').style.display = 'block';
-  document.getElementById('cruise-termurah-mode').style.display = 'none';
-  document.getElementById('cruise-spesifik-mode').style.display = 'none';
-  document.getElementById('btn-mode-termurah').style.background = 'var(--bg)';
-  document.getElementById('btn-mode-termurah').style.borderColor = 'var(--border)';
-  document.getElementById('btn-mode-spesifik').style.background = 'var(--bg)';
-  document.getElementById('btn-mode-spesifik').style.borderColor = 'var(--border)';
-  // Reset hasil
-  const tmHasil = document.getElementById('tm-hasil');
-  if (tmHasil) { tmHasil.style.display = 'none'; tmHasil.innerHTML = ''; }
-  const cruiseHasil = document.getElementById('cruise-hasil');
-  if (cruiseHasil) { cruiseHasil.style.display = 'none'; cruiseHasil.innerHTML = ''; }
-  // Reset spesifik mode
-  document.getElementById('cruise-tgl-group').style.display = 'none';
-  document.getElementById('cruise-kabin-group').style.display = 'none';
-  document.getElementById('cruise-pax-group').style.display = 'none';
-  document.getElementById('cruise-promo-info').style.display = 'none';
-  document.getElementById('cruise-rute').value = '';
 }
 
 // ===================== CRUISE PANEL DRAG =====================
@@ -3818,192 +3724,11 @@ async function hargaShowResult() {
     </div>`;
 
   // Fetch eSIM Access dari Worker (async, tidak block render Aviroam)
-  // Gunakan findEsimCode untuk mapping otomatis dari nama Aviroam
-  const esimMatch = findEsimCode(c);
-  loadEsimAccessPrice(c, d, kurs, markup, parseFloat(esimPar) || 0, esimMatch);
+  loadEsimAccessPrice(c, d, kurs, markup, parseFloat(esimPar) || 0);
 }
 
-async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsim, esimMatch) {
-  const el = document.getElementById('esim-access-result');
-  if (!el) return;
-  try {
-    // Tunggu locations selesai load kalau belum
-    if (!esimLocationsLoaded) {
-      el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Memuat data negara...</div>';
-      await loadEsimLocations();
-      esimMatch = findEsimCode(country);
-    }
-
-    // Kalau region multi-country → tampilkan searchable dropdown
-    if (esimMatch && esimMatch.type === 2 && esimMatch.subList?.length > 0) {
-      renderEsimRegionDropdown(el, esimMatch.subList, day, kurs, markup, aviroamPartnerEsim);
-      return;
-    }
-
-    // Single country — ambil code
-    const code = esimMatch?.code || null;
-    if (!code) {
-      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia di eSIM Access</span>';
-      return;
-    }
-
-    await fetchAndRenderEsimPackages(el, code, day, kurs, markup, aviroamPartnerEsim);
-
-  } catch(e) {
-    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${e.message}</span>`;
-  }
-}
-
-// Render dropdown searchable untuk region multi-country
-function renderEsimRegionDropdown(el, subList, day, kurs, markup, aviroamPartnerEsim) {
-  const dropId = 'esim-region-dd-' + Date.now();
-  el.innerHTML = `
-    <div style="margin-bottom:8px;font-size:11px;color:#e07b00;background:#fef3c7;border-radius:4px;padding:3px 8px;">
-      🌍 Region — pilih negara spesifik untuk cek harga eSIM Access
-    </div>
-    <div style="position:relative;">
-      <input type="text" id="esim-region-search"
-        placeholder="Ketik nama negara..."
-        autocomplete="off"
-        style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;box-sizing:border-box;"
-        oninput="esimRegionFilter(this.value, ${JSON.stringify(subList).replace(/"/g,'&quot;')}, ${day}, ${kurs}, ${markup}, ${aviroamPartnerEsim})">
-      <div id="${dropId}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:180px;overflow-y:auto;"></div>
-    </div>
-    <div id="esim-region-result" style="margin-top:8px;"></div>`;
-
-  // Simpan subList ke window untuk akses dari inline handler
-  window._esimRegionSubList = subList;
-  window._esimRegionParams  = { day, kurs, markup, aviroamPartnerEsim };
-
-  // Re-attach dengan event listener bersih
-  setTimeout(() => {
-    const inp = document.getElementById('esim-region-search');
-    if (inp) inp.addEventListener('input', function() {
-      esimRegionFilter(this.value);
-    });
-  }, 100);
-}
-
-function esimRegionFilter(query) {
-  const subList = window._esimRegionSubList || [];
-  const dd = document.querySelector('#esim-access-result [id^="esim-region-dd"]') ||
-             document.getElementById('esim-region-search')?.nextElementSibling;
-  if (!dd) return;
-  const q = (query || '').toLowerCase().trim();
-  const filtered = q ? subList.filter(c => c.name.toLowerCase().includes(q)) : subList.slice(0, 20);
-  if (!filtered.length) { dd.style.display = 'none'; return; }
-  dd.innerHTML = filtered.map(c =>
-    `<div onclick="esimRegionSelect('${c.code}','${escH(c.name)}')"
-      style="padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);"
-      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">
-      ${escH(c.name)}
-    </div>`
-  ).join('');
-  dd.style.display = 'block';
-}
-
-async function esimRegionSelect(code, name) {
-  const inp = document.getElementById('esim-region-search');
-  if (inp) inp.value = name;
-  const dd = document.getElementById('esim-region-search')?.nextElementSibling;
-  if (dd) dd.style.display = 'none';
-  const resultEl = document.getElementById('esim-region-result');
-  if (!resultEl) return;
-  resultEl.innerHTML = '<div style="font-size:11px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Memuat...</div>';
-  const { day, kurs, markup, aviroamPartnerEsim } = window._esimRegionParams || {};
-  await fetchAndRenderEsimPackages(resultEl, code, day, kurs, markup, aviroamPartnerEsim);
-}
-
-async function fetchAndRenderEsimPackages(el, code, day, kurs, markup, aviroamPartnerEsim) {
-  const res = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimPackages&country=${encodeURIComponent(code)}`);
-  const data = await res.json();
-
-  if (!data.ok || !data.data || data.data.success === false) {
-    el.innerHTML = `<span style="font-size:11px;color:var(--text-muted);">${escH(data.data?.errorMsg || 'Tidak tersedia')}</span>`;
-    return;
-  }
-
-  const packages = data.data?.packageList || [];
-  if (!packages.length) {
-    el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
-    return;
-  }
-
-  const allDays = [...new Set(packages.map(p => parseInt(p.duration || p.day || 0)))].filter(Boolean).sort((a,b) => a-b);
-
-  // Cek exact match dulu
-  const hasExact = allDays.includes(day);
-
-  // Cari durasi bawah (≤ day) dan atas (≥ day)
-  const below = allDays.filter(d => d <= day);
-  const above = allDays.filter(d => d >= day);
-  const dayBelow = below.length ? below[below.length - 1] : null; // terdekat di bawah
-  const dayAbove = above.length ? above[0] : null;                 // terdekat di atas
-
-  // Fungsi render satu grup durasi
-  const renderGroup = (targetDay, label) => {
-    let list = packages.filter(p => parseInt(p.duration || p.day || 0) === targetDay);
-    // Sort: single-country duluan, lalu harga ascending
-    list.sort((a, b) => {
-      const aLen = a.locationNetworkList?.length || 99;
-      const bLen = b.locationNetworkList?.length || 99;
-      if (aLen !== bLen) return aLen - bLen;
-      return (a.price || 0) - (b.price || 0);
-    });
-    // Tidak ada limit — tampilkan semua paket
-
-    let html = label ? `<div style="font-size:10px;font-weight:700;color:var(--text-muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:0.4px;">${label}</div>` : '';
-    list.forEach(pkg => {
-      const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 10000;
-      const buyIDR  = Math.round(buyUSD * kurs);
-      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-      const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
-      const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
-      const bg     = isCheaper ? '#f0fdf4' : 'white';
-      const badge  = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
-      const pkgName = escH(pkg.name || pkg.packageName || '-');
-      const pkgDay  = pkg.duration || pkg.day || '-';
-      const coverage = pkg.locationNetworkList?.map(l => l.locationName).join(', ') || '';
-      html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
-        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${pkgName}${badge}</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">${pkgDay} hari · ${escH(pkg.speed||'')}</div>
-        ${coverage ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">📍 ${escH(coverage)}</div>` : ''}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
-          <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
-          <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
-          <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
-          <span style="font-size:13px;font-weight:700;color:#1d4ed8;">${hargaFmtIDR(sellIDR)}</span>
-        </div>
-      </div>`;
-    });
-    return html;
-  };
-
-  let html = '';
-
-  if (hasExact) {
-    // Exact match — tampilkan satu grup tanpa label durasi
-    html = renderGroup(day, '');
-  } else {
-    // Tidak ada exact match — tampilkan dua grup: bawah + atas
-    html = `<div style="font-size:10px;color:#e07b00;background:#fef3c7;border-radius:4px;padding:4px 8px;margin-bottom:10px;">
-      ⚠️ Paket <b>${day} hari</b> tidak tersedia — menampilkan durasi terdekat
-    </div>`;
-    if (dayBelow && dayAbove && dayBelow !== dayAbove) {
-      html += renderGroup(dayBelow, `⬇ ${dayBelow} hari (di bawah)`);
-      html += `<div style="height:1px;background:var(--border);margin:8px 0;"></div>`;
-      html += renderGroup(dayAbove, `⬆ ${dayAbove} hari (di atas)`);
-    } else if (dayBelow) {
-      html += renderGroup(dayBelow, `${dayBelow} hari`);
-    } else if (dayAbove) {
-      html += renderGroup(dayAbove, `${dayAbove} hari`);
-    }
-  }
-
-  el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
-}
+// Fungsi loadEsimAccessPrice, fetchAndRenderEsimPackages, findEsimCode
+// sudah ada di atas (bagian HARGA SIM/ESIM) — bagian ini dihapus untuk menghindari duplikasi
 // ===================== MDAC =====================
 var mdacBookingInfo = null;
 var mdacPaxList = [];
