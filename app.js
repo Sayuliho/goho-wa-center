@@ -2964,11 +2964,13 @@ async function loadHargaData() {
   result.innerHTML = '';
 
   // Coba load dari cache localStorage dulu (instan)
+  const CACHE_VERSION = 'v2'; // increment ini kalau struktur data berubah
   try {
     const cached = localStorage.getItem('hargaData_cache');
     const cachedAt = parseInt(localStorage.getItem('hargaData_cache_at') || '0');
+    const cachedVer = localStorage.getItem('hargaData_cache_ver') || '';
     const cacheAge = Date.now() - cachedAt;
-    if (cached && cacheAge < 30 * 60 * 1000) { // cache 30 menit
+    if (cached && cacheAge < 30 * 60 * 1000 && cachedVer === CACHE_VERSION) { // cache 30 menit
       hargaData = JSON.parse(cached);
       hargaLoaded = true;
       window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
@@ -3001,6 +3003,7 @@ async function fetchHargaDataBackground() {
       try {
         localStorage.setItem('hargaData_cache', JSON.stringify(hargaData));
         localStorage.setItem('hargaData_cache_at', Date.now().toString());
+        localStorage.setItem('hargaData_cache_ver', CACHE_VERSION);
       } catch(e) {}
     }
   } catch(e) {
