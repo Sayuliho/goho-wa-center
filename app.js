@@ -3857,12 +3857,10 @@ function hargaUpdateDay() {
 
   // Cari data Aviroam: match keyword dari GOHO_COUNTRIES.aviroam[]
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
-  console.log('[hargaUpdateDay] displayName:', displayName, '| keywords:', avKeywords, '| hargaData rows:', hargaData.length);
   const aviroamRows = hargaData.filter(r => {
     const name = (r[0] || '').toLowerCase();
     return avKeywords.some(kw => name.includes(kw));
   });
-  console.log('[hargaUpdateDay] aviroamRows found:', aviroamRows.length, aviroamRows.slice(0,3).map(r=>r[0]));
 
   // Kumpulkan durasi dari Aviroam (standar: 3,5,7,10,14,30)
   const avDays = [...new Set(aviroamRows.map(r => r[2]))].sort((a,b) => a-b);
@@ -3924,15 +3922,17 @@ async function hargaShowResult() {
 
   const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
 
-  // Cari data Aviroam dengan keyword matching
+  // Cari SEMUA data Aviroam yang match — bisa lebih dari 1 kategori
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
-  const row = (window._aviroamRows || hargaData).find(r => {
+  const avRows = (window._aviroamRows || hargaData).filter(r => {
     const name = (r[0] || '').toLowerCase();
     return r[2] === d && r[1] === p && avKeywords.some(kw => name.includes(kw));
   });
-
-  // Kolom sheet: COUNTRY[0] PACKAGE[1] DAY[2] PUBLISH_SIM[3] PUBLISH_ESIM[4] PARTNER_SIM[5] PARTNER_ESIM[6]
-  const [,, day, simPub, esimPub, simPar, esimPar] = row || [null, null, d, 0, 0, 0, 0];
+  // Deduplikasi berdasarkan nama kategori (r[0])
+  const avRowsUniq = avRows.filter((r, i, arr) => arr.findIndex(x => x[0] === r[0]) === i);
+  // Row pertama untuk referensi harga (untuk perbandingan LEBIH MURAH di eSIM/iRoamly)
+  const row = avRowsUniq[0] || null;
+  const [,, day, , , , esimPar] = row || [null, null, d, 0, 0, 0, 0];
   const c = displayName;
 
   const kurs   = hargaGetKurs();
@@ -3944,20 +3944,31 @@ async function hargaShowResult() {
   if (kursEl)   kursEl.value   = kurs;
   if (markupEl) markupEl.value = markup;
 
+  // Build Aviroam cards — satu card per kategori
+  const aviroamCards = avRowsUniq.length === 0
+    ? '<div style="font-size:11px;color:var(--text-muted);">Data tidak tersedia</div>'
+    : avRowsUniq.map(r => {
+        const [,, , simPub, esimPub, simPar, esimPar] = r;
+        return `
+          <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+            <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:6px;display:inline-block;">🌏 ${escH(r[0])}</div>
+            <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
+            ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
+            ${hargaRowAviroam('Partner', hargaFmtIDR(simPar), 'agen')}
+            <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin:6px 0 4px;text-transform:uppercase;letter-spacing:0.4px;">eSIM</div>
+            ${hargaRowAviroam('Publish', hargaFmtIDR(esimPub), 'customer')}
+            ${hargaRowAviroam('Partner', hargaFmtIDR(esimPar), 'agen')}
+          </div>`;
+      }).join('');
+
   resultEl.innerHTML = `
     <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${d} hari &bull; ${escH(p)}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
 
       <!-- KIRI: Aviroam -->
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
-        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">🌐 Aviroam</div>
-        ${row ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 7px;margin-bottom:8px;display:inline-block;">🌏 ${escH(row[0])}</div>` : ''}
-        <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
-        ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
-        ${hargaRowAviroam('Partner', hargaFmtIDR(simPar), 'agen')}
-        <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin:10px 0 6px;text-transform:uppercase;letter-spacing:0.4px;">eSIM</div>
-        ${hargaRowAviroam('Publish', hargaFmtIDR(esimPub), 'customer')}
-        ${hargaRowAviroam('Partner', hargaFmtIDR(esimPar), 'agen')}
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">🌐 Aviroam</div>
+        ${aviroamCards}
       </div>
 
       <!-- TENGAH: eSIM Access -->
