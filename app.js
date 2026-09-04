@@ -3778,8 +3778,12 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
       return;
     }
 
-    // Prioritaskan paket single country (locationNetworkList.length === 1), buang paket regional/global
-    const singlePkgs = rawPackages.filter(p => !p.locationNetworkList || p.locationNetworkList.length <= 1);
+    // Prioritaskan paket single country — filter nama (buang regional/multi-country)
+    const ESIM_REGIONAL_KW = ['asia', 'global', 'worldwide', 'multi', ' & ', ' and '];
+    const singlePkgs = rawPackages.filter(p => {
+      const name = (p.name || p.packageName || p.slug || '').toLowerCase();
+      return !ESIM_REGIONAL_KW.some(kw => name.includes(kw));
+    });
     const packages = singlePkgs.length ? singlePkgs : rawPackages;
 
     // Cari durasi yang tersedia, pilih yang paling mendekati
