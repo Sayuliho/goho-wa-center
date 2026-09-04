@@ -2693,6 +2693,179 @@ async function deleteSmartNote(noteId, noWa) {
 }
 // ===================== HARGA SIM/ESIM =====================
 let hargaData = [];
+// MASTER COUNTRY LIST — GohoTravel eSIM
+// Source: iRoamly official list + ISO mapping untuk eSIM Access + keyword untuk Aviroam
+// Format: { display, iroamly, iso, aviroam_keywords[] }
+
+const GOHO_COUNTRIES = [
+  { display: 'Korea', iroamly: 'south-korea', iso: 'KR', aviroam: ['korea'] },
+  { display: 'United Arab Emirates', iroamly: 'united-arab-emirates', iso: 'AE', aviroam: ['emirates', 'uae', 'dubai'] },
+  { display: 'Philippines', iroamly: 'philippines', iso: 'PH', aviroam: ['philippines'] },
+  { display: 'United States', iroamly: 'united-states', iso: 'US', aviroam: ['united states', 'usa', 'america'] },
+  { display: 'Japan', iroamly: 'japan', iso: 'JP', aviroam: ['japan'] },
+  { display: 'Saudi Arabia', iroamly: 'saudi-arabia', iso: 'SA', aviroam: ['saudi arabia'] },
+  { display: 'Taiwan', iroamly: 'taiwan', iso: 'TW', aviroam: ['taiwan'] },
+  { display: 'Turkey', iroamly: 'turkey', iso: 'TR', aviroam: ['turkey'] },
+  { display: 'India', iroamly: 'india', iso: 'IN', aviroam: ['india'] },
+  { display: 'United Kingdom', iroamly: 'united-kingdom', iso: 'GB', aviroam: ['united kingdom', 'uk', 'britain', 'england'] },
+  { display: 'Cambodia', iroamly: 'cambodia', iso: 'KH', aviroam: ['cambodia'] },
+  { display: 'Malaysia', iroamly: 'malaysia', iso: 'MY', aviroam: ['malaysia'] },
+  { display: 'Thailand', iroamly: 'thailand', iso: 'TH', aviroam: ['thailand'] },
+  { display: 'Ireland', iroamly: 'ireland', iso: 'IE', aviroam: ['ireland'] },
+  { display: 'Singapore', iroamly: 'singapore', iso: 'SG', aviroam: ['singapore'] },
+  { display: 'Indonesia', iroamly: 'indonesia', iso: 'ID', aviroam: ['indonesia'] },
+  { display: 'Vietnam', iroamly: 'vietnam', iso: 'VN', aviroam: ['vietnam'] },
+  { display: 'Albania', iroamly: 'albania', iso: 'AL', aviroam: ['albania'] },
+  { display: 'Egypt', iroamly: 'egypt', iso: 'EG', aviroam: ['egypt'] },
+  { display: 'Kazakhstan', iroamly: 'kazakhstan', iso: 'KZ', aviroam: ['kazakhstan'] },
+  { display: 'Ukraine', iroamly: 'ukraine', iso: 'UA', aviroam: ['ukraine'] },
+  { display: 'Estonia', iroamly: 'estonia', iso: 'EE', aviroam: ['estonia'] },
+  { display: 'Uzbekistan', iroamly: 'uzbekistan', iso: 'UZ', aviroam: ['uzbekistan'] },
+  { display: 'China', iroamly: 'china', iso: 'CN', aviroam: ['china'] },
+  { display: 'Montenegro', iroamly: 'montenegro', iso: 'ME', aviroam: ['montenegro'] },
+  { display: 'Qatar', iroamly: 'qatar', iso: 'QA', aviroam: ['qatar'] },
+  { display: 'Kuwait', iroamly: 'kuwait', iso: 'KW', aviroam: ['kuwait'] },
+  { display: 'Denmark', iroamly: 'denmark', iso: 'DK', aviroam: ['denmark'] },
+  { display: 'Bulgaria', iroamly: 'bulgaria', iso: 'BG', aviroam: ['bulgaria'] },
+  { display: 'Croatia', iroamly: 'croatia', iso: 'HR', aviroam: ['croatia'] },
+  { display: 'Iceland', iroamly: 'iceland', iso: 'IS', aviroam: ['iceland'] },
+  { display: 'Liechtenstein', iroamly: 'liechtenstein', iso: 'LI', aviroam: ['liechtenstein'] },
+  { display: 'Hungary', iroamly: 'hungary', iso: 'HU', aviroam: ['hungary'] },
+  { display: 'Luxembourg', iroamly: 'luxembourg', iso: 'LU', aviroam: ['luxembourg'] },
+  { display: 'Cyprus', iroamly: 'cyprus', iso: 'CY', aviroam: ['cyprus'] },
+  { display: 'Austria', iroamly: 'austria', iso: 'AT', aviroam: ['austria'] },
+  { display: 'Greece', iroamly: 'greece', iso: 'GR', aviroam: ['greece'] },
+  { display: 'Germany', iroamly: 'germany', iso: 'DE', aviroam: ['germany'] },
+  { display: 'Italy', iroamly: 'italy', iso: 'IT', aviroam: ['italy'] },
+  { display: 'Latvia', iroamly: 'latvia', iso: 'LV', aviroam: ['latvia'] },
+  { display: 'France', iroamly: 'france', iso: 'FR', aviroam: ['france'] },
+  { display: 'Spain', iroamly: 'spain', iso: 'ES', aviroam: ['spain'] },
+  { display: 'Sweden', iroamly: 'sweden', iso: 'SE', aviroam: ['sweden'] },
+  { display: 'Switzerland', iroamly: 'switzerland', iso: 'CH', aviroam: ['switzerland'] },
+  { display: 'Belgium', iroamly: 'belgium', iso: 'BE', aviroam: ['belgium'] },
+  { display: 'Czech Republic', iroamly: 'czech-republic', iso: 'CZ', aviroam: ['czech republic'] },
+  { display: 'Finland', iroamly: 'finland', iso: 'FI', aviroam: ['finland'] },
+  { display: 'French Guiana', iroamly: 'french-guiana', iso: 'GF', aviroam: ['french guiana'] },
+  { display: 'Lithuania', iroamly: 'lithuania', iso: 'LT', aviroam: ['lithuania'] },
+  { display: 'Malta', iroamly: 'malta', iso: 'MT', aviroam: ['malta'] },
+  { display: 'Netherlands', iroamly: 'netherlands', iso: 'NL', aviroam: ['netherlands'] },
+  { display: 'Norway', iroamly: 'norway', iso: 'NO', aviroam: ['norway'] },
+  { display: 'Poland', iroamly: 'poland', iso: 'PL', aviroam: ['poland'] },
+  { display: 'Portugal', iroamly: 'portugal', iso: 'PT', aviroam: ['portugal'] },
+  { display: 'Romania', iroamly: 'romania', iso: 'RO', aviroam: ['romania'] },
+  { display: 'Slovakia', iroamly: 'slovakia', iso: 'SK', aviroam: ['slovakia'] },
+  { display: 'Slovenia', iroamly: 'slovenia', iso: 'SI', aviroam: ['slovenia'] },
+  { display: 'Réunion', iroamly: 'reunion', iso: 'RE', aviroam: ['reunion', 'réunion'] },
+  { display: 'Gibraltar', iroamly: 'gibraltar', iso: 'GI', aviroam: ['gibraltar'] },
+  { display: 'Bosnia and Herzegovina', iroamly: 'bosnia-and-herzegovina', iso: 'BA', aviroam: ['bosnia and herzegovina'] },
+  { display: 'North Macedonia', iroamly: 'north-macedonia', iso: 'MK', aviroam: ['north macedonia'] },
+  { display: 'Isle of Man', iroamly: 'isle-of-man', iso: 'IM', aviroam: ['isle of man'] },
+  { display: 'Jersey', iroamly: 'jersey', iso: 'JE', aviroam: ['jersey'] },
+  { display: 'Congo Dem. Rep', iroamly: 'congo', iso: 'CD', aviroam: ['congo dem', 'democratic republic'] },
+  { display: 'South Africa', iroamly: 'south-africa', iso: 'ZA', aviroam: ['south africa'] },
+  { display: 'Mongolia', iroamly: 'mongolia', iso: 'MN', aviroam: ['mongolia'] },
+  { display: 'Afghanistan', iroamly: 'afghanistan', iso: 'AF', aviroam: ['afghanistan'] },
+  { display: 'Ecuador', iroamly: 'ecuador', iso: 'EC', aviroam: ['ecuador'] },
+  { display: 'Georgia', iroamly: 'georgia', iso: 'GE', aviroam: ['georgia'] },
+  { display: 'Guam', iroamly: 'guam', iso: 'GU', aviroam: ['guam'] },
+  { display: 'Kenya', iroamly: 'kenya', iso: 'KE', aviroam: ['kenya'] },
+  { display: 'Madagascar', iroamly: 'madagascar', iso: 'MG', aviroam: ['madagascar'] },
+  { display: 'Malawi', iroamly: 'malawi', iso: 'MW', aviroam: ['malawi'] },
+  { display: 'Peru', iroamly: 'peru', iso: 'PE', aviroam: ['peru'] },
+  { display: 'Niger', iroamly: 'niger', iso: 'NE', aviroam: ['niger'] },
+  { display: 'Northern Mariana Islands (incl. Saipan)', iroamly: 'saipan', iso: 'MP', aviroam: ['saipan', 'northern mariana'] },
+  { display: 'Ghana', iroamly: 'ghana', iso: 'GH', aviroam: ['ghana'] },
+  { display: 'Sri Lanka', iroamly: 'sri-lanka', iso: 'LK', aviroam: ['sri lanka'] },
+  { display: 'Pakistan', iroamly: 'pakistan', iso: 'PK', aviroam: ['pakistan'] },
+  { display: 'Dominican Republic', iroamly: 'dominican-republic', iso: 'DO', aviroam: ['dominican republic'] },
+  { display: 'Nigeria', iroamly: 'nigeria', iso: 'NG', aviroam: ['nigeria'] },
+  { display: 'Serbia', iroamly: 'serbia', iso: 'RS', aviroam: ['serbia'] },
+  { display: 'Sudan', iroamly: 'sudan', iso: 'SD', aviroam: ['sudan'] },
+  { display: 'Tanzania', iroamly: 'tanzania', iso: 'TZ', aviroam: ['tanzania'] },
+  { display: 'Brunei', iroamly: 'brunei', iso: 'BN', aviroam: ['brunei'] },
+  { display: 'Uganda', iroamly: 'uganda', iso: 'UG', aviroam: ['uganda'] },
+  { display: 'Uruguay', iroamly: 'uruguay', iso: 'UY', aviroam: ['uruguay'] },
+  { display: 'Chile', iroamly: 'chile', iso: 'CL', aviroam: ['chile'] },
+  { display: 'Mexico', iroamly: 'mexico', iso: 'MX', aviroam: ['mexico'] },
+  { display: 'Laos', iroamly: 'laos', iso: 'LA', aviroam: ['laos'] },
+  { display: 'Brazil', iroamly: 'brazil', iso: 'BR', aviroam: ['brazil'] },
+  { display: 'Guernsey', iroamly: 'guernsey', iso: 'GG', aviroam: ['guernsey'] },
+  { display: 'Mauritius', iroamly: 'mauritius', iso: 'MU', aviroam: ['mauritius'] },
+  { display: 'Morocco', iroamly: 'morocco', iso: 'MA', aviroam: ['morocco'] },
+  { display: 'Jordan', iroamly: 'jordan', iso: 'JO', aviroam: ['jordan'] },
+  { display: 'Balkan Peninsula', iroamly: 'balkan-peninsula', iso: null, aviroam: ['balkan'] },
+  { display: 'Moldova', iroamly: 'moldova', iso: 'MD', aviroam: ['moldova'] },
+  { display: 'Algeria', iroamly: 'algeria', iso: 'DZ', aviroam: ['algeria'] },
+  { display: 'Chad', iroamly: 'chad', iso: 'TD', aviroam: ['chad'] },
+  { display: 'Republic of the Congo', iroamly: 'congo-republic', iso: 'CG', aviroam: ['republic of the congo', 'congo republic'] },
+  { display: 'Gabon', iroamly: 'gabon', iso: 'GA', aviroam: ['gabon'] },
+  { display: 'Tunisia', iroamly: 'tunisia', iso: 'TN', aviroam: ['tunisia'] },
+  { display: 'Canada', iroamly: 'canada', iso: 'CA', aviroam: ['canada'] },
+  { display: 'Bahrain', iroamly: 'bahrain', iso: 'BH', aviroam: ['bahrain'] },
+  { display: 'Australia', iroamly: 'australia', iso: 'AU', aviroam: ['australia'] },
+  { display: 'New Zealand', iroamly: 'new-zealand', iso: 'NZ', aviroam: ['new zealand'] },
+  { display: 'Azerbaijan', iroamly: 'azerbaijan', iso: 'AZ', aviroam: ['azerbaijan'] },
+  { display: 'Argentina', iroamly: 'argentina', iso: 'AR', aviroam: ['argentina'] },
+  { display: 'Armenia', iroamly: 'armenia', iso: 'AM', aviroam: ['armenia'] },
+  { display: 'Faroe Islands', iroamly: 'faroe-islands', iso: 'FO', aviroam: ['faroe islands'] },
+  { display: 'Andorra', iroamly: 'andorra', iso: 'AD', aviroam: ['andorra'] },
+  { display: 'Oman', iroamly: 'oman', iso: 'OM', aviroam: ['oman'] },
+  { display: 'Bangladesh', iroamly: 'bangladesh', iso: 'BD', aviroam: ['bangladesh'] },
+  { display: 'Russia', iroamly: 'russia', iso: 'RU', aviroam: ['russia'] },
+  { display: 'Hong Kong', iroamly: 'hong-kong', iso: 'HK', aviroam: ['hong kong', 'hongkong'] },
+  { display: 'Kyrgyzstan', iroamly: 'kyrgyzstan', iso: 'KG', aviroam: ['kyrgyzstan'] },
+  { display: 'Turks and Caicos Islands', iroamly: 'turks-and-caicos-islands', iso: 'TC', aviroam: ['turks and caicos islands'] },
+  { display: 'Saint Vincent and the Grenadines', iroamly: 'saint-vincent-and-the-grenadines', iso: 'VC', aviroam: ['saint vincent and the grenadines'] },
+  { display: 'Saint Kitts and Nevis', iroamly: 'saint-kitts-and-nevis', iso: 'KN', aviroam: ['saint kitts and nevis'] },
+  { display: 'Antigua and Barbuda', iroamly: 'antigua-and-barbuda', iso: 'AG', aviroam: ['antigua and barbuda'] },
+  { display: 'Saint Lucia', iroamly: 'saint-lucia', iso: 'LC', aviroam: ['saint lucia'] },
+  { display: 'Grenada', iroamly: 'grenada', iso: 'GD', aviroam: ['grenada'] },
+  { display: 'Guadeloupe', iroamly: 'guadeloupe', iso: 'GP', aviroam: ['guadeloupe'] },
+  { display: 'Nepal', iroamly: 'nepal', iso: 'NP', aviroam: ['nepal'] },
+  { display: 'Paraguay', iroamly: 'paraguay', iso: 'PY', aviroam: ['paraguay'] },
+  { display: 'Cayman Islands', iroamly: 'cayman-islands', iso: 'KY', aviroam: ['cayman islands'] },
+  { display: 'Colombia', iroamly: 'colombia', iso: 'CO', aviroam: ['colombia'] },
+  { display: 'Dominica', iroamly: 'dominica', iso: 'DM', aviroam: ['dominica'] },
+  { display: 'Anguilla', iroamly: 'anguilla', iso: 'AI', aviroam: ['anguilla'] },
+  { display: 'Barbados', iroamly: 'barbados', iso: 'BB', aviroam: ['barbados'] },
+  { display: 'Liberia', iroamly: 'liberia', iso: 'LR', aviroam: ['liberia'] },
+  { display: 'Aruba', iroamly: 'aruba', iso: 'AW', aviroam: ['aruba'] },
+  { display: 'Bermuda', iroamly: 'bermuda', iso: 'BM', aviroam: ['bermuda'] },
+  { display: 'Cameroon', iroamly: 'cameroon', iso: 'CM', aviroam: ['cameroon'] },
+  { display: 'Fiji', iroamly: 'fiji', iso: 'FJ', aviroam: ['fiji'] },
+  { display: 'Guatemala', iroamly: 'guatemala', iso: 'GT', aviroam: ['guatemala'] },
+  { display: 'Haiti', iroamly: 'haiti', iso: 'HT', aviroam: ['haiti'] },
+  { display: 'Honduras', iroamly: 'honduras', iso: 'HN', aviroam: ['honduras'] },
+  { display: 'Martinique', iroamly: 'martinique', iso: 'MQ', aviroam: ['martinique'] },
+  { display: 'Mozambique', iroamly: 'mozambique', iso: 'MZ', aviroam: ['mozambique'] },
+  { display: 'Nicaragua', iroamly: 'nicaragua', iso: 'NI', aviroam: ['nicaragua'] },
+  { display: 'Seychelles', iroamly: 'seychelles', iso: 'SC', aviroam: ['seychelles'] },
+  { display: 'Sierra Leone', iroamly: 'sierra-leone', iso: 'SL', aviroam: ['sierra leone'] },
+  { display: 'Tonga', iroamly: 'tonga', iso: 'TO', aviroam: ['tonga'] },
+  { display: 'Zambia', iroamly: 'zambia', iso: 'ZM', aviroam: ['zambia'] },
+  { display: 'Papua New Guinea', iroamly: 'papua-new-guinea', iso: 'PG', aviroam: ['papua new guinea'] },
+  { display: 'Cote d'Ivoire', iroamly: 'cote-d-ivoire', iso: 'CI', aviroam: ['ivory coast', 'cote d'ivoire', 'cote divoire'] },
+  { display: 'Rwanda', iroamly: 'rwanda', iso: 'RW', aviroam: ['rwanda'] },
+  { display: 'Eswatini', iroamly: 'eswatini', iso: 'SZ', aviroam: ['eswatini'] },
+  { display: 'Trinidad and Tobago', iroamly: 'trinidad-and-tobago', iso: 'TT', aviroam: ['trinidad and tobago'] },
+  { display: 'Vanuatu', iroamly: 'vanuatu', iso: 'VU', aviroam: ['vanuatu'] },
+  { display: 'Yemen', iroamly: 'yemen', iso: 'YE', aviroam: ['yemen'] },
+  { display: 'Belarus', iroamly: 'belarus', iso: 'BY', aviroam: ['belarus'] },
+  { display: 'Costa Rica', iroamly: 'costa-rica', iso: 'CR', aviroam: ['costa rica'] },
+  { display: 'El Salvador', iroamly: 'el-salvador', iso: 'SV', aviroam: ['el salvador'] },
+  { display: 'Panama', iroamly: 'panama', iso: 'PA', aviroam: ['panama'] },
+  { display: 'Tajikistan', iroamly: 'tajikistan', iso: 'TJ', aviroam: ['tajikistan'] },
+  { display: 'Macau', iroamly: 'macau', iso: 'MO', aviroam: ['macau'] },
+  { display: 'Saint Barthelemy', iroamly: 'saint-barthelemy', iso: 'BL', aviroam: ['saint barthelemy'] },
+  { display: 'Saint Martin', iroamly: 'saint-martin', iso: 'MF', aviroam: ['saint martin'] },
+  { display: 'Maldives', iroamly: 'maldives', iso: 'MV', aviroam: ['maldives'] },
+  { display: 'Israel', iroamly: 'israel', iso: 'IL', aviroam: ['israel'] },
+  { display: 'Monaco', iroamly: 'monaco', iso: 'MC', aviroam: ['monaco'] },
+  { display: 'San Marino', iroamly: 'san-marino', iso: 'SM', aviroam: ['san marino'] },
+  { display: 'Vatican City', iroamly: 'vatican-city', iso: 'VA', aviroam: ['vatican city'] },
+];
+
+
 let hargaLoaded = false;
 
 // FIX 1: openHargaModal → floating panel (bisa chat sambil lihat harga)
@@ -2791,24 +2964,25 @@ async function loadHargaData() {
   loading.style.display = 'block';
   result.innerHTML = '';
   try {
+    // Fetch data Aviroam dari GAS (untuk harga SIM & eSIM)
     const res = await apiGet({ action: 'getHargaSim' });
-    if (!res.ok || !res.data || res.data.length === 0) {
-      loading.style.display = 'none';
-      result.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">Data harga belum tersedia. Jalankan Sync Harga di Apps Script dulu.</div>';
-      return;
+    if (res.ok && res.data && res.data.length > 0) {
+      hargaData = res.data.map(r => {
+        r[0] = (r[0] || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        return r;
+      });
     }
-    hargaData = res.data.map(r => {
-      r[0] = (r[0] || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-      return r;
-    });
     hargaLoaded = true;
     loading.style.display = 'none';
-    // FIX 3: populate searchable country list
-    window._hargaCountries = [...new Set(hargaData.map(r => r[0]))].sort();
+    // Pakai GOHO_COUNTRIES sebagai master list negara
+    window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
     result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
   } catch(e) {
+    // Tetap lanjut meski GAS gagal — iRoamly & eSIM Access tetap bisa tampil
+    hargaLoaded = true;
     loading.style.display = 'none';
-    result.innerHTML = '<div style="color:var(--red);font-size:12px;">Gagal memuat: ' + e.toString() + '</div>';
+    window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
+    result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
   }
 }
 
@@ -2836,6 +3010,8 @@ function hargaSelectByIndex(i) {
   document.getElementById('h-country-search').value = country;
   document.getElementById('h-country').value = country;
   document.getElementById('h-country-dropdown').style.display = 'none';
+  // Simpan object negara yang dipilih
+  window._selectedCountry = GOHO_COUNTRIES.find(c => c.display === country) || null;
   hargaUpdateDay();
 }
 
@@ -2844,6 +3020,7 @@ function hargaSelectCountry(country) {
   document.getElementById('h-country-search').value = clean;
   document.getElementById('h-country').value = clean;
   document.getElementById('h-country-dropdown').style.display = 'none';
+  window._selectedCountry = GOHO_COUNTRIES.find(c => c.display === clean) || null;
   hargaUpdateDay();
 }
 
@@ -3668,29 +3845,52 @@ function renderBreakdownCruise(container, d, info) {
 
 // FIX 2: hargaUpdateDay — filter durasi by negara
 function hargaUpdateDay() {
-  const c = document.getElementById('h-country').value;
+  const displayName = document.getElementById('h-country').value;
+  const countryObj  = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
   const selD = document.getElementById('h-day');
   const selP = document.getElementById('h-pkg');
   selD.innerHTML = '<option value="">— Pilih durasi —</option>';
   selP.innerHTML = '<option value="">— Pilih paket —</option>';
-  selD.disabled = !c; selP.disabled = true;
+  selD.disabled = !displayName; selP.disabled = true;
   document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi dan paket</div>';
-  if (!c) return;
-  const days = [...new Set(hargaData.filter(r => r[0] === c).map(r => r[2]))].sort((a,b) => a-b);
+  if (!displayName) return;
+
+  // Cari data Aviroam: match keyword dari GOHO_COUNTRIES.aviroam[]
+  const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
+  const aviroamRows = hargaData.filter(r => {
+    const name = (r[0] || '').toLowerCase();
+    return avKeywords.some(kw => name.includes(kw));
+  });
+
+  // Kumpulkan durasi dari Aviroam (standar: 3,5,7,10,14,30)
+  const avDays = [...new Set(aviroamRows.map(r => r[2]))].sort((a,b) => a-b);
+  // Fallback durasi standar kalau Aviroam tidak ada data
+  const stdDays = [1,2,3,4,5,6,7,8,9,10,12,14,15,20,25,30];
+  const days = avDays.length ? avDays : stdDays;
+
   days.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d + ' hari'; selD.appendChild(o); });
+  // Simpan filtered aviroam rows untuk dipakai hargaUpdatePkg & hargaShowResult
+  window._aviroamRows = aviroamRows;
 }
 
 // FIX 2: hargaUpdatePkg — hanya tampil paket yang tersedia untuk negara + durasi ini
 function hargaUpdatePkg() {
-  const c = document.getElementById('h-country').value;
   const d = parseInt(document.getElementById('h-day').value);
   const selP = document.getElementById('h-pkg');
   selP.innerHTML = '<option value="">— Pilih paket —</option>';
   selP.disabled = !d;
   document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih paket</div>';
   if (!d) return;
-  const pkgs = [...new Set(hargaData.filter(r => r[0] === c && r[2] === d).map(r => r[1]))];
-  pkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
+  const rows = (window._aviroamRows || []).filter(r => r[2] === d);
+  const pkgs = [...new Set(rows.map(r => r[1]))];
+  if (pkgs.length) {
+    pkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
+  } else {
+    // Kalau Aviroam tidak ada paket — tetap bisa lanjut dengan pilih ukuran data
+    ['500MB','1GB','2GB','3GB','5GB','10GB','20GB','30GB','50GB','Unlimited'].forEach(p => {
+      const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o);
+    });
+  }
 }
 
 // ===== HARGA v2: kurs & markup helpers =====
@@ -3714,16 +3914,24 @@ function hargaRowAviroam(label, value, type) {
 }
 
 async function hargaShowResult() {
-  const c = document.getElementById('h-country').value;
+  const displayName = document.getElementById('h-country').value;
   const p = document.getElementById('h-pkg').value;
   const d = parseInt(document.getElementById('h-day').value);
   const resultEl = document.getElementById('h-result');
-  if (!c || !p || !d) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih semua filter</div>'; return; }
-  const row = hargaData.find(r => r[0] === c && r[1] === p && r[2] === d);
-  if (!row) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Data tidak tersedia untuk kombinasi ini</div>'; return; }
+  if (!displayName || !p || !d) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih semua filter</div>'; return; }
+
+  const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
+
+  // Cari data Aviroam dengan keyword matching
+  const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
+  const row = (window._aviroamRows || hargaData).find(r => {
+    const name = (r[0] || '').toLowerCase();
+    return r[2] === d && r[1] === p && avKeywords.some(kw => name.includes(kw));
+  });
 
   // Kolom sheet: COUNTRY[0] PACKAGE[1] DAY[2] PUBLISH_SIM[3] PUBLISH_ESIM[4] PARTNER_SIM[5] PARTNER_ESIM[6]
-  const [,, day, simPub, esimPub, simPar, esimPar] = row;
+  const [,, day, simPub, esimPub, simPar, esimPar] = row || [null, null, d, 0, 0, 0, 0];
+  const c = displayName;
 
   const kurs   = hargaGetKurs();
   const markup = hargaGetMarkup();
@@ -3740,7 +3948,8 @@ async function hargaShowResult() {
 
       <!-- KIRI: Aviroam -->
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
-        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">🌐 Aviroam</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">🌐 Aviroam</div>
+        ${row ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 7px;margin-bottom:8px;display:inline-block;">🌏 ${escH(row[0])}</div>` : ''}
         <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
         ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
         ${hargaRowAviroam('Partner', hargaFmtIDR(simPar), 'agen')}
@@ -3789,12 +3998,14 @@ const ESIM_COUNTRY_MAP = {
   'Macau': 'MO', 'Macao': 'MO', 'Russia': 'RU', 'Kazakhstan': 'KZ',
 };
 
-async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsim) {
+async function loadEsimAccessPrice(countryDisplay, day, kurs, markup, aviroamPartnerEsim) {
+  const country = countryDisplay; // tetap diteruskan sebagai display name untuk fallback
   const el = document.getElementById('esim-access-result');
   if (!el) return;
   try {
-    // Konversi nama negara ke ISO code
-    const code = ESIM_COUNTRY_MAP[country] || country.toUpperCase().substring(0, 2);
+    // Konversi nama negara ke ISO code dari master GOHO_COUNTRIES
+    const countryObjEA = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === countryDisplay);
+    const code = countryObjEA?.iso || countryDisplay.toUpperCase().substring(0, 2);
 
     const res = await fetch(
       `https://goho-proxy.gohotravel.workers.dev?action=getEsimPackages&country=${encodeURIComponent(code)}`
@@ -3853,9 +4064,15 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
 
       const pkgName = escH(pkg.name || pkg.packageName || pkg.slug || '-');
       const pkgDay  = pkg.duration || pkg.day || '-';
+      // Coverage dari locationNetworkList
+      const locList = pkg.locationNetworkList || pkg.locationList || [];
+      const coverageEA = locList.length > 1
+        ? locList.map(l => escH(l.locationName || l.name || l.locationCode || '')).filter(Boolean).join(' · ')
+        : '';
 
       html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
         <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${pkgName}${badge}</div>
+        ${coverageEA ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:4px;display:inline-block;">🌏 ${coverageEA}</div>` : ''}
         <div style="font-size:10px;color:var(--text-muted);margin-bottom:5px;">${pkgDay} hari</div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
           <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
@@ -3891,15 +4108,60 @@ const IROAMLY_COUNTRY_MAP = {
   'Switzerland': 'switzerland', 'Canada': 'canada', 'Mexico': 'mexico',
   'Macau': 'macau', 'Macao': 'macau', 'Bangladesh': 'bangladesh',
   'Pakistan': 'pakistan', 'Sri Lanka': 'sri-lanka', 'Nepal': 'nepal',
+  'Brunei': 'brunei', 'Laos': 'laos', 'Mongolia': 'mongolia',
+  'Qatar': 'qatar', 'Kuwait': 'kuwait', 'Bahrain': 'bahrain',
+  'Jordan': 'jordan', 'Israel': 'israel', 'Morocco': 'morocco',
+  'South Africa': 'south-africa', 'Kenya': 'kenya', 'Nigeria': 'nigeria',
+  'Brazil': 'brazil', 'Argentina': 'argentina', 'Chile': 'chile',
+  'Portugal': 'portugal', 'Greece': 'greece', 'Poland': 'poland',
+  'Czech': 'czech-republic', 'Austria': 'austria', 'Sweden': 'sweden',
+  'Norway': 'norway', 'Denmark': 'denmark', 'Finland': 'finland',
+  'Belgium': 'belgium', 'Hungary': 'hungary', 'Romania': 'romania',
+};
+
+// Smart mapping untuk nama regional Aviroam yang mengandung nama negara
+function iroamlyGetRegion(countryName) {
+  if (!countryName) return null;
+  // Exact match dulu
+  if (IROAMLY_COUNTRY_MAP[countryName]) return IROAMLY_COUNTRY_MAP[countryName];
+  // Cari nama negara yang terkandung dalam string (prioritas urutan map)
+  const lower = countryName.toLowerCase();
+  for (const [name, region] of Object.entries(IROAMLY_COUNTRY_MAP)) {
+    if (lower.includes(name.toLowerCase())) return region;
+  }
+  return null;
+}
+
+
+// iRoamly regional coverage — dari tab region xlsx
+const IROAMLY_REGIONS = {
+  'hong-kong-and-macau': 'Hong Kong · Macau',
+  'usa-ca': 'USA · Canada',
+  'southeast-asia-4-countries': 'Singapore · Malaysia · Indonesia · Thailand',
+  'au-nz': 'Australia · New Zealand',
+  'singapore-malaysia-thailand': 'Singapore · Malaysia · Thailand',
+  'usa-canada-mexico': 'USA · Canada · Mexico',
+  'central-asia-4-countries': 'Kazakhstan · Kyrgyzstan · Pakistan · Uzbekistan',
+  'south-america-8-countries': 'Brazil · Argentina · Chile · Peru · Paraguay · Uruguay · Ecuador · Colombia',
+  'china-mainland-hong-kong-macau': 'China · Hong Kong · Macau',
+  'africa-18-countries': 'Algeria · Chad · Congo · Egypt · Gabon · Ghana · Kenya · Madagascar · Malawi · Mauritius · Morocco · Niger · Nigeria · Réunion · Tanzania · Tunisia · Uganda',
+  'south-america-6-countries': 'Brazil · Argentina · Chile · Ecuador · Peru · Uruguay',
+  'singapore-malaysia': 'Singapore · Malaysia',
+  'africa-6-countries': 'Algeria · Tunisia · Egypt · South Africa · Ghana · Réunion',
+  'europe-34-countries': 'Austria · Belgium · Bulgaria · Switzerland · Cyprus · Czech Republic · Germany · Denmark · Spain · Estonia · Finland · France · UK · Greece · Croatia · Hungary · Ireland · Iceland · Italy · Liechtenstein · Lithuania · Luxembourg · Latvia · Moldova · Malta · Netherlands · Norway · Portugal · Romania · Slovakia · Slovenia · Sweden · Ukraine',
+  'saipan-guam': 'Saipan · Guam',
+  'asia-12-countries': 'Asia 12 Countries',
+  'middle-east-5-countries': 'Middle East 5 Countries',
 };
 
 async function loadIroamlyPrice(country, day, kurs, markup, aviroamPartnerEsim) {
   const el = document.getElementById('iroamly-result');
   if (!el) return;
   try {
-    const region = IROAMLY_COUNTRY_MAP[country];
+    const countryObj2 = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
+    const region = countryObj2?.iroamly || iroamlyGetRegion(country);
     if (!region) {
-      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia</span>';
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia di iRoamly</span>';
       return;
     }
 
@@ -3952,9 +4214,13 @@ async function loadIroamlyPrice(country, day, kurs, markup, aviroamPartnerEsim) 
       const dataLabel = escH(pkg.data || '-');
       const planType  = pkg.plan_type && pkg.plan_type !== 'default' ? ` · ${escH(pkg.plan_type)}` : '';
       const operator  = escH(pkg.operator || '');
+      // Coverage dari region index
+      const regionIdx   = pkg.region_index || '';
+      const coverageIR  = IROAMLY_REGIONS[regionIdx] || '';
 
       html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
         <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${dataLabel} · ${bestDay}h${badge}</div>
+        ${coverageIR ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:4px;display:inline-block;">🌏 ${coverageIR}</div>` : ''}
         <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">${operator}${planType}</div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
           <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
