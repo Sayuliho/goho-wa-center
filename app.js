@@ -3881,14 +3881,27 @@ function hargaUpdatePkg() {
   selP.disabled = !d;
   document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih paket</div>';
   if (!d) return;
-  const rows = (window._aviroamRows || []).filter(r => r[2] === d);
-  const pkgs = [...new Set(rows.map(r => r[1]))];
+
+  // Ambil paket dari Aviroam untuk durasi EXACT ini saja
+  const rowsForDay = (window._aviroamRows || []).filter(r => r[2] === d);
+  const pkgs = [...new Set(rowsForDay.map(r => r[1]).filter(Boolean))];
+
   if (pkgs.length) {
-    pkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
+    // Ada data Aviroam — tampilkan nama paket asli
+    pkgs.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p; o.textContent = p;
+      selP.appendChild(o);
+    });
   } else {
-    // Kalau Aviroam tidak ada paket — tetap bisa lanjut dengan pilih ukuran data
-    ['500MB','1GB','2GB','3GB','5GB','10GB','20GB','30GB','50GB','Unlimited'].forEach(p => {
-      const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o);
+    // Tidak ada data Aviroam untuk durasi ini
+    // Tampilkan pilihan generic supaya eSIM Access & iRoamly tetap bisa dicari
+    selP.innerHTML += '<option value="__noaviroam__" disabled style="color:#999">— Aviroam tidak punya paket ini —</option>';
+    ['500MB / day','1GB / day','2GB / day','3GB / day',
+     '5GB','10GB','20GB','30GB','50GB','Unlimited'].forEach(p => {
+      const o = document.createElement('option');
+      o.value = p; o.textContent = p;
+      selP.appendChild(o);
     });
   }
 }
@@ -3923,8 +3936,12 @@ async function hargaShowResult() {
   const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
 
   // Cari SEMUA data Aviroam yang match — bisa lebih dari 1 kategori
+  // Kalau paket dipilih dari generic list (bukan nama asli Aviroam), skip Aviroam
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
-  const avRows = (window._aviroamRows || hargaData).filter(r => {
+  const genericPkgs = ['500MB / day','1GB / day','2GB / day','3GB / day',
+    '5GB','10GB','20GB','30GB','50GB','Unlimited'];
+  const isGenericPkg = genericPkgs.includes(p);
+  const avRows = isGenericPkg ? [] : (window._aviroamRows || hargaData).filter(r => {
     const name = (r[0] || '').toLowerCase();
     return r[2] === d && r[1] === p && avKeywords.some(kw => name.includes(kw));
   });
