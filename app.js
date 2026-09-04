@@ -3694,8 +3694,8 @@ async function hargaShowResult() {
   const row = hargaData.find(r => r[0] === c && r[1] === p && r[2] === d);
   if (!row) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Data tidak tersedia untuk kombinasi ini</div>'; return; }
 
-  // Kolom sheet: COUNTRY[0] PACKAGE[1] DAY[2] PUBLISH_SIM[3] PUBLISH_ESIM[4] PARTNER_SIM[5] PARTNER_ESIM[6]
-  const [,, day, simPub, esimPub, simPar, esimPar] = row;
+  // Kolom sheet dari GAS: COUNTRY[0] PACKAGE[1] DAY[2] PUBLISH_SIM[3] PARTNER_SIM[4] PUBLISH_ESIM[5] PARTNER_ESIM[6]
+  const [,, day, simPub, simPar, esimPub, esimPar] = row;
 
   const kurs   = hargaGetKurs();
   const markup = hargaGetMarkup();
