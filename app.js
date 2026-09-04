@@ -3972,7 +3972,7 @@ async function hargaShowResult() {
   const avRowsUniq = avRows.filter((r, i, arr) => arr.findIndex(x => x[0] === r[0]) === i);
   // Row pertama untuk referensi harga (untuk perbandingan LEBIH MURAH di eSIM/iRoamly)
   const row = avRowsUniq[0] || null;
-  const [,,,,esimPar] = row || [null, null, d, 0, 0, 0, 0];
+  const [,,,,,,esimPar] = row || [null,null,d,0,0,0,0];
   const c = displayName;
 
   const kurs   = hargaGetKurs();
@@ -3988,7 +3988,7 @@ async function hargaShowResult() {
   const aviroamCards = avRowsUniq.length === 0
     ? '<div style="font-size:11px;color:var(--text-muted);">Data tidak tersedia</div>'
     : avRowsUniq.map(r => {
-        const [,,,simPub, esimPub, simPar, esimPar] = r;
+        const [,,,simPub, esimPub, simPar, esimPar] = r; // D=simPub E=esimPub F=simPar G=esimPar
         return `
           <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
             <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:6px;display:inline-block;">🌏 ${escH(r[0])}</div>
