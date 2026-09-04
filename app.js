@@ -2844,7 +2844,7 @@ const GOHO_COUNTRIES = [
   { display: 'Tonga', iroamly: 'tonga', iso: 'TO', aviroam: ['tonga'] },
   { display: 'Zambia', iroamly: 'zambia', iso: 'ZM', aviroam: ['zambia'] },
   { display: 'Papua New Guinea', iroamly: 'papua-new-guinea', iso: 'PG', aviroam: ['papua new guinea'] },
-  { display: 'Cote d'Ivoire', iroamly: 'cote-d-ivoire', iso: 'CI', aviroam: ['ivory coast', 'cote d'ivoire', 'cote divoire'] },
+  { display: "Cote d'Ivoire", iroamly: 'cote-d-ivoire', iso: 'CI', aviroam: ['ivory coast', "cote d'ivoire", 'cote divoire'] },
   { display: 'Rwanda', iroamly: 'rwanda', iso: 'RW', aviroam: ['rwanda'] },
   { display: 'Eswatini', iroamly: 'eswatini', iso: 'SZ', aviroam: ['eswatini'] },
   { display: 'Trinidad and Tobago', iroamly: 'trinidad-and-tobago', iso: 'TT', aviroam: ['trinidad and tobago'] },
