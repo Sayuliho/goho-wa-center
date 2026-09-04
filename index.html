@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<link rel="stylesheet" href="/styles.css?v=202609041555">
+<link rel="stylesheet" href="/styles.css?v=202609030515">
 <style>
 .mpx-result-foto {
   cursor: zoom-in;
@@ -707,7 +707,7 @@
           <input type="number" id="h-kurs-usd"
             value="16000" min="1000" step="100"
             style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
-            onchange="localStorage.setItem('esim_kurs_usd',this.value); hargaShowResult();">
+            onchange="hargaSaveSetting('esim_kurs_usd', this.value); hargaShowResult();">
           <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">IDR / USD</span>
         </div>
       </div>
@@ -717,7 +717,7 @@
           <input type="number" id="h-markup-pct"
             value="20" min="0" max="100" step="1"
             style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
-            onchange="localStorage.setItem('esim_markup_pct',this.value); hargaShowResult();">
+            onchange="hargaSaveSetting('esim_markup_pct', this.value); hargaShowResult();">
           <span style="font-size:10px;color:var(--text-muted);">%</span>
         </div>
       </div>
@@ -1108,6 +1108,6 @@
   </div>
 </div>
 
-<script src="/app.js?v=202609041555" defer></script>
+<script src="/app.js?v=202609030515" defer></script>
 </body>
 </html>
