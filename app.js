@@ -2961,28 +2961,51 @@ function initHargaPanelDrag() {
 async function loadHargaData() {
   const loading = document.getElementById('h-loading');
   const result  = document.getElementById('h-result');
-  loading.style.display = 'block';
   result.innerHTML = '';
+
+  // Coba load dari cache localStorage dulu (instan)
   try {
-    // Fetch data Aviroam dari GAS (untuk harga SIM & eSIM)
+    const cached = localStorage.getItem('hargaData_cache');
+    const cachedAt = parseInt(localStorage.getItem('hargaData_cache_at') || '0');
+    const cacheAge = Date.now() - cachedAt;
+    if (cached && cacheAge < 30 * 60 * 1000) { // cache 30 menit
+      hargaData = JSON.parse(cached);
+      hargaLoaded = true;
+      window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
+      result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
+      loading.style.display = 'none';
+      // Fetch di background untuk update cache
+      fetchHargaDataBackground();
+      return;
+    }
+  } catch(e) {}
+
+  // Tidak ada cache — fetch dan tampilkan loading
+  loading.style.display = 'block';
+  await fetchHargaDataBackground();
+  loading.style.display = 'none';
+  result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
+}
+
+async function fetchHargaDataBackground() {
+  try {
     const res = await apiGet({ action: 'getHargaSim' });
     if (res.ok && res.data && res.data.length > 0) {
       hargaData = res.data.map(r => {
         r[0] = (r[0] || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
         return r;
       });
+      hargaLoaded = true;
+      window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
+      // Simpan ke cache
+      try {
+        localStorage.setItem('hargaData_cache', JSON.stringify(hargaData));
+        localStorage.setItem('hargaData_cache_at', Date.now().toString());
+      } catch(e) {}
     }
-    hargaLoaded = true;
-    loading.style.display = 'none';
-    // Pakai GOHO_COUNTRIES sebagai master list negara
-    window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
-    result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
   } catch(e) {
-    // Tetap lanjut meski GAS gagal — iRoamly & eSIM Access tetap bisa tampil
     hargaLoaded = true;
-    loading.style.display = 'none';
     window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
-    result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
   }
 }
 
