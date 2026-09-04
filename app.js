@@ -3772,11 +3772,15 @@ async function loadEsimAccessPrice(country, day, kurs, markup, aviroamPartnerEsi
       return;
     }
 
-    const packages = data.data?.packageList || data.data?.obj || data.packages || [];
-    if (!packages.length) {
+    const rawPackages = data.data?.packageList || data.data?.obj || data.packages || [];
+    if (!rawPackages.length) {
       el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
       return;
     }
+
+    // Prioritaskan paket single country (locationNetworkList.length === 1), buang paket regional/global
+    const singlePkgs = rawPackages.filter(p => !p.locationNetworkList || p.locationNetworkList.length <= 1);
+    const packages = singlePkgs.length ? singlePkgs : rawPackages;
 
     // Cari durasi yang tersedia, pilih yang paling mendekati
     const allDays = [...new Set(packages.map(p => parseInt(p.duration || p.day || 0)))].filter(Boolean).sort((a,b) => a-b);

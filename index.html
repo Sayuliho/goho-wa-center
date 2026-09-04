@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<link rel="stylesheet" href="/styles.css?v=202609040748">
+<link rel="stylesheet" href="/styles.css?v=202609030515">
 <style>
 .mpx-result-foto {
   cursor: zoom-in;
@@ -655,7 +655,7 @@
 <div id="panel-harga" style="
   display:none;
   position:fixed;
-  width:740px;
+  width:960px;
   max-height:88vh;
   background:white;
   border-radius:12px;
@@ -680,7 +680,7 @@
   ">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:16px;">📶</span>
-      <span style="font-size:13px;font-weight:600;color:white;">Harga SIM Card & eSIM — Aviroam vs eSIM Access</span>
+      <span style="font-size:13px;font-weight:600;color:white;">Harga SIM Card & eSIM — Aviroam vs eSIM Access vs iRoamly</span>
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
       <button onclick="hargaReset()" title="Reset pencarian" style="
@@ -712,7 +712,7 @@
         </div>
       </div>
       <div class="form-group" style="margin:0;">
-        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Markup eSIM Access</label>
+        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Markup eSIM Access / iRoamly</label>
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
           <input type="number" id="h-markup-pct"
             value="20" min="0" max="100" step="1"
@@ -813,18 +813,17 @@
       <span style="font-size:16px;">🚢</span>
       <span style="font-size:13px;font-weight:600;color:white;">Dream Cruises — Cek Harga</span>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <button onclick="cruiseReset()" title="Reset pencarian" style="
-        background:rgba(255,255,255,0.12);border:none;color:white;
-        padding:3px 10px;border-radius:10px;cursor:pointer;
-        font-size:11px;font-weight:600;font-family:var(--font);white-space:nowrap;
-      ">↺ Reset</button>
-      <button onclick="closeCruiseModal()" style="
-        background:rgba(255,255,255,0.15);border:none;color:white;
-        width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;
-        display:flex;align-items:center;justify-content:center;line-height:1;
-      ">✕</button>
-    </div>
+    <button onclick="closeCruiseModal()" style="
+      background:rgba(255,255,255,0.15);
+      border:none;
+      color:white;
+      width:24px;height:24px;
+      border-radius:50%;
+      cursor:pointer;
+      font-size:14px;
+      display:flex;align-items:center;justify-content:center;
+      line-height:1;
+    ">✕</button>
   </div>
   <!-- Body scrollable -->
   <div style="padding:16px;overflow-y:auto;flex:1;">
@@ -1109,6 +1108,6 @@
   </div>
 </div>
 
-<script src="/app.js?v=202609040748" defer></script>
+<script src="/app.js?v=202609030515" defer></script>
 </body>
 </html>
