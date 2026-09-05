@@ -4024,7 +4024,7 @@ async function hargaShowResult() {
   const aviroamCards = avRowsUniq.length === 0
     ? '<div style="font-size:11px;color:var(--text-muted);">Data tidak tersedia</div>'
     : avRowsUniq.map(r => {
-        const [,,,simPub, esimPub, simPar, esimPar] = r; // r[3]=pubSIM r[4]=pubESIM r[5]=parSIM r[6]=parESIM
+        const [,,,simPub, simPar, esimPub, esimPar] = r; // r[3]=pubSIM r[4]=parSIM r[5]=pubESIM r[6]=parESIM
         return `
           <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
             <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:6px;display:inline-block;">🌏 ${escH(r[0])}</div>
