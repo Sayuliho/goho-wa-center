@@ -4140,7 +4140,7 @@ async function loadEsimAccessPrice(countryDisplay, day, kurs, markup, aviroamPar
     let html = matchLabel;
     list.forEach(pkg => {
       // price dalam miliUSD → bagi 1000
-      const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 1000;
+      const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 10000;
       const buyIDR  = Math.round(buyUSD * kurs);
       const sellIDR = Math.round(buyIDR * (1 + markup / 100));
 
