@@ -2895,6 +2895,36 @@ function openHargaModal() {
     if (!hargaLoaded) loadHargaData();
   });
   initHargaPanelDrag();
+  initHargaPanelResize();
+}
+
+function initHargaPanelResize() {
+  const panel  = document.getElementById('panel-harga');
+  const handle = document.getElementById('panel-harga-resize');
+  if (!panel || !handle) return;
+
+  handle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = panel.offsetWidth;
+    const startH = panel.offsetHeight;
+
+    function onMove(e) {
+      const newW = Math.max(400, startW + (e.clientX - startX));
+      const newH = Math.max(300, startH + (e.clientY - startY));
+      panel.style.width  = newW + 'px';
+      panel.style.height = newH + 'px';
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      localStorage.setItem('hargaPanel_w', panel.style.width);
+      localStorage.setItem('hargaPanel_h', panel.style.height);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
 }
 
 async function hargaLoadSettings() {

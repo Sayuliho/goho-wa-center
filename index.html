@@ -666,11 +666,10 @@
   box-shadow:0 8px 32px rgba(0,0,0,0.18);
   border:1px solid var(--border);
   z-index:8500;
-  overflow:visible;
+  overflow:hidden;
   flex-direction:column;
   top:80px;
   right:24px;
-  resize:both;
 ">
   <!-- Header drag area -->
   <div id="panel-harga-header" style="
@@ -787,6 +786,14 @@
       border-radius:6px;background:white;font-size:12px;
       cursor:pointer;font-family:var(--font);
     ">Tutup</button>
+    <!-- Resize handle -->
+    <div id="panel-harga-resize" style="
+      position:absolute;right:0;bottom:0;
+      width:20px;height:20px;cursor:nwse-resize;
+      display:flex;align-items:flex-end;justify-content:flex-end;padding:3px;
+    ">
+      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M9 1L1 9M9 5L5 9" stroke="#bbb" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
   </div>
 </div>
 <!-- FLOATING PANEL DREAM CRUISES -->
