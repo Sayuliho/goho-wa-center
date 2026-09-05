@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<link rel="stylesheet" href="/styles.css?v=202609050155">
+<link rel="stylesheet" href="/styles.css?v=202609030515">
 <style>
 .mpx-result-foto {
   cursor: zoom-in;
@@ -656,16 +656,21 @@
   display:none;
   position:fixed;
   width:960px;
-  max-height:88vh;
+  min-width:400px;
+  max-width:98vw;
+  height:88vh;
+  min-height:300px;
+  max-height:98vh;
   background:white;
   border-radius:12px;
   box-shadow:0 8px 32px rgba(0,0,0,0.18);
   border:1px solid var(--border);
   z-index:8500;
-  overflow:hidden;
+  overflow:visible;
   flex-direction:column;
   top:80px;
   right:24px;
+  resize:both;
 ">
   <!-- Header drag area -->
   <div id="panel-harga-header" style="
@@ -677,6 +682,8 @@
     cursor:grab;
     user-select:none;
     flex-shrink:0;
+    border-radius:12px 12px 0 0;
+    overflow:hidden;
   ">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:16px;">📶</span>
@@ -697,7 +704,7 @@
   </div>
 
   <!-- Body: scrollable -->
-  <div style="padding:16px;overflow-y:auto;flex:1;">
+  <div style="padding:16px;overflow-y:auto;flex:1;overflow-x:hidden;border-radius:0 0 12px 12px;">
 
     <!-- Kurs USD + Markup eSIM Access -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
@@ -826,7 +833,7 @@
     ">✕</button>
   </div>
   <!-- Body scrollable -->
-  <div style="padding:16px;overflow-y:auto;flex:1;">
+  <div style="padding:16px;overflow-y:auto;flex:1;overflow-x:hidden;border-radius:0 0 12px 12px;">
 
       <!-- Step 1: Pilih Mode -->
       <div id="cruise-mode-selector" style="margin-bottom:16px;">
@@ -1108,6 +1115,6 @@
   </div>
 </div>
 
-<script src="/app.js?v=202609050155" defer></script>
+<script src="/app.js?v=202609030515" defer></script>
 </body>
 </html>

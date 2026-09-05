@@ -2874,6 +2874,22 @@ function openHargaModal() {
   if (!panel) return;
   panel.style.display = 'flex';
   panel.style.flexDirection = 'column';
+
+  // Restore ukuran dari localStorage
+  const savedW = localStorage.getItem('hargaPanel_w');
+  const savedH = localStorage.getItem('hargaPanel_h');
+  if (savedW) panel.style.width  = savedW;
+  if (savedH) panel.style.height = savedH;
+
+  // Observer untuk simpan ukuran saat di-resize
+  if (!panel._resizeObserver) {
+    panel._resizeObserver = new ResizeObserver(() => {
+      localStorage.setItem('hargaPanel_w', panel.style.width  || panel.offsetWidth  + 'px');
+      localStorage.setItem('hargaPanel_h', panel.style.height || panel.offsetHeight + 'px');
+    });
+    panel._resizeObserver.observe(panel);
+  }
+
   // Load settings dari D1 dulu, baru load data harga
   hargaLoadSettings().then(() => {
     if (!hargaLoaded) loadHargaData();
