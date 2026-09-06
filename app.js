@@ -137,37 +137,48 @@ function closeLayananDropdown() {
 
 // ---- Draggable layanan dropdown ----
 (function() {
-  var dragging = false, startX, startY, origLeft, origTop;
+  var dragging = false, startX, startY, origLeft, origTop, moved;
+  var DRAG_THRESHOLD = 6; // px sebelum dianggap drag (bukan tap)
   function getDD() { return document.getElementById('layanan-dropdown'); }
   function onDown(e) {
     var dd = getDD();
     if (!dd || !dd.classList.contains('open')) return;
+    // Hanya mulai tracking kalau sentuh di dalam dropdown
     var touch = e.touches ? e.touches[0] : e;
     var rect = dd.getBoundingClientRect();
-    dragging = true;
+    if (touch.clientX < rect.left || touch.clientX > rect.right ||
+        touch.clientY < rect.top  || touch.clientY > rect.bottom) return;
     startX = touch.clientX; startY = touch.clientY;
     origLeft = rect.left; origTop = rect.top;
-    e.preventDefault();
+    dragging = false; moved = false;
   }
   function onMove(e) {
-    if (!dragging) return;
+    if (startX === undefined) return;
     var touch = e.touches ? e.touches[0] : e;
     var dx = touch.clientX - startX;
     var dy = touch.clientY - startY;
+    if (!moved && Math.sqrt(dx*dx + dy*dy) < DRAG_THRESHOLD) return;
+    moved = true; dragging = true;
     var dd = getDD();
+    if (!dd) return;
     var newLeft = Math.max(4, Math.min(origLeft + dx, window.innerWidth  - dd.offsetWidth  - 4));
     var newTop  = Math.max(4, Math.min(origTop  + dy, window.innerHeight - dd.offsetHeight - 4));
     dd.style.left = newLeft + 'px';
     dd.style.top  = newTop  + 'px';
-    e.preventDefault();
+    e.preventDefault(); // hanya prevent scroll saat benar-benar drag
   }
-  function onUp() { dragging = false; }
-  document.addEventListener('mousedown',  onDown,  { passive: false });
+  function onUp() { startX = undefined; dragging = false; moved = false; }
   document.addEventListener('mousemove',  onMove,  { passive: false });
   document.addEventListener('mouseup',    onUp);
-  document.addEventListener('touchstart', onDown,  { passive: false });
   document.addEventListener('touchmove',  onMove,  { passive: false });
   document.addEventListener('touchend',   onUp);
+  // touchstart di dropdown langsung (bukan document) supaya tap item tetap jalan
+  document.addEventListener('touchstart', function(e) {
+    var dd = getDD();
+    if (!dd || !dd.classList.contains('open')) return;
+    onDown(e);
+  }, { passive: true });
+  document.addEventListener('mousedown', onDown);
 })();
 
 function pilihLayanan(type) {
