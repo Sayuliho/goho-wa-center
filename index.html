@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<link rel="stylesheet" href="/styles.css?v=202609060357">
+<link rel="stylesheet" href="/styles.css?v=202609060342">
 <style>
 .mpx-result-foto {
   cursor: zoom-in;
@@ -655,9 +655,9 @@
 <div id="panel-harga" style="
   display:none;
   position:fixed;
-  width:960px;
-  min-width:400px;
-  max-width:98vw;
+  width:min(960px, calc(100vw - 16px));
+  min-width:min(400px, calc(100vw - 16px));
+  max-width:calc(100vw - 16px);
   height:88vh;
   min-height:300px;
   max-height:98vh;
@@ -669,7 +669,7 @@
   overflow:hidden;
   flex-direction:column;
   top:80px;
-  right:24px;
+  left:8px;
 ">
   <!-- Header drag area -->
   <div id="panel-harga-header" style="
@@ -800,7 +800,8 @@
 <div id="modal-cruise" style="
   display:none;
   position:fixed;
-  width:540px;
+  width:min(540px, calc(100vw - 16px));
+  max-width:calc(100vw - 16px);
   max-height:88vh;
   background:white;
   border-radius:12px;
@@ -810,7 +811,7 @@
   overflow:hidden;
   flex-direction:column;
   top:72px;
-  right:24px;
+  left:8px;
 ">
   <!-- Header drag area -->
   <div id="cruise-panel-header" style="
@@ -1122,6 +1123,6 @@
   </div>
 </div>
 
-<script src="/app.js?v=202609060357" defer></script>
+<script src="/app.js?v=202609060342" defer></script>
 </body>
 </html>
