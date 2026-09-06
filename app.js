@@ -4159,7 +4159,7 @@ async function hargaShowResult() {
 
   resultEl.innerHTML = `
     <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${d} hari &bull; ${escH(p)}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
 
       <!-- KIRI: Aviroam -->
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
