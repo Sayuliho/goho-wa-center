@@ -118,7 +118,10 @@ function toggleLayananDropdown(e) {
   if (!isOpen) {
     const btn = document.getElementById('mtab-layanan');
     const rect = btn.getBoundingClientRect();
-    dd.style.left = rect.left + 'px';
+    const ddW = 240;
+    let left = rect.left + rect.width / 2 - ddW / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - ddW - 8));
+    dd.style.left = left + 'px';
     dd.style.top  = (rect.bottom + 2) + 'px';
     dd.classList.add('open');
     if (chev) chev.style.transform = 'rotate(180deg)';
@@ -131,6 +134,41 @@ function closeLayananDropdown() {
   if (dd) dd.classList.remove('open');
   if (chev) chev.style.transform = 'rotate(0deg)';
 }
+
+// ---- Draggable layanan dropdown ----
+(function() {
+  var dragging = false, startX, startY, origLeft, origTop;
+  function getDD() { return document.getElementById('layanan-dropdown'); }
+  function onDown(e) {
+    var dd = getDD();
+    if (!dd || !dd.classList.contains('open')) return;
+    var touch = e.touches ? e.touches[0] : e;
+    var rect = dd.getBoundingClientRect();
+    dragging = true;
+    startX = touch.clientX; startY = touch.clientY;
+    origLeft = rect.left; origTop = rect.top;
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    var touch = e.touches ? e.touches[0] : e;
+    var dx = touch.clientX - startX;
+    var dy = touch.clientY - startY;
+    var dd = getDD();
+    var newLeft = Math.max(4, Math.min(origLeft + dx, window.innerWidth  - dd.offsetWidth  - 4));
+    var newTop  = Math.max(4, Math.min(origTop  + dy, window.innerHeight - dd.offsetHeight - 4));
+    dd.style.left = newLeft + 'px';
+    dd.style.top  = newTop  + 'px';
+    e.preventDefault();
+  }
+  function onUp() { dragging = false; }
+  document.addEventListener('mousedown',  onDown,  { passive: false });
+  document.addEventListener('mousemove',  onMove,  { passive: false });
+  document.addEventListener('mouseup',    onUp);
+  document.addEventListener('touchstart', onDown,  { passive: false });
+  document.addEventListener('touchmove',  onMove,  { passive: false });
+  document.addEventListener('touchend',   onUp);
+})();
 
 function pilihLayanan(type) {
   closeLayananDropdown();
