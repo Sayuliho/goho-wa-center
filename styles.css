@@ -51,9 +51,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .topnav-av { width: 26px; height: 26px; border-radius: 50%; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; }
 .topnav-av.owner { background: #EF9F27; color: #412402; }
 .owner-badge { background: rgba(239,159,39,0.25); color: #FAC775; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
-.main-tabs { display: none; background: #0d3d37; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+.main-tabs { display: none; background: #0d3d37; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.main-tabs::-webkit-scrollbar { display: none; }
 .main-tabs.visible { display: flex; }
-.main-tab { padding: 8px 16px; color: rgba(255,255,255,0.6); font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; display: flex; align-items: center; gap: 5px; position: relative; }
+.main-tab { padding: 8px 12px; color: rgba(255,255,255,0.6); font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; display: flex; align-items: center; gap: 5px; position: relative; white-space: nowrap; flex-shrink: 0; }
 .main-tab.active { color: white; border-bottom-color: var(--green-light); }
 .tab-badge { background: #ef4444; color: white; border-radius: 10px; padding: 1px 5px; font-size: 9px; font-weight: 700; min-width: 16px; text-align: center; }
 .main-area { display: flex; flex: 1; overflow: hidden; min-height: 0; }
