@@ -2924,14 +2924,28 @@ function openHargaModal() {
   panel.style.display = 'flex';
   panel.style.flexDirection = 'column';
 
-  // Restore ukuran dari localStorage
-  const savedW = localStorage.getItem('hargaPanel_w');
-  const savedH = localStorage.getItem('hargaPanel_h');
-  if (savedW) panel.style.width  = savedW;
-  if (savedH) panel.style.height = savedH;
+  const isMobile = window.innerWidth < 600;
+  if (isMobile) {
+    // Mobile: lebar penuh layar, posisi kiri atas
+    panel.style.width  = (window.innerWidth - 16) + 'px';
+    panel.style.height = '85vh';
+    panel.style.left   = '8px';
+    panel.style.top    = '72px';
+    panel.style.right  = 'auto';
+  } else {
+    // Desktop: restore ukuran dari localStorage
+    const savedW = localStorage.getItem('hargaPanel_w');
+    const savedH = localStorage.getItem('hargaPanel_h');
+    if (savedW) panel.style.width  = savedW;
+    if (savedH) panel.style.height = savedH;
+    // Clamp posisi supaya tidak keluar layar
+    const rect = panel.getBoundingClientRect();
+    if (rect.left < 0) { panel.style.left = '8px'; panel.style.right = 'auto'; }
+    if (rect.right > window.innerWidth) { panel.style.left = Math.max(8, window.innerWidth - panel.offsetWidth - 8) + 'px'; panel.style.right = 'auto'; }
+  }
 
-  // Observer untuk simpan ukuran saat di-resize
-  if (!panel._resizeObserver) {
+  // Observer untuk simpan ukuran saat di-resize (hanya desktop)
+  if (!panel._resizeObserver && !isMobile) {
     panel._resizeObserver = new ResizeObserver(() => {
       localStorage.setItem('hargaPanel_w', panel.style.width  || panel.offsetWidth  + 'px');
       localStorage.setItem('hargaPanel_h', panel.style.height || panel.offsetHeight + 'px');
@@ -3034,23 +3048,29 @@ function initHargaPanelDrag() {
   if (!panel || !header || header._dragInit) return;
   header._dragInit = true;
   let isDragging = false, startX, startY, origLeft, origTop;
-  header.addEventListener('mousedown', (e) => {
+  function dragStart(cx, cy) {
     isDragging = true;
-    startX = e.clientX; startY = e.clientY;
+    startX = cx; startY = cy;
     const rect = panel.getBoundingClientRect();
     origLeft = rect.left; origTop = rect.top;
     header.style.cursor = 'grabbing';
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', (e) => {
+  }
+  function dragMove(cx, cy) {
     if (!isDragging) return;
-    panel.style.left = (origLeft + e.clientX - startX) + 'px';
-    panel.style.top  = (origTop  + e.clientY - startY) + 'px';
+    const newLeft = Math.max(0, Math.min(origLeft + cx - startX, window.innerWidth  - panel.offsetWidth));
+    const newTop  = Math.max(0, Math.min(origTop  + cy - startY, window.innerHeight - panel.offsetHeight));
+    panel.style.left = newLeft + 'px';
+    panel.style.top  = newTop  + 'px';
     panel.style.right = 'auto';
-  });
-  document.addEventListener('mouseup', () => {
-    if (isDragging) { isDragging = false; header.style.cursor = 'grab'; }
-  });
+  }
+  function dragEnd() { if (isDragging) { isDragging = false; header.style.cursor = 'grab'; } }
+  header.addEventListener('mousedown', (e) => { dragStart(e.clientX, e.clientY); e.preventDefault(); });
+  document.addEventListener('mousemove', (e) => dragMove(e.clientX, e.clientY));
+  document.addEventListener('mouseup', dragEnd);
+  // Touch support
+  header.addEventListener('touchstart', (e) => { const t = e.touches[0]; dragStart(t.clientX, t.clientY); }, { passive: true });
+  document.addEventListener('touchmove', (e) => { if (!isDragging) return; const t = e.touches[0]; dragMove(t.clientX, t.clientY); e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchend', dragEnd);
 }
 
 async function loadHargaData() {
@@ -3352,6 +3372,21 @@ async function openCruiseModal() {
   const panel = document.getElementById('modal-cruise');
   panel.style.display = 'flex';
   panel.style.flexDirection = 'column';
+  // Mobile: lebar penuh layar
+  if (window.innerWidth < 600) {
+    panel.style.width  = (window.innerWidth - 16) + 'px';
+    panel.style.left   = '8px';
+    panel.style.top    = '72px';
+    panel.style.right  = 'auto';
+  } else {
+    // Desktop: clamp posisi supaya tidak keluar layar
+    panel.style.right = 'auto';
+    setTimeout(() => {
+      const rect = panel.getBoundingClientRect();
+      if (rect.left < 0) panel.style.left = '8px';
+      if (rect.right > window.innerWidth) panel.style.left = Math.max(8, window.innerWidth - panel.offsetWidth - 8) + 'px';
+    }, 10);
+  }
   initCruisePanelDrag();
   // Load konfie list
   loadKonfieList();
@@ -3396,47 +3431,37 @@ function initCruisePanelDrag() {
   const panel = document.getElementById('modal-cruise');
   const header = document.getElementById('cruise-panel-header');
   if (!panel || !header) return;
-  if (_cruisePanelDragInit) {
-    // Reset posisi setiap kali dibuka
-    panel.style.top = '72px';
-    panel.style.right = '24px';
-    panel.style.left = '';
-    panel.style.transform = '';
-    return;
-  }
+  if (_cruisePanelDragInit) return; // posisi sudah di-set di openCruiseModal
   _cruisePanelDragInit = true;
 
   let isDragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
-  header.addEventListener('mousedown', (e) => {
-    if (e.target.tagName === 'BUTTON') return;
+  function dragStart(cx, cy) {
     isDragging = true;
     const rect = panel.getBoundingClientRect();
-    startX = e.clientX;
-    startY = e.clientY;
-    startLeft = rect.left;
-    startTop = rect.top;
+    startX = cx; startY = cy;
+    startLeft = rect.left; startTop = rect.top;
     panel.style.right = '';
     panel.style.left = startLeft + 'px';
-    panel.style.top = startTop + 'px';
+    panel.style.top  = startTop  + 'px';
     header.style.cursor = 'grabbing';
-    e.preventDefault();
-  });
-
-  window.addEventListener('mousemove', (e) => {
+  }
+  function dragMove(cx, cy) {
     if (!isDragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    panel.style.left = (startLeft + dx) + 'px';
-    panel.style.top  = (startTop  + dy) + 'px';
-  });
+    const newLeft = Math.max(0, Math.min(startLeft + cx - startX, window.innerWidth  - panel.offsetWidth));
+    const newTop  = Math.max(0, Math.min(startTop  + cy - startY, window.innerHeight - panel.offsetHeight));
+    panel.style.left = newLeft + 'px';
+    panel.style.top  = newTop  + 'px';
+  }
+  function dragEnd() { if (isDragging) { isDragging = false; header.style.cursor = 'grab'; } }
 
-  window.addEventListener('mouseup', () => {
-    if (isDragging) {
-      isDragging = false;
-      header.style.cursor = 'grab';
-    }
-  });
+  header.addEventListener('mousedown', (e) => { if (e.target.tagName === 'BUTTON') return; dragStart(e.clientX, e.clientY); e.preventDefault(); });
+  window.addEventListener('mousemove', (e) => dragMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', dragEnd);
+  // Touch support
+  header.addEventListener('touchstart', (e) => { if (e.target.tagName === 'BUTTON') return; const t = e.touches[0]; dragStart(t.clientX, t.clientY); }, { passive: true });
+  window.addEventListener('touchmove', (e) => { if (!isDragging) return; const t = e.touches[0]; dragMove(t.clientX, t.clientY); e.preventDefault(); }, { passive: false });
+  window.addEventListener('touchend', dragEnd);
 }
 
 function setCruiseMode(mode) {
