@@ -754,17 +754,17 @@
 
       <!-- Durasi -->
       <div class="form-group" style="margin:0;">
-        <label style="font-size:11px;font-weight:600;color:var(--text-muted);">Durasi (hari)</label>
-        <select id="h-day" onchange="hargaUpdatePkg()" disabled style="width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;">
-          <option value="">— Pilih durasi —</option>
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);">Durasi (hari) <span style="font-size:9px;font-weight:400;color:#6366f1;background:#ede9fe;border-radius:3px;padding:1px 5px;">opsional</span></label>
+        <select id="h-day" onchange="hargaOnDayChange()" disabled style="width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;">
+          <option value="">— Semua durasi —</option>
         </select>
       </div>
 
       <!-- Paket data -->
       <div class="form-group" style="margin:0;">
-        <label style="font-size:11px;font-weight:600;color:var(--text-muted);">Paket data</label>
-        <select id="h-pkg" onchange="hargaShowResult()" disabled style="width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;">
-          <option value="">— Pilih paket —</option>
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);">Paket data <span style="font-size:9px;font-weight:400;color:#6366f1;background:#ede9fe;border-radius:3px;padding:1px 5px;">opsional</span></label>
+        <select id="h-pkg" onchange="hargaOnPkgChange()" disabled style="width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);outline:none;">
+          <option value="">— Semua paket —</option>
         </select>
       </div>
 
@@ -774,7 +774,7 @@
       <i class="ti ti-loader spin"></i> Memuat data harga...
     </div>
     <div id="h-result" style="font-size:13px;color:var(--text-muted);">
-      Pilih negara, durasi, dan paket untuk melihat harga
+      Pilih negara — lalu durasi <b>atau</b> paket data (atau keduanya)
     </div>
   </div>
 

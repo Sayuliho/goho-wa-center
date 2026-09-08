@@ -3034,12 +3034,14 @@ function hargaReset() {
   document.getElementById('h-country-dropdown').style.display = 'none';
   const selD = document.getElementById('h-day');
   const selP = document.getElementById('h-pkg');
-  selD.innerHTML = '<option value="">— Pilih durasi —</option>';
+  selD.innerHTML = '<option value="">— Semua durasi —</option>';
   selD.disabled = true;
-  selP.innerHTML = '<option value="">— Pilih paket —</option>';
+  selP.innerHTML = '<option value="">— Semua paket —</option>';
   selP.disabled = true;
-  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket untuk melihat harga</div>';
+  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara — lalu durasi <b>atau</b> paket data (atau keduanya)</div>';
   document.getElementById('h-loading').style.display = 'none';
+  window._aviroamRows = null;
+  window._selectedCountry = null;
 }
 
 function initHargaPanelDrag() {
@@ -3089,7 +3091,7 @@ async function loadHargaData() {
       hargaData = JSON.parse(cached);
       hargaLoaded = true;
       window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
-      result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
+      result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara — lalu durasi <b>atau</b> paket data</div>';
       loading.style.display = 'none';
       // Fetch di background untuk update cache
       fetchHargaDataBackground();
@@ -3101,7 +3103,7 @@ async function loadHargaData() {
   loading.style.display = 'block';
   await fetchHargaDataBackground();
   loading.style.display = 'none';
-  result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara, durasi, dan paket</div>';
+  result.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara — lalu durasi <b>atau</b> paket data</div>';
 }
 
 async function fetchHargaDataBackground() {
@@ -3989,33 +3991,36 @@ function renderBreakdownCruise(container, d, info) {
 }
 
 
-// FIX 2: hargaUpdateDay — filter durasi by negara
+// hargaUpdateDay — populate durasi & paket saat negara dipilih, lalu trigger search
 function hargaUpdateDay() {
   const displayName = document.getElementById('h-country').value;
   const countryObj  = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
   const selD = document.getElementById('h-day');
   const selP = document.getElementById('h-pkg');
-  selD.innerHTML = '<option value="">— Pilih durasi —</option>';
-  selP.innerHTML = '<option value="">— Pilih paket —</option>';
-  selD.disabled = !displayName; selP.disabled = true;
-  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi dan paket</div>';
-  if (!displayName) return;
+
+  // Reset kedua dropdown
+  selD.innerHTML = '<option value="">— Semua durasi —</option>';
+  selP.innerHTML = '<option value="">— Semua paket —</option>';
+  selD.disabled = !displayName;
+  selP.disabled = !displayName;
+
+  if (!displayName) {
+    document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara — lalu durasi <b>atau</b> paket data (atau keduanya)</div>';
+    return;
+  }
 
   // Cari data Aviroam: prioritaskan exact match, fallback ke partial
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
-  // Step 1: cari exact match (nama negara = keyword persis)
   let aviroamRows = hargaData.filter(r => {
     const name = (r[0] || '').toLowerCase().trim();
     return avKeywords.some(kw => name === kw.toLowerCase());
   });
-  // Step 2: kalau tidak ada exact, pakai partial tapi exclude nama regional panjang (>30 karakter)
   if (!aviroamRows.length) {
     aviroamRows = hargaData.filter(r => {
       const name = (r[0] || '').toLowerCase();
       return avKeywords.some(kw => name.includes(kw)) && name.length <= 35;
     });
   }
-  // Step 3: fallback semua partial match
   if (!aviroamRows.length) {
     aviroamRows = hargaData.filter(r => {
       const name = (r[0] || '').toLowerCase();
@@ -4023,48 +4028,72 @@ function hargaUpdateDay() {
     });
   }
 
-  // Kumpulkan durasi dari Aviroam (standar: 3,5,7,10,14,30)
+  // Populate durasi
   const avDays = [...new Set(aviroamRows.map(r => r[2]))].sort((a,b) => a-b);
-  // Fallback durasi standar kalau Aviroam tidak ada data
   const stdDays = [1,2,3,4,5,6,7,8,9,10,12,14,15,20,25,30];
   const days = avDays.length ? avDays : stdDays;
-
   days.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d + ' hari'; selD.appendChild(o); });
-  // Simpan filtered aviroam rows untuk dipakai hargaUpdatePkg & hargaShowResult
-  window._aviroamRows = aviroamRows;
-}
 
-// FIX 2: hargaUpdatePkg — hanya tampil paket yang tersedia untuk negara + durasi ini
-function hargaUpdatePkg() {
-  const d = parseInt(document.getElementById('h-day').value);
-  const selP = document.getElementById('h-pkg');
-  selP.innerHTML = '<option value="">— Pilih paket —</option>';
-  selP.disabled = !d;
-  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih paket</div>';
-  if (!d) return;
-
-  // Ambil paket dari Aviroam untuk durasi EXACT ini saja
-  const rowsForDay = (window._aviroamRows || []).filter(r => r[2] === d);
-  const pkgs = [...new Set(rowsForDay.map(r => r[1]).filter(Boolean))];
-
-  if (pkgs.length) {
-    // Ada data Aviroam — tampilkan nama paket asli
-    pkgs.forEach(p => {
-      const o = document.createElement('option');
-      o.value = p; o.textContent = p;
-      selP.appendChild(o);
-    });
+  // Populate semua paket (semua durasi)
+  const allPkgs = [...new Set(aviroamRows.map(r => r[1]).filter(Boolean))];
+  if (allPkgs.length) {
+    allPkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
   } else {
-    // Tidak ada data Aviroam untuk durasi ini
-    // Tampilkan pilihan generic supaya eSIM Access & iRoamly tetap bisa dicari
-    selP.innerHTML += '<option value="__noaviroam__" disabled style="color:#999">— Aviroam tidak punya paket ini —</option>';
     ['500MB / day','1GB / day','2GB / day','3GB / day',
      '5GB','10GB','20GB','30GB','50GB','Unlimited'].forEach(p => {
-      const o = document.createElement('option');
-      o.value = p; o.textContent = p;
-      selP.appendChild(o);
+      const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o);
     });
   }
+
+  // Simpan aviroam rows
+  window._aviroamRows = aviroamRows;
+
+  // Hint: negara sudah dipilih, minta durasi atau paket
+  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi <b>atau</b> paket data untuk melihat harga</div>';
+}
+
+// Handler saat durasi berubah — update opsi paket lalu auto-search
+function hargaOnDayChange() {
+  const d = parseInt(document.getElementById('h-day').value);
+  const selP = document.getElementById('h-pkg');
+  const currentPkg = selP.value;
+
+  // Rebuild paket berdasarkan durasi yang dipilih (atau semua kalau kosong)
+  const rowsForDay = d
+    ? (window._aviroamRows || []).filter(r => r[2] === d)
+    : (window._aviroamRows || []);
+
+  const pkgs = [...new Set(rowsForDay.map(r => r[1]).filter(Boolean))];
+  selP.innerHTML = '<option value="">— Semua paket —</option>';
+  if (pkgs.length) {
+    pkgs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o); });
+  } else {
+    ['500MB / day','1GB / day','2GB / day','3GB / day',
+     '5GB','10GB','20GB','30GB','50GB','Unlimited'].forEach(p => {
+      const o = document.createElement('option'); o.value = p; o.textContent = p; selP.appendChild(o);
+    });
+  }
+
+  // Pertahankan pilihan paket sebelumnya kalau masih ada
+  if (currentPkg && selP.querySelector(`option[value="${currentPkg}"]`)) {
+    selP.value = currentPkg;
+  }
+
+  // Auto-search: kalau negara sudah ada dan durasi dipilih
+  const country = document.getElementById('h-country').value;
+  if (country && d) hargaShowResult();
+}
+
+// Handler saat paket berubah — auto-search
+function hargaOnPkgChange() {
+  const country = document.getElementById('h-country').value;
+  const pkg = document.getElementById('h-pkg').value;
+  if (country && pkg) hargaShowResult();
+}
+
+// hargaUpdatePkg — legacy stub, logic dipindah ke hargaOnDayChange
+function hargaUpdatePkg() {
+  hargaOnDayChange();
 }
 
 // ===== HARGA v2: kurs & markup helpers =====
@@ -4089,14 +4118,16 @@ function hargaRowAviroam(label, value, type) {
 
 async function hargaShowResult() {
   const displayName = document.getElementById('h-country').value;
-  const p = document.getElementById('h-pkg').value;
-  const d = parseInt(document.getElementById('h-day').value);
+  const p = document.getElementById('h-pkg').value;   // bisa '' = semua paket
+  const d = parseInt(document.getElementById('h-day').value) || 0; // 0 = semua durasi
   const resultEl = document.getElementById('h-result');
-  if (!displayName || !p || !d) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih semua filter</div>'; return; }
+  if (!displayName) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara dulu</div>'; return; }
+  if (!p && !d) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi <b>atau</b> paket data untuk melihat harga</div>'; return; }
 
   const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
 
   // Cari SEMUA data Aviroam yang match — prioritaskan exact match
+  // d=0 = semua durasi, p='' = semua paket
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
   const genericPkgs = ['500MB / day','1GB / day','2GB / day','3GB / day',
     '5GB','10GB','20GB','30GB','50GB','Unlimited'];
@@ -4104,31 +4135,36 @@ async function hargaShowResult() {
   let avRows = [];
   if (!isGenericPkg) {
     const src = window._aviroamRows || hargaData;
+    const matchDur = (r) => !d || r[2] === d;
+    const matchPkg = (r) => !p || r[1] === p;
     // Exact match dulu
     avRows = src.filter(r => {
       const name = (r[0] || '').toLowerCase().trim();
-      return r[2] === d && r[1] === p && avKeywords.some(kw => name === kw.toLowerCase());
+      return matchDur(r) && matchPkg(r) && avKeywords.some(kw => name === kw.toLowerCase());
     });
     // Partial match exclude regional panjang
     if (!avRows.length) {
       avRows = src.filter(r => {
         const name = (r[0] || '').toLowerCase();
-        return r[2] === d && r[1] === p && avKeywords.some(kw => name.includes(kw)) && name.length <= 35;
+        return matchDur(r) && matchPkg(r) && avKeywords.some(kw => name.includes(kw)) && name.length <= 35;
       });
     }
     // Fallback semua
     if (!avRows.length) {
       avRows = src.filter(r => {
         const name = (r[0] || '').toLowerCase();
-        return r[2] === d && r[1] === p && avKeywords.some(kw => name.includes(kw));
+        return matchDur(r) && matchPkg(r) && avKeywords.some(kw => name.includes(kw));
       });
     }
   }
-  // Deduplikasi berdasarkan nama kategori (r[0])
-  const avRowsUniq = avRows.filter((r, i, arr) => arr.findIndex(x => x[0] === r[0]) === i);
+  // Deduplikasi berdasarkan nama kategori (r[0]) + durasi kalau multi-durasi
+  const dedupeKey = (r) => d ? r[0] : `${r[0]}__${r[2]}__${r[1]}`;
+  const avRowsUniq = avRows.filter((r, i, arr) => arr.findIndex(x => dedupeKey(x) === dedupeKey(r)) === i);
   // Row pertama untuk referensi harga (untuk perbandingan LEBIH MURAH di eSIM/iRoamly)
   const row = avRowsUniq[0] || null;
   const [,,,,,, esimPar] = row || [null,null,d,0,0,0,0];
+  // Durasi efektif untuk fetch eSIM Access/iRoamly — kalau d=0 ambil dari row pertama
+  const effectiveDay = d || (row ? row[2] : 7);
   const c = displayName;
 
   const kurs   = hargaGetKurs();
@@ -4140,14 +4176,20 @@ async function hargaShowResult() {
   if (kursEl)   kursEl.value   = kurs;
   if (markupEl) markupEl.value = markup;
 
-  // Build Aviroam cards — satu card per kategori
+  // Build Aviroam cards — satu card per row (bisa multi kalau semua durasi / semua paket)
   const aviroamCards = avRowsUniq.length === 0
     ? '<div style="font-size:11px;color:var(--text-muted);">Data tidak tersedia</div>'
     : avRowsUniq.map(r => {
-        const [,,,simPub, simPar, esimPub, esimPar] = r; // r[3]=pubSIM r[4]=parSIM r[5]=pubESIM r[6]=parESIM
+        const [,,,simPub, simPar, esimPub, esimPar] = r;
+        const rowDur = r[2] ? `${r[2]} hari` : '';
+        const rowPkg = r[1] ? escH(r[1]) : '';
+        const badgeExtra = (!d || !p) ? `<span style="font-size:9px;color:#0369a1;background:#e0f2fe;border-radius:3px;padding:1px 5px;margin-left:4px;">${[rowDur, rowPkg].filter(Boolean).join(' · ')}</span>` : '';
         return `
           <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
-            <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:6px;display:inline-block;">🌏 ${escH(r[0])}</div>
+            <div style="margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+              <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;display:inline-block;">🌏 ${escH(r[0])}</div>
+              ${badgeExtra}
+            </div>
             <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
             ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
             ${hargaRowAviroam('Partner', hargaFmtIDR(simPar), 'agen')}
@@ -4157,8 +4199,14 @@ async function hargaShowResult() {
           </div>`;
       }).join('');
 
+  // Label summary filter yang aktif
+  const summaryParts = [];
+  if (d) summaryParts.push(`${d} hari`);
+  if (p) summaryParts.push(escH(p));
+  const summaryLabel = summaryParts.length ? summaryParts.join(' &bull; ') : 'Semua paket';
+
   resultEl.innerHTML = `
-    <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${d} hari &bull; ${escH(p)}</div>
+    <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${summaryLabel}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
 
       <!-- KIRI: Aviroam -->
@@ -4194,9 +4242,9 @@ async function hargaShowResult() {
     </div>`;
 
   // Fetch eSIM Access, iRoamly & eSIMCard (async, tidak block render Aviroam)
-  loadEsimAccessPrice(c, d, kurs, markup, parseFloat(esimPar) || 0);
-  loadIroamlyPrice(c, d, kurs, markup, parseFloat(esimPar) || 0);
-  loadEsimCardPrice(c, d, kurs, markup, parseFloat(esimPar) || 0);
+  loadEsimAccessPrice(c, effectiveDay, kurs, markup, parseFloat(esimPar) || 0);
+  loadIroamlyPrice(c, effectiveDay, kurs, markup, parseFloat(esimPar) || 0);
+  loadEsimCardPrice(c, effectiveDay, kurs, markup, parseFloat(esimPar) || 0);
 }
 
 // Mapping nama negara Aviroam → ISO code eSIM Access
