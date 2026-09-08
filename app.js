@@ -4239,6 +4239,10 @@ async function hargaShowResult() {
       <!-- KANAN 2: eSIMCard -->
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">🟦 eSIMCard</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button onclick="esimcardOpenRiwayat()" style="font-size:10px;padding:4px 10px;background:#f1f5f9;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-family:var(--font);">📋 Riwayat eSIM</button>
+          <button onclick="esimcardOpenSettingEmail()" style="font-size:10px;padding:4px 10px;background:#f1f5f9;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-family:var(--font);">⚙️ Setting Email</button>
+        </div>
         <div id="esimcard-result" style="font-size:12px;color:var(--text-muted);">
           <i class="ti ti-loader spin"></i> Memuat...
         </div>
@@ -4559,6 +4563,155 @@ async function loadIroamlyPrice(country, day, kurs, markup, aviroamPartnerEsim) 
 // eSIMCard PURCHASE FLOW
 // ============================================================
 
+// ============================================================
+// eSIMCard RIWAYAT & SETTING EMAIL
+// ============================================================
+
+async function esimcardOpenRiwayat() {
+  // Buat modal riwayat
+  let modal = document.getElementById('esimcard-riwayat-modal');
+  if (modal) { modal.remove(); }
+
+  modal = document.createElement('div');
+  modal.id = 'esimcard-riwayat-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:480px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">📋 Riwayat Pembelian eSIMCard</h3>
+        <button onclick="document.getElementById('esimcard-riwayat-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+      <div id="ec-riwayat-list" style="font-size:12px;color:var(--text-muted);">⏳ Memuat riwayat...</div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimcardOrders');
+    const data = await res.json();
+    const listEl = document.getElementById('ec-riwayat-list');
+    if (!listEl) return;
+
+    if (!data.ok || !data.orders?.length) {
+      listEl.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada transaksi</div>';
+      return;
+    }
+
+    listEl.innerHTML = data.orders.map(o => {
+      const tgl = o.created_at ? new Date(o.created_at).toLocaleString('id-ID', { dateStyle:'short', timeStyle:'short' }) : '-';
+      const qrId = 'rw-qr-' + o.id;
+      return `
+        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--text);">${escH(o.package_name || '-')}</div>
+              <div style="font-size:10px;color:var(--text-muted);">${tgl} ${o.staff ? '· ' + escH(o.staff) : ''}</div>
+            </div>
+            <span style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:600;">${escH(o.status || 'Released')}</span>
+          </div>
+
+          ${o.lpa_string ? `
+          <div style="text-align:center;margin-bottom:8px;">
+            <div id="${qrId}" style="display:inline-block;padding:6px;background:white;border:1px solid #e2e8f0;border-radius:6px;"></div>
+            <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;">
+              <button onclick="ecCopy('${escH(o.lpa_string)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy LPA</button>
+              <button onclick="ecDownloadQR('${qrId}','esim-${escH(o.iccid||'qr')}.png')" style="font-size:10px;padding:3px 8px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">⬇️ Download QR</button>
+            </div>
+          </div>` : ''}
+
+          <div style="font-size:10px;color:#64748b;margin-bottom:4px;">
+            ICCID: <b>${escH(o.iccid || '-')}</b>
+            <button onclick="ecCopy('${escH(o.iccid||'')}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>
+          </div>
+
+          ${o.link_ios ? `<a href="${escH(o.link_ios)}" target="_blank" style="display:inline-block;margin-top:4px;margin-right:6px;font-size:10px;background:#2563eb;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🍎 iPhone</a>` : ''}
+          ${o.link_android ? `<a href="${escH(o.link_android)}" target="_blank" style="display:inline-block;margin-top:4px;font-size:10px;background:#16a34a;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🤖 Android</a>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    // Generate QR untuk semua yang punya LPA
+    data.orders.forEach(o => {
+      if (o.lpa_string) {
+        setTimeout(() => ecGenerateQR(o.lpa_string, 'rw-qr-' + o.id), 200);
+      }
+    });
+
+  } catch(e) {
+    const listEl = document.getElementById('ec-riwayat-list');
+    if (listEl) listEl.innerHTML = `<div style="color:var(--red);">Error: ${escH(e.message)}</div>`;
+  }
+}
+
+async function esimcardOpenSettingEmail() {
+  // Ambil setting email saat ini
+  let currentEmail = '';
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getSetting&key=esimcard_email');
+    const data = await res.json();
+    currentEmail = data.value || '';
+  } catch(e) {}
+
+  const modal = document.createElement('div');
+  modal.id = 'esimcard-email-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:380px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">⚙️ Setting Email eSIMCard</h3>
+        <button onclick="document.getElementById('esimcard-email-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
+        Email ini digunakan sebagai penerima notifikasi QR code dari eSIMCard setelah pembelian berhasil.
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Email penerima QR eSIMCard</label>
+        <input id="ec-setting-email" type="email" value="${escH(currentEmail)}" placeholder="contoh: gohotravel@gmail.com"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;">
+      </div>
+      <div id="ec-email-status" style="display:none;margin-bottom:12px;font-size:11px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('esimcard-email-modal').remove()"
+          style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">
+          Batal
+        </button>
+        <button onclick="esimcardSaveEmail()"
+          style="flex:2;padding:9px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">
+          💾 Simpan
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function esimcardSaveEmail() {
+  const email = document.getElementById('ec-setting-email')?.value?.trim();
+  const statusEl = document.getElementById('ec-email-status');
+  if (!email) { alert('Email tidak boleh kosong'); return; }
+
+  statusEl.style.display = 'block';
+  statusEl.style.cssText = 'display:block;margin-bottom:12px;font-size:11px;color:#6366f1;background:#ede9fe;padding:8px;border-radius:6px;';
+  statusEl.textContent = '⏳ Menyimpan...';
+
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveSetting', key: 'esimcard_email', value: email })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      statusEl.style.cssText = 'display:block;margin-bottom:12px;font-size:11px;color:#166534;background:#dcfce7;padding:8px;border-radius:6px;';
+      statusEl.textContent = '✅ Email berhasil disimpan!';
+      setTimeout(() => document.getElementById('esimcard-email-modal')?.remove(), 1500);
+    } else {
+      throw new Error(data.msg || 'Gagal simpan');
+    }
+  } catch(e) {
+    statusEl.style.cssText = 'display:block;margin-bottom:12px;font-size:11px;color:#991b1b;background:#fee2e2;padding:8px;border-radius:6px;';
+    statusEl.textContent = '❌ Error: ' + e.message;
+  }
+}
+
 function esimcardOpenBeli(pkgStr) {
   let pkg;
   try { pkg = typeof pkgStr === 'string' ? JSON.parse(pkgStr) : pkgStr; }
@@ -4774,6 +4927,28 @@ async function esimcardDoPurchase(packageId, packageName) {
         statusEl.innerHTML = `<div style="background:#dcfce7;border-radius:8px;padding:10px;font-size:11px;color:#166534;">✅ Pembelian berhasil!<br><span style="font-size:10px;color:#64748b;">Data eSIM sedang diproses.</span></div>`;
       }
       console.log('[eSIMCard Purchase]', data);
+
+      // Simpan order ke D1 untuk riwayat
+      const simData = data.raw?.data?.sim || {};
+      fetch('https://goho-proxy.gohotravel.workers.dev', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveEsimcardOrder',
+          simId: simData.id || data.raw?.data?.sim_id || '',
+          iccid: simData.iccid || '',
+          packageId: packageId,
+          packageName: packageName,
+          lpaString: simData.qr_code_text || '',
+          linkIos: simData.universal_link || '',
+          linkAndroid: simData.android_universal_link || '',
+          smdpAddress: simData.smdp_address || '',
+          activationCode: simData.matching_id || '',
+          status: simData.status || 'Released',
+          staff: window._currentStaff?.nama || ''
+        })
+      }).catch(e => console.log('Save order error:', e));
+
     } else {
       throw new Error(data.msg || data.error || 'Purchase gagal');
     }
