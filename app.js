@@ -4555,6 +4555,137 @@ async function loadIroamlyPrice(country, day, kurs, markup, aviroamPartnerEsim) 
     if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${e.message}</span>`;
   }
 }
+// ============================================================
+// eSIMCard PURCHASE FLOW
+// ============================================================
+
+function esimcardOpenBeli(pkgStr) {
+  let pkg;
+  try { pkg = typeof pkgStr === 'string' ? JSON.parse(pkgStr) : pkgStr; }
+  catch(e) { alert('Error parse paket: ' + e.message); return; }
+
+  // Default email & WA GohoTravel (bisa diubah)
+  const defaultEmail = window._appSettings?.esimcard_default_email || 'gohotravel@gmail.com';
+  const defaultWa    = window._appSettings?.esimcard_default_wa    || '6281234567890';
+
+  const modal = document.createElement('div');
+  modal.id = 'esimcard-beli-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:380px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">🛒 Beli eSIMCard</h3>
+        <button onclick="document.getElementById('esimcard-beli-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+
+      <!-- Info Paket -->
+      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">${escH(pkg.name || '')}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${escH(String(pkg.dataQty))} · ${pkg.validity} hari</div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+          <span style="font-size:11px;color:var(--text-muted);">Beli: <b style="color:var(--text);">${hargaFmtIDR(pkg.buyIDR)}</b> <span style="font-size:10px;">(USD ${pkg.buyUSD.toFixed(2)})</span></span>
+          <span style="font-size:11px;color:var(--text-muted);">Jual: <b style="color:#2563eb;">${hargaFmtIDR(pkg.sellIDR)}</b></span>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Email (untuk terima QR/link aktivasi)</label>
+        <input id="ec-email" type="email" value="${escH(defaultEmail)}"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">No WA customer (opsional)</label>
+        <input id="ec-nowa" type="text" value="${escH(defaultWa)}" placeholder="628xxxxxxxxx"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;">
+      </div>
+
+      <div id="ec-status" style="font-size:11px;margin-bottom:12px;display:none;"></div>
+
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('esimcard-beli-modal').remove()"
+          style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">
+          Batal
+        </button>
+        <button id="ec-beli-btn" onclick="esimcardDoPurchase('${pkg.id}', '${escH(pkg.name)}')"
+          style="flex:2;padding:9px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">
+          ✅ Konfirmasi Beli
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function esimcardDoPurchase(packageId, packageName) {
+  const email = document.getElementById('ec-email')?.value?.trim();
+  const noWa  = document.getElementById('ec-nowa')?.value?.trim() || '';
+  const statusEl = document.getElementById('ec-status');
+  const beliBtn  = document.getElementById('ec-beli-btn');
+
+  if (!email) { alert('Email wajib diisi'); return; }
+
+  // Loading state
+  beliBtn.disabled = true;
+  beliBtn.textContent = '⏳ Memproses...';
+  statusEl.style.display = 'block';
+  statusEl.style.color = '#6366f1';
+  statusEl.style.background = '#ede9fe';
+  statusEl.style.padding = '8px 10px';
+  statusEl.style.borderRadius = '6px';
+  statusEl.textContent = 'Mengirim request ke eSIMCard...';
+
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'esimcardPurchase',
+        packageId,
+        email,
+        noWa,
+        packageName
+      })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      // Sukses
+      statusEl.style.color = '#166534';
+      statusEl.style.background = '#dcfce7';
+      beliBtn.style.background = '#16a34a';
+      beliBtn.textContent = '✅ Berhasil!';
+
+      const orderId  = data.orderId  || data.data?.id || '-';
+      const esimId   = data.esimId   || data.data?.esim_id || '-';
+      const qrCode   = data.qrCode   || data.data?.qr_code || '';
+      const actLink  = data.actLink  || data.data?.activation_url || data.data?.link || '';
+
+      statusEl.innerHTML = `
+        <div style="font-weight:700;margin-bottom:6px;">✅ Pembelian berhasil!</div>
+        <div>📋 Order ID: <b>${escH(String(orderId))}</b></div>
+        ${esimId !== '-' ? `<div>📱 eSIM ID: <b>${escH(String(esimId))}</b></div>` : ''}
+        <div style="margin-top:4px;">📧 QR/link aktivasi dikirim ke: <b>${escH(email)}</b></div>
+        ${actLink ? `<div style="margin-top:6px;"><a href="${escH(actLink)}" target="_blank" style="color:#2563eb;font-size:11px;">🔗 Activation Link</a></div>` : ''}
+        ${qrCode ? `<div style="margin-top:8px;text-align:center;"><img src="${escH(qrCode)}" style="width:140px;height:140px;border:1px solid #e2e8f0;border-radius:8px;"></div>` : ''}
+        <div style="margin-top:8px;font-size:10px;color:#6b7280;">Cek email untuk QR code atau link aktivasi eSIM.</div>
+      `;
+
+      // Log ke console untuk debug
+      console.log('[eSIMCard Purchase]', data);
+
+    } else {
+      throw new Error(data.msg || data.error || 'Purchase gagal');
+    }
+  } catch(e) {
+    statusEl.style.color = '#991b1b';
+    statusEl.style.background = '#fee2e2';
+    statusEl.innerHTML = `❌ Error: ${escH(e.message)}`;
+    beliBtn.disabled = false;
+    beliBtn.textContent = '✅ Coba Lagi';
+    beliBtn.style.background = '#2563eb';
+  }
+}
+
 async function loadEsimCardPrice(country, day, kurs, markup, aviroamPartnerEsim) {
   const el = document.getElementById('esimcard-result');
   if (!el) return;
@@ -4687,6 +4818,17 @@ async function loadEsimCardPrice(country, day, kurs, markup, aviroamPartnerEsim)
             <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
             <span style="font-size:13px;font-weight:700;color:#2563eb;">${hargaFmtIDR(sellIDR)}</span>
           </div>
+          <button onclick="esimcardOpenBeli(${JSON.stringify({
+            id: pkg.id,
+            name: pkg.name,
+            dataQty: dataQty,
+            validity: validity,
+            buyUSD: buyUSD,
+            buyIDR: buyIDR,
+            sellIDR: sellIDR
+          }).replace(/"/g,'&quot;')})" style="width:100%;margin-top:8px;padding:7px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">
+            🛒 Beli eSIMCard
+          </button>
         </div>`;
       });
     });
