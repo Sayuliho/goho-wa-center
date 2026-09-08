@@ -4517,62 +4517,129 @@ async function loadEsimCardPrice(country, day, kurs, markup, aviroamPartnerEsim)
       return;
     }
 
-    const res = await fetch(
-      `https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`
-    );
-    const data = await res.json();
+    // Ambil filter aktif dari UI
+    const selDay = parseInt(document.getElementById('h-day')?.value) || 0;  // 0 = semua durasi
+    const selPkg = (document.getElementById('h-pkg')?.value || '').trim();  // '' = semua paket
 
-    if (!data.ok || !data.data?.data?.length) {
-      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
+    // Gunakan cache per negara supaya tidak fetch ulang tiap kali filter berubah
+    const cacheKey = `esimcard_pkgs_${iso}`;
+    let pkgs = window._esimcardCache?.[cacheKey];
+    if (!pkgs) {
+      const res = await fetch(
+        `https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`
+      );
+      const data = await res.json();
+      if (!data.ok || !data.data?.data?.length) {
+        el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
+        return;
+      }
+      pkgs = data.data.data;
+      if (!window._esimcardCache) window._esimcardCache = {};
+      window._esimcardCache[cacheKey] = pkgs;
+    }
+
+    // Helper: label data quantity dari paket
+    function pkgDataLabel(pkg) {
+      return pkg.data_quantity > 0
+        ? `${pkg.data_quantity}${pkg.data_unit}`
+        : (pkg.name || '').toLowerCase().includes('plus') ? 'Unlimited Plus' : 'Unlimited';
+    }
+
+    // === FILTER LOGIC ===
+    // Skenario 1: durasi dipilih saja → semua paket dengan validity = selDay
+    // Skenario 2: paket dipilih saja → semua durasi yang match label paket
+    // Skenario 3: keduanya dipilih → filter keduanya
+    // Skenario 4: keduanya kosong → tampil semua (digroup per durasi)
+
+    let filtered = pkgs;
+
+    if (selDay) {
+      filtered = filtered.filter(p => parseInt(p.package_validity) === selDay);
+    }
+
+    if (selPkg) {
+      // Cocokkan label paket dari dropdown Aviroam ke data eSIMCard
+      // Contoh: "10GB + Unlimited" → cari yang data_quantity=10 atau Unlimited
+      // Normalisasi: ambil angka GB dari selPkg, atau detect Unlimited
+      const selLower = selPkg.toLowerCase();
+      const isUnlimited = selLower.includes('unlimited');
+      const gbMatch = selLower.match(/(\d+)\s*gb/i);
+      const gbVal = gbMatch ? parseInt(gbMatch[1]) : null;
+
+      filtered = filtered.filter(p => {
+        const qty = p.data_quantity;
+        const unit = (p.data_unit || '').toLowerCase();
+        const isEsimUnlimited = qty === 0 || qty === null;
+        if (isUnlimited && gbVal) {
+          // "10GB + Unlimited" → match Unlimited atau 10GB
+          return isEsimUnlimited || (qty === gbVal && unit === 'gb');
+        } else if (isUnlimited) {
+          return isEsimUnlimited;
+        } else if (gbVal) {
+          return qty === gbVal && unit === 'gb';
+        }
+        return true; // kalau tidak bisa parse, tampilkan semua
+      });
+    }
+
+    if (!filtered.length) {
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok untuk filter ini</span>';
       return;
     }
 
-    const pkgs = data.data.data;
+    // Sort: by validity ASC, lalu by price ASC
+    filtered.sort((a, b) => {
+      const dayDiff = parseInt(a.package_validity) - parseInt(b.package_validity);
+      if (dayDiff !== 0) return dayDiff;
+      return parseFloat(a.price) - parseFloat(b.price);
+    });
 
-    // Cari semua durasi unik, pilih terdekat dengan input day
-    const allDays = [...new Set(pkgs.map(p => parseInt(p.package_validity)))].filter(Boolean).sort((a,b) => a-b);
-    if (!allDays.length) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>'; return; }
+    // Grouping by durasi (untuk tampilan lebih rapi kalau multi-durasi)
+    const byDay = new Map();
+    filtered.forEach(pkg => {
+      const d = parseInt(pkg.package_validity);
+      if (!byDay.has(d)) byDay.set(d, []);
+      byDay.get(d).push(pkg);
+    });
 
-    let bestDay = allDays[0], minDiff = Math.abs(allDays[0] - day);
-    for (const d of allDays) {
-      const diff = Math.abs(d - day);
-      if (diff < minDiff) { minDiff = diff; bestDay = d; }
-    }
+    let html = '';
+    byDay.forEach((dayPkgs, validity) => {
+      // Header grup durasi — hanya tampil kalau multi-durasi
+      if (byDay.size > 1) {
+        html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+          📅 ${validity} Hari
+        </div>`;
+      }
 
-    const list = pkgs.filter(p => parseInt(p.package_validity) === bestDay);
+      dayPkgs.forEach(pkg => {
+        const buyUSD  = parseFloat(pkg.price || 0);
+        const buyIDR  = Math.round(buyUSD * kurs);
+        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+        const dataQty = pkgDataLabel(pkg);
 
-    const matchLabel = minDiff === 0
-      ? ''
-      : `<div style="font-size:10px;color:#e07b00;background:#fef3c7;border-radius:4px;padding:3px 8px;margin-bottom:8px;">
-           ⚠️ Paket ${day}h tidak ada — terdekat: <b>${bestDay} hari</b>
-         </div>`;
+        const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+        const bg     = isCheaper ? '#f0fdf4' : 'white';
+        const cheapBadge = isCheaper
+          ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>'
+          : '';
 
-    let html = matchLabel;
-    list.forEach(pkg => {
-      const buyUSD  = parseFloat(pkg.price || 0);
-      const buyIDR  = Math.round(buyUSD * kurs);
-      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-      const dataQty = pkg.data_quantity > 0 ? `${pkg.data_quantity}${pkg.data_unit}` : 'Unlimited';
-
-      const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
-      const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
-      const bg     = isCheaper ? '#f0fdf4' : 'white';
-      const badge  = isCheaper
-        ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>'
-        : '';
-
-      html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
-        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${escH(dataQty)} · ${bestDay}h${badge}</div>
-        <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">${escH(pkg.name || '')}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
-          <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
-          <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
-          <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
-          <span style="font-size:13px;font-weight:700;color:#2563eb;">${hargaFmtIDR(sellIDR)}</span>
-        </div>
-      </div>`;
+        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)} · ${validity}h</span>
+            ${cheapBadge}
+          </div>
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">${escH(pkg.name || '')}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:#2563eb;">${hargaFmtIDR(sellIDR)}</span>
+          </div>
+        </div>`;
+      });
     });
 
     el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
