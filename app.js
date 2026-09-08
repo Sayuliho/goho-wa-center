@@ -4564,15 +4564,11 @@ function esimcardOpenBeli(pkgStr) {
   try { pkg = typeof pkgStr === 'string' ? JSON.parse(pkgStr) : pkgStr; }
   catch(e) { alert('Error parse paket: ' + e.message); return; }
 
-  // Default email & WA GohoTravel (bisa diubah)
-  const defaultEmail = window._appSettings?.esimcard_default_email || 'gohotravel@gmail.com';
-  const defaultWa    = window._appSettings?.esimcard_default_wa    || '6281234567890';
-
   const modal = document.createElement('div');
   modal.id = 'esimcard-beli-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
   modal.innerHTML = `
-    <div style="background:white;border-radius:12px;padding:24px;width:380px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="background:white;border-radius:12px;padding:24px;width:400px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <h3 style="margin:0;font-size:14px;color:var(--text);">🛒 Beli eSIMCard</h3>
         <button onclick="document.getElementById('esimcard-beli-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
@@ -4586,18 +4582,6 @@ function esimcardOpenBeli(pkgStr) {
           <span style="font-size:11px;color:var(--text-muted);">Beli: <b style="color:var(--text);">${hargaFmtIDR(pkg.buyIDR)}</b> <span style="font-size:10px;">(USD ${pkg.buyUSD.toFixed(2)})</span></span>
           <span style="font-size:11px;color:var(--text-muted);">Jual: <b style="color:#2563eb;">${hargaFmtIDR(pkg.sellIDR)}</b></span>
         </div>
-      </div>
-
-      <!-- Form -->
-      <div style="margin-bottom:12px;">
-        <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Email (untuk terima QR/link aktivasi)</label>
-        <input id="ec-email" type="email" value="${escH(defaultEmail)}"
-          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;">
-      </div>
-      <div style="margin-bottom:16px;">
-        <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">No WA customer (opsional)</label>
-        <input id="ec-nowa" type="text" value="${escH(defaultWa)}" placeholder="628xxxxxxxxx"
-          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;">
       </div>
 
       <div id="ec-status" style="font-size:11px;margin-bottom:12px;display:none;"></div>
@@ -4616,61 +4600,133 @@ function esimcardOpenBeli(pkgStr) {
   document.body.appendChild(modal);
 }
 
+// Helper copy to clipboard
+function ecCopy(text, btnEl) {
+  navigator.clipboard.writeText(text).then(() => {
+    const ori = btnEl.textContent;
+    btnEl.textContent = '✅';
+    setTimeout(() => btnEl.textContent = ori, 1500);
+  });
+}
+
 async function esimcardDoPurchase(packageId, packageName) {
-  const email = document.getElementById('ec-email')?.value?.trim();
-  const noWa  = document.getElementById('ec-nowa')?.value?.trim() || '';
   const statusEl = document.getElementById('ec-status');
   const beliBtn  = document.getElementById('ec-beli-btn');
-
-  if (!email) { alert('Email wajib diisi'); return; }
 
   // Loading state
   beliBtn.disabled = true;
   beliBtn.textContent = '⏳ Memproses...';
   statusEl.style.display = 'block';
-  statusEl.style.color = '#6366f1';
-  statusEl.style.background = '#ede9fe';
-  statusEl.style.padding = '8px 10px';
-  statusEl.style.borderRadius = '6px';
+  statusEl.style.cssText = 'font-size:11px;margin-bottom:12px;display:block;color:#6366f1;background:#ede9fe;padding:8px 10px;border-radius:6px;';
   statusEl.textContent = 'Mengirim request ke eSIMCard...';
 
   try {
     const res = await fetch('https://goho-proxy.gohotravel.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'esimcardPurchase',
-        packageId,
-        email,
-        noWa,
-        packageName
-      })
+      body: JSON.stringify({ action: 'esimcardPurchase', packageId, packageName })
     });
     const data = await res.json();
 
     if (data.ok) {
-      // Sukses
-      statusEl.style.color = '#166534';
-      statusEl.style.background = '#dcfce7';
       beliBtn.style.background = '#16a34a';
       beliBtn.textContent = '✅ Berhasil!';
+      beliBtn.disabled = true;
 
-      const orderId  = data.orderId  || data.data?.id || '-';
-      const esimId   = data.esimId   || data.data?.esim_id || '-';
-      const qrCode   = data.qrCode   || data.data?.qr_code || '';
-      const actLink  = data.actLink  || data.data?.activation_url || data.data?.link || '';
+      // Ambil data dari raw.data.sim
+      const sim     = data.raw?.data?.sim || {};
+      const iccid   = sim.iccid   || '-';
+      const simId   = sim.id      || '-';
+      const lpa     = sim.qr_code_text    || '';
+      const smdp    = sim.smdp_address    || '';
+      const matchId = sim.matching_id     || '';
+      const linkIos = sim.universal_link  || '';
+      const linkAnd = sim.android_universal_link || '';
+      const status  = sim.status  || '-';
+      const bundle  = sim.last_bundle || packageName || '-';
 
+      // Fungsi row info dengan tombol copy
+      const rowInfo = (label, val, copyVal) => val && val !== '-' ? `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9;">
+          <span style="font-size:10px;color:#64748b;min-width:100px;">${label}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;font-weight:600;color:#1e293b;word-break:break-all;text-align:right;">${escH(val)}</span>
+            <button onclick="ecCopy('${escH(copyVal||val)}',this)" style="font-size:9px;padding:2px 6px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;flex-shrink:0;">📋</button>
+          </div>
+        </div>` : '';
+
+      statusEl.style.cssText = 'font-size:11px;margin-bottom:12px;display:block;';
       statusEl.innerHTML = `
-        <div style="font-weight:700;margin-bottom:6px;">✅ Pembelian berhasil!</div>
-        <div>📋 Order ID: <b>${escH(String(orderId))}</b></div>
-        ${esimId !== '-' ? `<div>📱 eSIM ID: <b>${escH(String(esimId))}</b></div>` : ''}
-        <div style="margin-top:4px;">📧 QR/link aktivasi dikirim ke: <b>${escH(email)}</b></div>
-        ${actLink ? `<div style="margin-top:6px;"><a href="${escH(actLink)}" target="_blank" style="color:#2563eb;font-size:11px;">🔗 Activation Link</a></div>` : ''}
-        ${qrCode ? `<div style="margin-top:8px;text-align:center;"><img src="${escH(qrCode)}" style="width:140px;height:140px;border:1px solid #e2e8f0;border-radius:8px;"></div>` : ''}
-        <div style="margin-top:8px;font-size:10px;color:#6b7280;">Cek email untuk QR code atau link aktivasi eSIM.</div>
+        <!-- Header sukses -->
+        <div style="background:#dcfce7;border-radius:8px;padding:10px 12px;margin-bottom:12px;color:#166534;font-weight:700;font-size:12px;">
+          ✅ Pembelian berhasil! eSIM siap diinstall.
+        </div>
+
+        <!-- Info eSIM -->
+        <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:8px;">📱 Info eSIM</div>
+          ${rowInfo('Paket', bundle, bundle)}
+          ${rowInfo('Status', status, '')}
+          ${rowInfo('ICCID', iccid, iccid)}
+          ${rowInfo('eSIM ID', simId, simId)}
+        </div>
+
+        <!-- Cara Install -->
+        <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:8px;">🔧 Cara Install ke HP Customer</div>
+
+          ${linkIos ? `
+          <div style="margin-bottom:8px;">
+            <div style="font-size:10px;font-weight:600;color:#64748b;margin-bottom:4px;">🍎 iPhone (iOS)</div>
+            <a href="${escH(linkIos)}" target="_blank"
+              style="display:block;background:#2563eb;color:white;text-align:center;padding:8px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;">
+              Tap untuk Install di iPhone
+            </a>
+          </div>` : ''}
+
+          ${linkAnd ? `
+          <div style="margin-bottom:8px;">
+            <div style="font-size:10px;font-weight:600;color:#64748b;margin-bottom:4px;">🤖 Android</div>
+            <a href="${escH(linkAnd)}" target="_blank"
+              style="display:block;background:#16a34a;color:white;text-align:center;padding:8px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;">
+              Tap untuk Install di Android
+            </a>
+          </div>` : ''}
+
+          ${smdp && matchId ? `
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e2e8f0;">
+            <div style="font-size:10px;font-weight:600;color:#64748b;margin-bottom:6px;">📝 Install Manual (Settings HP)</div>
+            ${rowInfo('SM-DP+ Address', smdp, smdp)}
+            ${rowInfo('Activation Code', matchId, matchId)}
+            ${lpa ? rowInfo('LPA String', lpa, lpa) : ''}
+          </div>` : ''}
+        </div>
+
+        <!-- Pesan WA siap kirim -->
+        ${(linkIos || linkAnd) ? `
+        <div style="background:#f0fdf4;border-radius:8px;padding:10px 12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="font-size:11px;font-weight:700;color:#166534;">💬 Pesan WA untuk Customer</div>
+            <button onclick="ecCopy(document.getElementById('ec-wa-msg').innerText, this)"
+              style="font-size:10px;padding:3px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">📋 Copy</button>
+          </div>
+          <div id="ec-wa-msg" style="font-size:11px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">eSIM Anda sudah siap! 🎉
+
+Paket: ${escH(bundle)}
+ICCID: ${escH(iccid)}
+
+*Cara install:*
+${linkIos ? `📱 iPhone: ${linkIos}` : ''}
+${linkAnd ? `📱 Android: ${linkAnd}` : ''}
+${smdp ? `
+📝 Manual:
+SM-DP+: ${smdp}
+Code: ${matchId}` : ''}
+
+eSIM aktif otomatis saat pertama connect ke jaringan. Selamat berlibur! ✈️</div>
+        </div>` : ''}
       `;
 
-      // Log ke console untuk debug
       console.log('[eSIMCard Purchase]', data);
 
     } else {
