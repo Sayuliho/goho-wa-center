@@ -2368,7 +2368,7 @@ async function loadFotoPreview(passengerId, fotoFileId) {
   } catch(e) {}
 }
 function setFotoEl(passengerId, src) {
-  var elId = passengerId.indexOf('foto-') === 0 || passengerId.indexOf('mdac-foto-') === 0
+  var elId = passengerId.indexOf('foto-') === 0 || passengerId.indexOf('mdac-foto-') === 0 || passengerId.indexOf('alli-foto-') === 0
     ? passengerId
     : 'foto-' + passengerId;
   const el = document.getElementById(elId);
@@ -2558,7 +2558,7 @@ function formatMpxDate(val) {
   return val;
 }
 function showFotoPopup(e, passengerId) {
-  var elId = passengerId.indexOf('foto-') === 0 || passengerId.indexOf('mdac-foto-') === 0 ? passengerId : 'foto-' + passengerId;
+  var elId = passengerId.indexOf('foto-') === 0 || passengerId.indexOf('mdac-foto-') === 0 || passengerId.indexOf('alli-foto-') === 0 ? passengerId : 'foto-' + passengerId;
   const el = document.getElementById(elId); const img = el ? el.querySelector('img') : null; if (!img) return;
   const popup = document.getElementById('mpx-foto-popup'); document.getElementById('mpx-foto-popup-img').src = img.src;
   const rect = e.target.getBoundingClientRect();
