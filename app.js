@@ -2216,11 +2216,13 @@ function searchPaxAlli(query) {
       window._alliSearchOptions = res.passengers;
       results.innerHTML = res.passengers.map((p, i) =>
         `<div onclick="pilihPaxAlli(${i})" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">
-          <div style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">${getInitials(p.namaLengkap)}</div>
+          <div id="alli-foto-${escH(p.passengerId)}" onmouseenter="showFotoPopup(event,'alli-foto-${escH(p.passengerId)}')" onmouseleave="hideFotoPopup()" style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;overflow:hidden;">${getInitials(p.namaLengkap)}</div>
           <div><div style="font-weight:600;">${escH(p.namaLengkap)}</div><div style="font-size:10px;color:var(--text-muted);">${p.noPaspor||'-'} · ${p.tglLahir||'-'}</div></div>
         </div>`
       ).join('');
       results.style.display = 'block';
+      // Load foto preview untuk tiap peserta yang punya fotoFileId
+      res.passengers.forEach(p => { if (p.fotoFileId) loadFotoPreview('alli-foto-' + p.passengerId, p.fotoFileId); });
     } catch(e) {}
   }, 350);
 }
