@@ -4890,21 +4890,23 @@ function ecShowPurchaseResult(statusEl, beliBtn, sim, packageName) {
         <div style="font-size:11px;font-weight:700;color:#166534;">💬 Pesan WA untuk Customer</div>
         <button onclick="ecCopy(document.getElementById('ec-wa-msg').innerText,this)" style="font-size:10px;padding:3px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">📋 Copy</button>
       </div>
-      <div id="ec-wa-msg" style="font-size:11px;color:#1e293b;line-height:1.6;white-space:pre-wrap;background:white;border-radius:6px;padding:8px;border:1px solid #bbf7d0;">eSIM Anda sudah siap! 🎉
+      <div id="ec-wa-msg" style="font-size:11px;color:#1e293b;line-height:1.6;white-space:pre-wrap;background:white;border-radius:6px;padding:8px;border:1px solid #bbf7d0;">Halo! eSIM kamu sudah siap 🎉
 
-Paket: ${escH(bundle)}
-ICCID: ${escH(iccid)}
+📦 *${escH(bundle)}*
+🔢 ICCID: ${escH(iccid)}
 
-*Cara install:*
-${linkIos ? `📱 iPhone: ${linkIos}` : ''}
-${linkAnd ? `📱 Android: ${linkAnd}` : ''}
-${smdp ? `
-📝 Manual:
-SM-DP+ Address: ${smdp}
-Activation Code: ${matchId}` : ''}
+Klik link di bawah sesuai HP kamu:
+${linkIos ? `🍎 *iPhone* → ${linkIos}` : ''}
+${linkAnd ? `🤖 *Android* → ${linkAnd}` : ''}
+${smdp && matchId ? `
+📝 *Install Manual:*
+• SM-DP+ Address: ${smdp}
+• Activation Code: ${matchId}` : ''}
 
-eSIM aktif otomatis saat pertama connect ke jaringan.
-Selamat berlibur! ✈️</div>
+Klik link → ikuti instruksi di HP → selesai!
+eSIM aktif otomatis saat pertama nyalakan data ✈️
+
+_Butuh bantuan? Chat kami kembali_ 😊</div>
     </div>` : ''}
   `;
   if (lpa) setTimeout(() => ecGenerateQR(lpa, qrId), 100);
