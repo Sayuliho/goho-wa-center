@@ -2961,19 +2961,6 @@ function openHargaModal() {
   });
   initHargaPanelDrag();
   initHargaPanelResize();
-
-  // Inject tombol Riwayat eSIM ke navbar panel-harga (sekali saja)
-  const hdrBar = document.getElementById('panel-harga-header');
-  if (hdrBar && !document.getElementById('btn-riwayat-esim-nav')) {
-    const resetBtn = hdrBar.querySelector('button');
-    const btn = document.createElement('button');
-    btn.id = 'btn-riwayat-esim-nav';
-    btn.textContent = '📋 Riwayat eSIM';
-    btn.style.cssText = 'font-size:11px;padding:4px 10px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;border-radius:5px;cursor:pointer;font-family:var(--font);font-weight:600;';
-    btn.onclick = (e) => { e.stopPropagation(); ecOpenRiwayatPanel(); };
-    if (resetBtn) hdrBar.insertBefore(btn, resetBtn);
-    else hdrBar.appendChild(btn);
-  }
 }
 
 function initHargaPanelResize() {
