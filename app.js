@@ -4658,50 +4658,76 @@ function ecRpFilter(q) {
 function ecRpRender(orders) {
   const listEl = document.getElementById('ec-rp-list');
   if (!listEl) return;
+  if (!orders.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Tidak ada hasil</div>';
+    return;
+  }
+  // Mode list — 1 baris per transaksi, klik untuk expand
   listEl.innerHTML = orders.map(o => {
-    const tgl   = o.created_at ? new Date(o.created_at).toLocaleString('id-ID', { dateStyle:'short', timeStyle:'short' }) : '-';
-    const qrId  = 'rp-qr-' + o.id;
-    const msgId = 'rp-wa-' + o.id;
-    const msgWa = `Halo! eSIM kamu sudah siap 🎉\n\n📦 *${o.package_name||'-'}*\n🔢 ICCID: ${o.iccid||'-'}\n\nKlik link di bawah sesuai HP kamu:\n${o.link_ios?'🍎 *iPhone* → '+o.link_ios:''}\n${o.link_android?'🤖 *Android* → '+o.link_android:''}\n\nKlik link → ikuti instruksi di HP → selesai!\neSIM aktif otomatis saat pertama nyalakan data ✈️\n\n_Butuh bantuan? Chat kami kembali_ 😊`;
+    const tgl  = o.created_at ? new Date(o.created_at).toLocaleString('id-ID', { dateStyle:'short', timeStyle:'short' }) : '-';
+    const nama = o.nama_pembeli ? `· 👤 ${escH(o.nama_pembeli)}` : '';
     return `
-      <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text);">${escH(o.package_name||'-')}</div>
-            <div style="font-size:10px;color:var(--text-muted);">${tgl}${o.staff?' · '+escH(o.staff):''}</div>
-            ${o.nama_pembeli?`<div style="font-size:10px;color:#2563eb;font-weight:600;margin-top:2px;">👤 ${escH(o.nama_pembeli)}${o.hp_pembeli?' · '+escH(o.hp_pembeli):''}</div>`:''}
+      <div id="rp-row-${o.id}" style="border:1px solid var(--border);border-radius:7px;margin-bottom:5px;overflow:hidden;">
+        <!-- Baris ringkas -->
+        <div onclick="ecRpToggle('${o.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;background:#f8fafc;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(o.package_name||'-')}</div>
+            <div style="font-size:10px;color:var(--text-muted);">${tgl} ${nama}</div>
           </div>
-          <span style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:600;">${escH(o.status||'Released')}</span>
+          <span style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:600;flex-shrink:0;">${escH(o.status||'Released')}</span>
+          <span id="rp-chev-${o.id}" style="font-size:11px;color:var(--text-muted);flex-shrink:0;">▶</span>
         </div>
-
-        ${o.lpa_string?`
-        <div style="text-align:center;margin-bottom:6px;">
-          <div id="${qrId}" style="display:inline-block;padding:5px;background:white;border:1px solid #e2e8f0;border-radius:6px;"></div>
-          <div style="display:flex;gap:5px;justify-content:center;margin-top:5px;">
-            <button onclick="ecCopy('${escH(o.lpa_string)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy LPA</button>
-            <button onclick="ecDownloadQR('${qrId}','esim-${escH(o.iccid||'qr')}.png')" style="font-size:10px;padding:3px 8px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">⬇️ Download QR</button>
-          </div>
-        </div>`:''}
-
-        <div style="font-size:10px;color:#64748b;margin-bottom:5px;">
-          ICCID: <b>${escH(o.iccid||'-')}</b>
-          <button onclick="ecCopy('${escH(o.iccid||'')}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>
+        <!-- Detail (tersembunyi default) -->
+        <div id="rp-detail-${o.id}" style="display:none;padding:10px;border-top:1px solid var(--border);">
+          ${ecRpDetailHtml(o)}
         </div>
-
-        ${o.link_ios?`<a href="${escH(o.link_ios)}" target="_blank" style="display:inline-block;margin-bottom:5px;margin-right:5px;font-size:10px;background:#2563eb;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🍎 iPhone</a>`:''}
-        ${o.link_android?`<a href="${escH(o.link_android)}" target="_blank" style="display:inline-block;margin-bottom:5px;font-size:10px;background:#16a34a;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🤖 Android</a>`:''}
-
-        ${(o.link_ios||o.link_android)?`
-        <div style="margin-top:6px;background:#f0fdf4;border-radius:6px;padding:7px 9px;border:1px solid #bbf7d0;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-            <div style="font-size:10px;font-weight:700;color:#166534;">💬 Pesan WA untuk Tamu</div>
-            <button onclick="ecCopy(document.getElementById('${msgId}').innerText,this)" style="font-size:10px;padding:2px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">📋 Copy</button>
-          </div>
-          <div id="${msgId}" style="font-size:10px;color:#166534;line-height:1.5;white-space:pre-wrap;background:white;border-radius:4px;padding:5px;border:1px solid #bbf7d0;">${escH(msgWa)}</div>
-        </div>`:''}
       </div>`;
   }).join('');
-  orders.forEach(o => { if (o.lpa_string) setTimeout(() => ecGenerateQR(o.lpa_string, 'rp-qr-' + o.id), 200); });
+}
+
+function ecRpToggle(id) {
+  const detail = document.getElementById('rp-detail-' + id);
+  const chev   = document.getElementById('rp-chev-' + id);
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.textContent = isOpen ? '▶' : '▼';
+  // Generate QR saat pertama dibuka
+  if (!isOpen) {
+    const o = (window._ecRpOrders||[]).find(x => String(x.id) === String(id));
+    if (o?.lpa_string) setTimeout(() => ecGenerateQR(o.lpa_string, 'rp-qr-' + id), 100);
+  }
+}
+
+function ecRpDetailHtml(o) {
+  const qrId  = 'rp-qr-' + o.id;
+  const msgId = 'rp-wa-' + o.id;
+  const msgWa = `Halo! eSIM kamu sudah siap 🎉\n\n📦 *${o.package_name||'-'}*\n🔢 ICCID: ${o.iccid||'-'}\n\nKlik link di bawah sesuai HP kamu:\n${o.link_ios?'🍎 *iPhone* → '+o.link_ios:''}\n${o.link_android?'🤖 *Android* → '+o.link_android:''}\n\nKlik link → ikuti instruksi di HP → selesai!\neSIM aktif otomatis saat pertama nyalakan data ✈️\n\n_Butuh bantuan? Chat kami kembali_ 😊`;
+  return `
+    ${o.nama_pembeli?`<div style="font-size:10px;color:#2563eb;font-weight:600;margin-bottom:6px;">👤 ${escH(o.nama_pembeli)}${o.hp_pembeli?' · '+escH(o.hp_pembeli):''}</div>`:''}
+    ${o.lpa_string?`
+    <div style="text-align:center;margin-bottom:8px;">
+      <div id="${qrId}" style="display:inline-block;padding:5px;background:white;border:1px solid #e2e8f0;border-radius:6px;"></div>
+      <div style="display:flex;gap:5px;justify-content:center;margin-top:5px;">
+        <button onclick="ecCopy('${escH(o.lpa_string)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy LPA</button>
+        <button onclick="ecDownloadQR('${qrId}','esim-${escH(o.iccid||'qr')}.png')" style="font-size:10px;padding:3px 8px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">⬇️ Download QR</button>
+      </div>
+    </div>`:''}
+    <div style="font-size:10px;color:#64748b;margin-bottom:6px;">
+      ICCID: <b>${escH(o.iccid||'-')}</b>
+      <button onclick="ecCopy('${escH(o.iccid||'')}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>
+    </div>
+    ${o.link_ios?`<a href="${escH(o.link_ios)}" target="_blank" style="display:inline-block;margin-bottom:6px;margin-right:5px;font-size:10px;background:#2563eb;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🍎 iPhone</a>`:''}
+    ${o.link_android?`<a href="${escH(o.link_android)}" target="_blank" style="display:inline-block;margin-bottom:6px;font-size:10px;background:#16a34a;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🤖 Android</a>`:''}
+    ${(o.link_ios||o.link_android)?`
+    <div style="margin-top:4px;background:#f0fdf4;border-radius:6px;padding:7px 9px;border:1px solid #bbf7d0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <div style="font-size:10px;font-weight:700;color:#166534;">💬 Pesan WA untuk Tamu</div>
+        <button onclick="ecCopy(document.getElementById('${msgId}').innerText,this)" style="font-size:10px;padding:2px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">📋 Copy</button>
+      </div>
+      <div id="${msgId}" style="font-size:10px;color:#166534;line-height:1.5;white-space:pre-wrap;background:white;border-radius:4px;padding:5px;border:1px solid #bbf7d0;">${escH(msgWa)}</div>
+    </div>`:''}
+  `;
 }
 
 // ===================== RIWAYAT ESIM PANEL END =====================
