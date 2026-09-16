@@ -4628,6 +4628,31 @@ async function esimcardOpenRiwayat() {
 
           ${o.link_ios ? `<a href="${escH(o.link_ios)}" target="_blank" style="display:inline-block;margin-top:4px;margin-right:6px;font-size:10px;background:#2563eb;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🍎 iPhone</a>` : ''}
           ${o.link_android ? `<a href="${escH(o.link_android)}" target="_blank" style="display:inline-block;margin-top:4px;font-size:10px;background:#16a34a;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🤖 Android</a>` : ''}
+
+          ${(o.link_ios || o.link_android) ? `
+          <div style="margin-top:10px;background:#f0fdf4;border-radius:6px;padding:8px 10px;border:1px solid #bbf7d0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div style="font-size:10px;font-weight:700;color:#166534;">💬 Pesan WA untuk Tamu</div>
+              <button onclick="ecCopy(\`Halo! eSIM kamu sudah siap 🎉
+
+📦 *${escH(o.package_name||'-')}*
+🔢 ICCID: ${escH(o.iccid||'-')}
+
+Klik link di bawah sesuai HP kamu:
+${o.link_ios ? `🍎 *iPhone* → ${o.link_ios}` : ''}
+${o.link_android ? `🤖 *Android* → ${o.link_android}` : ''}
+${o.smdp_address && o.activation_code ? `
+📝 *Install Manual:*
+• SM-DP+ Address: ${o.smdp_address}
+• Activation Code: ${o.activation_code}` : ''}
+
+Klik link → ikuti instruksi di HP → selesai!
+eSIM aktif otomatis saat pertama nyalakan data ✈️
+
+_Butuh bantuan? Chat kami kembali_ 😊\`,this)" style="font-size:10px;padding:3px 10px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">📋 Copy</button>
+            </div>
+            <div style="font-size:10px;color:#166534;line-height:1.5;">Paket · ICCID · Link install</div>
+          </div>` : ''}
         </div>
       `;
     }).join('');
