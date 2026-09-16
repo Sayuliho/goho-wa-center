@@ -4607,6 +4607,7 @@ async function esimcardOpenRiwayat() {
             <div>
               <div style="font-size:11px;font-weight:700;color:var(--text);">${escH(o.package_name || '-')}</div>
               <div style="font-size:10px;color:var(--text-muted);">${tgl} ${o.staff ? '· ' + escH(o.staff) : ''}</div>
+              ${o.nama_pembeli ? `<div style="font-size:10px;color:#2563eb;font-weight:600;margin-top:2px;">👤 ${escH(o.nama_pembeli)}${o.hp_pembeli ? ' · ' + escH(o.hp_pembeli) : ''}</div>` : ''}
             </div>
             <span style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:600;">${escH(o.status || 'Released')}</span>
           </div>
@@ -4736,6 +4737,13 @@ function esimcardOpenBeli(pkgStr) {
           <span style="font-size:11px;color:var(--text-muted);">Jual: <b style="color:#2563eb;">${hargaFmtIDR(pkg.sellIDR)}</b></span>
         </div>
       </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;">👤 Data Pembeli <span style="font-weight:400;color:var(--text-muted);">(opsional)</span></div>
+        <input id="ec-nama-pembeli" type="text" placeholder="Nama tamu (mis: Budi Santoso)"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);margin-bottom:6px;outline:none;" />
+        <input id="ec-hp-pembeli" type="text" placeholder="No HP / WA (mis: 08123456789)"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;" />
+      </div>
       <div id="ec-status" style="display:none;margin-bottom:12px;"></div>
       <div style="display:flex;gap:8px;">
         <button onclick="document.getElementById('esimcard-beli-modal').remove()"
@@ -4788,6 +4796,31 @@ function ecDownloadQR(containerId, filename) {
   a.download = filename || 'esim-qr.png';
   a.href = canvas.toDataURL('image/png');
   a.click();
+}
+
+function ecSaveOrder(simData, fallbackSimId, packageId, packageName) {
+  const namaPembeli = document.getElementById('ec-nama-pembeli')?.value?.trim() || '';
+  const hpPembeli   = document.getElementById('ec-hp-pembeli')?.value?.trim() || '';
+  fetch('https://goho-proxy.gohotravel.workers.dev', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'saveEsimcardOrder',
+      simId: simData.id || fallbackSimId || '',
+      iccid: simData.iccid || '',
+      packageId: packageId || '',
+      packageName: packageName || '',
+      lpaString: simData.qr_code_text || '',
+      linkIos: simData.universal_link || '',
+      linkAndroid: simData.android_universal_link || '',
+      smdpAddress: simData.smdp_address || '',
+      activationCode: simData.matching_id || '',
+      status: simData.status || 'Released',
+      staff: currentStaff?.nama || '',
+      namaPembeli: namaPembeli,
+      hpPembeli: hpPembeli
+    })
+  }).catch(e => console.log('Save order error:', e));
 }
 
 function ecShowPurchaseResult(statusEl, beliBtn, sim, packageName) {
@@ -4875,6 +4908,9 @@ Selamat berlibur! ✈️</div>
     </div>` : ''}
   `;
   if (lpa) setTimeout(() => ecGenerateQR(lpa, qrId), 100);
+
+  // Simpan/update ke D1 — dipanggil dari sini supaya data sudah lengkap (termasuk kasus polling)
+  ecSaveOrder(sim, sim.id || '', '', packageName);
 }
 
 async function ecFetchSimData(simId, statusEl, beliBtn, packageName) {
@@ -4930,26 +4966,12 @@ async function esimcardDoPurchase(packageId, packageName) {
       }
       console.log('[eSIMCard Purchase]', data);
 
-      // Simpan order ke D1 untuk riwayat
-      const simData = data.raw?.data?.sim || {};
-      fetch('https://goho-proxy.gohotravel.workers.dev', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'saveEsimcardOrder',
-          simId: simData.id || data.raw?.data?.sim_id || '',
-          iccid: simData.iccid || '',
-          packageId: packageId,
-          packageName: packageName,
-          lpaString: simData.qr_code_text || '',
-          linkIos: simData.universal_link || '',
-          linkAndroid: simData.android_universal_link || '',
-          smdpAddress: simData.smdp_address || '',
-          activationCode: simData.matching_id || '',
-          status: simData.status || 'Released',
-          staff: window._currentStaff?.nama || ''
-        })
-      }).catch(e => console.log('Save order error:', e));
+      // Simpan order ke D1 — hanya kalau sim_applied true dan data sudah lengkap
+      // Kalau sim_applied false, save akan dipanggil dari ecShowPurchaseResult setelah polling selesai
+      if (simApplied === true && sim.id) {
+        const simData = sim;
+        ecSaveOrder(simData, data.raw?.data?.sim_id || '', packageId, packageName);
+      }
 
     } else {
       throw new Error(data.msg || data.error || 'Purchase gagal');
