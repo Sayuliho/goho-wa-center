@@ -4562,176 +4562,6 @@ async function loadIroamlyPrice(country, day, kurs, markup, aviroamPartnerEsim) 
   }
 }
 // ============================================================
-// ===================== RIWAYAT ESIM PANEL =====================
-function ecOpenRiwayatPanel() {
-  // Kalau sudah ada, toggle show/hide
-  let panel = document.getElementById('ec-riwayat-panel');
-  if (panel) { panel.style.display = panel.style.display === 'none' ? 'flex' : 'none'; return; }
-
-  panel = document.createElement('div');
-  panel.id = 'ec-riwayat-panel';
-  panel.style.cssText = `
-    position:fixed;top:80px;right:20px;z-index:10000;
-    width:460px;height:70vh;min-width:320px;min-height:300px;
-    background:white;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);
-    display:flex;flex-direction:column;resize:both;overflow:hidden;
-    border:1px solid var(--border);font-family:var(--font);
-  `;
-  panel.innerHTML = `
-    <div id="ec-rp-header" style="background:#1e293b;color:white;padding:10px 14px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;cursor:grab;flex-shrink:0;user-select:none;">
-      <span style="font-size:13px;font-weight:700;">📋 Riwayat Pembelian eSIMCard</span>
-      <button onclick="document.getElementById('ec-riwayat-panel').style.display='none'" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;line-height:1;">✕</button>
-    </div>
-    <div style="padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <input id="ec-rp-search" type="text" placeholder="🔍 Cari nama, no HP, atau ICCID..."
-        oninput="ecRpFilter(this.value)"
-        style="width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;" />
-    </div>
-    <div id="ec-rp-list" style="flex:1;overflow-y:auto;padding:10px 12px;font-size:12px;color:var(--text-muted);">
-      ⏳ Memuat 10 transaksi terakhir...
-    </div>
-  `;
-  document.body.appendChild(panel);
-
-  // Drag
-  const hdr = document.getElementById('ec-rp-header');
-  let isDrag = false, ox = 0, oy = 0;
-  hdr.addEventListener('mousedown', e => {
-    if (e.target.tagName === 'BUTTON') return;
-    isDrag = true;
-    ox = e.clientX - panel.getBoundingClientRect().left;
-    oy = e.clientY - panel.getBoundingClientRect().top;
-    hdr.style.cursor = 'grabbing';
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', e => {
-    if (!isDrag) return;
-    panel.style.left   = Math.max(0, e.clientX - ox) + 'px';
-    panel.style.top    = Math.max(0, e.clientY - oy) + 'px';
-    panel.style.right  = 'auto';
-  });
-  document.addEventListener('mouseup', () => { isDrag = false; hdr.style.cursor = 'grab'; });
-
-  // Load data
-  ecRpLoad();
-}
-
-window._ecRpOrders = [];
-
-async function ecRpLoad() {
-  const listEl = document.getElementById('ec-rp-list');
-  if (!listEl) return;
-  try {
-    const res  = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimcardOrders');
-    const data = await res.json();
-    if (!data.ok || !data.orders?.length) {
-      listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada transaksi</div>';
-      return;
-    }
-    window._ecRpOrders = data.orders;
-    ecRpRender(data.orders.slice(0, 10));
-  } catch(e) {
-    const listEl = document.getElementById('ec-rp-list');
-    if (listEl) listEl.innerHTML = `<div style="color:red;">Error: ${escH(e.message)}</div>`;
-  }
-}
-
-function ecRpFilter(q) {
-  const orders = window._ecRpOrders || [];
-  const listEl = document.getElementById('ec-rp-list');
-  if (!listEl) return;
-  if (!q || !q.trim()) { ecRpRender(orders.slice(0, 10)); return; }
-  const kw = q.toLowerCase().trim();
-  const filtered = orders.filter(o =>
-    (o.nama_pembeli||'').toLowerCase().includes(kw) ||
-    (o.hp_pembeli||'').toLowerCase().includes(kw) ||
-    (o.iccid||'').toLowerCase().includes(kw) ||
-    (o.package_name||'').toLowerCase().includes(kw)
-  );
-  if (!filtered.length) {
-    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Tidak ditemukan</div>';
-    return;
-  }
-  ecRpRender(filtered);
-}
-
-function ecRpRender(orders) {
-  const listEl = document.getElementById('ec-rp-list');
-  if (!listEl) return;
-  if (!orders.length) {
-    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Tidak ada hasil</div>';
-    return;
-  }
-  // Mode list — 1 baris per transaksi, klik untuk expand
-  listEl.innerHTML = orders.map(o => {
-    const tgl  = o.created_at ? new Date(o.created_at).toLocaleString('id-ID', { dateStyle:'short', timeStyle:'short' }) : '-';
-    const nama = o.nama_pembeli ? `· 👤 ${escH(o.nama_pembeli)}` : '';
-    return `
-      <div id="rp-row-${o.id}" style="border:1px solid var(--border);border-radius:7px;margin-bottom:5px;overflow:hidden;">
-        <!-- Baris ringkas -->
-        <div onclick="ecRpToggle('${o.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;background:#f8fafc;gap:8px;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(o.package_name||'-')}</div>
-            <div style="font-size:10px;color:var(--text-muted);">${tgl} ${nama}</div>
-          </div>
-          <span style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:600;flex-shrink:0;">${escH(o.status||'Released')}</span>
-          <span id="rp-chev-${o.id}" style="font-size:11px;color:var(--text-muted);flex-shrink:0;">▶</span>
-        </div>
-        <!-- Detail (tersembunyi default) -->
-        <div id="rp-detail-${o.id}" style="display:none;padding:10px;border-top:1px solid var(--border);">
-          ${ecRpDetailHtml(o)}
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function ecRpToggle(id) {
-  const detail = document.getElementById('rp-detail-' + id);
-  const chev   = document.getElementById('rp-chev-' + id);
-  if (!detail) return;
-  const isOpen = detail.style.display !== 'none';
-  detail.style.display = isOpen ? 'none' : 'block';
-  if (chev) chev.textContent = isOpen ? '▶' : '▼';
-  // Generate QR saat pertama dibuka
-  if (!isOpen) {
-    const o = (window._ecRpOrders||[]).find(x => String(x.id) === String(id));
-    if (o?.lpa_string) setTimeout(() => ecGenerateQR(o.lpa_string, 'rp-qr-' + id), 100);
-  }
-}
-
-function ecRpDetailHtml(o) {
-  const qrId  = 'rp-qr-' + o.id;
-  const msgId = 'rp-wa-' + o.id;
-  const msgWa = `Halo! eSIM kamu sudah siap 🎉\n\n📦 *${o.package_name||'-'}*\n🔢 ICCID: ${o.iccid||'-'}\n\nKlik link di bawah sesuai HP kamu:\n${o.link_ios?'🍎 *iPhone* → '+o.link_ios:''}\n${o.link_android?'🤖 *Android* → '+o.link_android:''}\n\nKlik link → ikuti instruksi di HP → selesai!\neSIM aktif otomatis saat pertama nyalakan data ✈️\n\n_Butuh bantuan? Chat kami kembali_ 😊`;
-  return `
-    ${o.nama_pembeli?`<div style="font-size:10px;color:#2563eb;font-weight:600;margin-bottom:6px;">👤 ${escH(o.nama_pembeli)}${o.hp_pembeli?' · '+escH(o.hp_pembeli):''}</div>`:''}
-    ${o.lpa_string?`
-    <div style="text-align:center;margin-bottom:8px;">
-      <div id="${qrId}" style="display:inline-block;padding:5px;background:white;border:1px solid #e2e8f0;border-radius:6px;"></div>
-      <div style="display:flex;gap:5px;justify-content:center;margin-top:5px;">
-        <button onclick="ecCopy('${escH(o.lpa_string)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy LPA</button>
-        <button onclick="ecDownloadQR('${qrId}','esim-${escH(o.iccid||'qr')}.png')" style="font-size:10px;padding:3px 8px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">⬇️ Download QR</button>
-      </div>
-    </div>`:''}
-    <div style="font-size:10px;color:#64748b;margin-bottom:6px;">
-      ICCID: <b>${escH(o.iccid||'-')}</b>
-      <button onclick="ecCopy('${escH(o.iccid||'')}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>
-    </div>
-    ${o.link_ios?`<a href="${escH(o.link_ios)}" target="_blank" style="display:inline-block;margin-bottom:6px;margin-right:5px;font-size:10px;background:#2563eb;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🍎 iPhone</a>`:''}
-    ${o.link_android?`<a href="${escH(o.link_android)}" target="_blank" style="display:inline-block;margin-bottom:6px;font-size:10px;background:#16a34a;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🤖 Android</a>`:''}
-    ${(o.link_ios||o.link_android)?`
-    <div style="margin-top:4px;background:#f0fdf4;border-radius:6px;padding:7px 9px;border:1px solid #bbf7d0;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-        <div style="font-size:10px;font-weight:700;color:#166534;">💬 Pesan WA untuk Tamu</div>
-        <button onclick="ecCopy(document.getElementById('${msgId}').innerText,this)" style="font-size:10px;padding:2px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">📋 Copy</button>
-      </div>
-      <div id="${msgId}" style="font-size:10px;color:#166534;line-height:1.5;white-space:pre-wrap;background:white;border-radius:4px;padding:5px;border:1px solid #bbf7d0;">${escH(msgWa)}</div>
-    </div>`:''}
-  `;
-}
-
-// ===================== RIWAYAT ESIM PANEL END =====================
-
 // eSIMCard PURCHASE FLOW
 // ============================================================
 
@@ -4777,6 +4607,7 @@ async function esimcardOpenRiwayat() {
             <div>
               <div style="font-size:11px;font-weight:700;color:var(--text);">${escH(o.package_name || '-')}</div>
               <div style="font-size:10px;color:var(--text-muted);">${tgl} ${o.staff ? '· ' + escH(o.staff) : ''}</div>
+              ${o.nama_pembeli ? `<div style="font-size:10px;color:#2563eb;font-weight:600;margin-top:2px;">👤 ${escH(o.nama_pembeli)}${o.hp_pembeli ? ' · ' + escH(o.hp_pembeli) : ''}</div>` : ''}
             </div>
             <span style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:600;">${escH(o.status || 'Released')}</span>
           </div>
@@ -4906,6 +4737,13 @@ function esimcardOpenBeli(pkgStr) {
           <span style="font-size:11px;color:var(--text-muted);">Jual: <b style="color:#2563eb;">${hargaFmtIDR(pkg.sellIDR)}</b></span>
         </div>
       </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;">👤 Data Pembeli <span style="font-weight:400;color:var(--text-muted);">(opsional)</span></div>
+        <input id="ec-nama-pembeli" type="text" placeholder="Nama tamu (mis: Budi Santoso)"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);margin-bottom:6px;outline:none;" />
+        <input id="ec-hp-pembeli" type="text" placeholder="No HP / WA (mis: 08123456789)"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;" />
+      </div>
       <div id="ec-status" style="display:none;margin-bottom:12px;"></div>
       <div style="display:flex;gap:8px;">
         <button onclick="document.getElementById('esimcard-beli-modal').remove()"
@@ -4958,6 +4796,31 @@ function ecDownloadQR(containerId, filename) {
   a.download = filename || 'esim-qr.png';
   a.href = canvas.toDataURL('image/png');
   a.click();
+}
+
+function ecSaveOrder(simData, fallbackSimId, packageId, packageName) {
+  const namaPembeli = document.getElementById('ec-nama-pembeli')?.value?.trim() || '';
+  const hpPembeli   = document.getElementById('ec-hp-pembeli')?.value?.trim() || '';
+  fetch('https://goho-proxy.gohotravel.workers.dev', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'saveEsimcardOrder',
+      simId: simData.id || fallbackSimId || '',
+      iccid: simData.iccid || '',
+      packageId: packageId || '',
+      packageName: packageName || '',
+      lpaString: simData.qr_code_text || '',
+      linkIos: simData.universal_link || '',
+      linkAndroid: simData.android_universal_link || '',
+      smdpAddress: simData.smdp_address || '',
+      activationCode: simData.matching_id || '',
+      status: simData.status || 'Released',
+      staff: currentStaff?.nama || '',
+      namaPembeli: namaPembeli,
+      hpPembeli: hpPembeli
+    })
+  }).catch(e => console.log('Save order error:', e));
 }
 
 function ecShowPurchaseResult(statusEl, beliBtn, sim, packageName) {
@@ -5045,6 +4908,9 @@ Selamat berlibur! ✈️</div>
     </div>` : ''}
   `;
   if (lpa) setTimeout(() => ecGenerateQR(lpa, qrId), 100);
+
+  // Simpan/update ke D1 — dipanggil di sini agar data sudah lengkap (termasuk kasus polling)
+  ecSaveOrder(sim, sim.id || '', '', packageName);
 }
 
 async function ecFetchSimData(simId, statusEl, beliBtn, packageName) {
@@ -5100,26 +4966,11 @@ async function esimcardDoPurchase(packageId, packageName) {
       }
       console.log('[eSIMCard Purchase]', data);
 
-      // Simpan order ke D1 untuk riwayat
-      const simData = data.raw?.data?.sim || {};
-      fetch('https://goho-proxy.gohotravel.workers.dev', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'saveEsimcardOrder',
-          simId: simData.id || data.raw?.data?.sim_id || '',
-          iccid: simData.iccid || '',
-          packageId: packageId,
-          packageName: packageName,
-          lpaString: simData.qr_code_text || '',
-          linkIos: simData.universal_link || '',
-          linkAndroid: simData.android_universal_link || '',
-          smdpAddress: simData.smdp_address || '',
-          activationCode: simData.matching_id || '',
-          status: simData.status || 'Released',
-          staff: window._currentStaff?.nama || ''
-        })
-      }).catch(e => console.log('Save order error:', e));
+      // Simpan ke D1 hanya kalau sim_applied true dan data sudah lengkap.
+      // Kalau sim_applied false (polling), save dipanggil dari ecShowPurchaseResult setelah polling selesai.
+      if (simApplied === true && sim.id) {
+        ecSaveOrder(sim, data.raw?.data?.sim_id || '', packageId, packageName);
+      }
 
     } else {
       throw new Error(data.msg || data.error || 'Purchase gagal');
