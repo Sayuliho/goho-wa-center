@@ -5594,3 +5594,6 @@ document.addEventListener('click', function(e) {
     if (dd && !dd.contains(e.target) && e.target !== inp) dd.style.display = 'none';
   });
 });
+
+// Alias untuk kompatibilitas tombol navbar
+function ecOpenRiwayatPanel() { esimcardOpenRiwayat(); }
