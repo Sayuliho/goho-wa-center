@@ -4598,52 +4598,94 @@ async function esimcardOpenRiwayat() {
       return;
     }
 
-    listEl.innerHTML = data.orders.map(o => {
+    // Render sebagai list compact — klik "Buka" untuk expand detail
+    listEl.innerHTML = data.orders.map((o, idx) => {
       const tgl = o.created_at ? new Date(o.created_at).toLocaleString('id-ID', { dateStyle:'short', timeStyle:'short' }) : '-';
-      const qrId = 'rw-qr-' + o.id;
+      const label = o.nama_pembeli
+        ? `👤 ${escH(o.nama_pembeli)}${o.hp_pembeli ? ' · ' + escH(o.hp_pembeli) : ''}`
+        : escH(o.package_name || '-');
       return `
-        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
-          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
-            <div>
-              <div style="font-size:11px;font-weight:700;color:var(--text);">${escH(o.package_name || '-')}</div>
-              <div style="font-size:10px;color:var(--text-muted);">${tgl} ${o.staff ? '· ' + escH(o.staff) : ''}</div>
-              ${o.nama_pembeli ? `<div style="font-size:10px;color:#2563eb;font-weight:600;margin-top:2px;">👤 ${escH(o.nama_pembeli)}${o.hp_pembeli ? ' · ' + escH(o.hp_pembeli) : ''}</div>` : ''}
+        <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;cursor:pointer;background:#f8fafc;" onclick="ecToggleRiwayat(${idx})">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label}</div>
+              <div style="font-size:10px;color:var(--text-muted);">${tgl}${o.staff ? ' · ' + escH(o.staff) : ''} · <span style="color:#166534;">${escH(o.status||'Released')}</span></div>
             </div>
-            <span style="font-size:9px;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:600;">${escH(o.status || 'Released')}</span>
+            <button id="ec-rw-btn-${idx}" style="font-size:10px;padding:3px 10px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;margin-left:8px;flex-shrink:0;">▶ Buka</button>
           </div>
-
-          ${o.lpa_string ? `
-          <div style="text-align:center;margin-bottom:8px;">
-            <div id="${qrId}" style="display:inline-block;padding:6px;background:white;border:1px solid #e2e8f0;border-radius:6px;"></div>
-            <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;">
-              <button onclick="ecCopy('${escH(o.lpa_string)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy LPA</button>
-              <button onclick="ecDownloadQR('${qrId}','esim-${escH(o.iccid||'qr')}.png')" style="font-size:10px;padding:3px 8px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">⬇️ Download QR</button>
+          <div id="ec-rw-detail-${idx}" style="display:none;padding:12px;border-top:1px solid var(--border);">
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;">${escH(o.package_name || '-')}</div>
+            ${o.nama_pembeli ? `<div style="font-size:10px;color:#2563eb;font-weight:600;margin-bottom:8px;">👤 ${escH(o.nama_pembeli)}${o.hp_pembeli ? ' · ' + escH(o.hp_pembeli) : ''}</div>` : ''}
+            ${o.lpa_string ? `
+            <div style="text-align:center;margin-bottom:8px;">
+              <div id="rw-qr-${o.id}" style="display:inline-block;padding:6px;background:white;border:1px solid #e2e8f0;border-radius:6px;"></div>
+              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap;">
+                <button onclick="ecCopy('${escH(o.lpa_string)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy LPA</button>
+                <button onclick="ecDownloadQR('rw-qr-${o.id}','esim-${escH(o.iccid||'qr')}.png')" style="font-size:10px;padding:3px 8px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">⬇️ Download QR</button>
+                <button onclick="ecCopyPesanWA(${idx})" style="font-size:10px;padding:3px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">📲 Copy Pesan WA</button>
+              </div>
+            </div>` : ''}
+            <div style="font-size:10px;color:#64748b;margin-bottom:6px;">
+              ICCID: <b>${escH(o.iccid || '-')}</b>
+              <button onclick="ecCopy('${escH(o.iccid||'')}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>
             </div>
-          </div>` : ''}
-
-          <div style="font-size:10px;color:#64748b;margin-bottom:4px;">
-            ICCID: <b>${escH(o.iccid || '-')}</b>
-            <button onclick="ecCopy('${escH(o.iccid||'')}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${o.link_ios ? `<a href="${escH(o.link_ios)}" target="_blank" style="font-size:10px;background:#2563eb;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🍎 iPhone</a>` : ''}
+              ${o.link_android ? `<a href="${escH(o.link_android)}" target="_blank" style="font-size:10px;background:#16a34a;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🤖 Android</a>` : ''}
+            </div>
           </div>
-
-          ${o.link_ios ? `<a href="${escH(o.link_ios)}" target="_blank" style="display:inline-block;margin-top:4px;margin-right:6px;font-size:10px;background:#2563eb;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🍎 iPhone</a>` : ''}
-          ${o.link_android ? `<a href="${escH(o.link_android)}" target="_blank" style="display:inline-block;margin-top:4px;font-size:10px;background:#16a34a;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🤖 Android</a>` : ''}
         </div>
       `;
     }).join('');
 
-    // Generate QR untuk semua yang punya LPA
-    data.orders.forEach(o => {
-      if (o.lpa_string) {
-        setTimeout(() => ecGenerateQR(o.lpa_string, 'rw-qr-' + o.id), 200);
-      }
-    });
+    // Simpan data orders ke window untuk dipakai ecCopyPesanWA
+    window._ecOrders = data.orders;
+
+    // Tidak auto-generate QR — generate saat di-expand saja (lihat ecToggleRiwayat)
 
   } catch(e) {
     const listEl = document.getElementById('ec-riwayat-list');
     if (listEl) listEl.innerHTML = `<div style="color:var(--red);">Error: ${escH(e.message)}</div>`;
   }
 }
+
+function ecToggleRiwayat(idx) {
+  const detail = document.getElementById('ec-rw-detail-' + idx);
+  const btn    = document.getElementById('ec-rw-btn-' + idx);
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? '▶ Buka' : '▼ Tutup';
+  // Generate QR saat pertama dibuka
+  if (!isOpen && window._ecOrders?.[idx]?.lpa_string) {
+    setTimeout(() => ecGenerateQR(window._ecOrders[idx].lpa_string, 'rw-qr-' + window._ecOrders[idx].id), 100);
+  }
+}
+
+function ecCopyPesanWA(idx) {
+  const o = window._ecOrders?.[idx];
+  if (!o) return;
+  const nama = o.nama_pembeli ? `Halo ${o.nama_pembeli}` : 'Halo Kak';
+  const paket = o.package_name || 'eSIM';
+  let pesan = `${nama} 😊\n\nBerikut eSIM kamu:\n📦 Paket: ${paket}\n\n`;
+  if (o.link_ios || o.link_android) {
+    pesan += `📲 *Install eSIM:*\n`;
+    if (o.link_ios)     pesan += `• iPhone: ${o.link_ios}\n`;
+    if (o.link_android) pesan += `• Android: ${o.link_android}\n`;
+  }
+  pesan += `\n📶 eSIM aktif otomatis saat pertama connect ke jaringan.\nSelamat berlibur! ✈️`;
+  navigator.clipboard.writeText(pesan).then(() => {
+    const btn = document.querySelector(`#ec-rw-detail-${idx} button[onclick="ecCopyPesanWA(${idx})"]`);
+    if (btn) { const ori = btn.textContent; btn.textContent = '✅ Tersalin!'; setTimeout(() => btn.textContent = ori, 1800); }
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = pesan; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+
+// Alias untuk tombol navbar
+function ecOpenRiwayatPanel() { esimcardOpenRiwayat(); }
 
 async function esimcardOpenSettingEmail() {
   // Ambil setting email saat ini
@@ -5594,6 +5636,3 @@ document.addEventListener('click', function(e) {
     if (dd && !dd.contains(e.target) && e.target !== inp) dd.style.display = 'none';
   });
 });
-
-// Alias untuk kompatibilitas tombol navbar
-function ecOpenRiwayatPanel() { esimcardOpenRiwayat(); }
