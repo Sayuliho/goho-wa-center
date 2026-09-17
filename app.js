@@ -4077,4 +4077,1564 @@ function hargaOnPkgChange() {
 }
 
 // hargaUpdatePkg — legacy stub
-function hargaUpd
+function hargaUpdatePkg() { hargaOnDayChange(); }
+// FIX 2: hargaUpdatePkg — hanya tampil paket yang tersedia untuk negara + durasi ini
+function hargaUpdatePkg() {
+  const d = parseInt(document.getElementById('h-day').value);
+  const selP = document.getElementById('h-pkg');
+  selP.innerHTML = '<option value="">— Pilih durasi <b>atau</b> paket data untuk melihat harga —</option>';
+  selP.disabled = !d;
+  document.getElementById('h-result').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi <b>atau</b> paket data untuk melihat harga</div>';
+  if (!d) return;
+
+  // Ambil paket dari Aviroam untuk durasi EXACT ini saja
+  const rowsForDay = (window._aviroamRows || []).filter(r => r[2] === d);
+  const pkgs = [...new Set(rowsForDay.map(r => r[1]).filter(Boolean))];
+
+  if (pkgs.length) {
+    // Ada data Aviroam — tampilkan nama paket asli
+    pkgs.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p; o.textContent = p;
+      selP.appendChild(o);
+    });
+  } else {
+    // Tidak ada data Aviroam untuk durasi ini
+    // Tampilkan pilihan generic supaya eSIM Access & iRoamly tetap bisa dicari
+    selP.innerHTML += '<option value="__noaviroam__" disabled style="color:#999">— Aviroam tidak punya paket ini —</option>';
+    ['500MB / day','1GB / day','2GB / day','3GB / day',
+     '5GB','10GB','20GB','30GB','50GB','Unlimited'].forEach(p => {
+      const o = document.createElement('option');
+      o.value = p; o.textContent = p;
+      selP.appendChild(o);
+    });
+  }
+}
+
+// ===== HARGA v2: kurs & markup helpers =====
+function hargaGetKurs() {
+  return parseFloat(window._appSettings?.esim_kurs_usd || localStorage.getItem('esim_kurs_usd') || '16000');
+}
+function hargaGetMarkup() {
+  return parseFloat(window._appSettings?.esim_markup_pct || localStorage.getItem('esim_markup_pct') || '20');
+}
+function hargaFmtIDR(v) {
+  return v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—';
+}
+function hargaRowAviroam(label, value, type) {
+  const color = type === 'customer' ? '#1d4ed8' : '#166534';
+  const bg    = type === 'customer' ? '#dbeafe'  : '#dcfce7';
+  const badge = type === 'customer' ? 'Customer' : 'Agen';
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+    <span style="font-size:11px;color:var(--text-muted);">${label} <span style="background:${bg};color:${color};font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;">${badge}</span></span>
+    <span style="font-size:13px;font-weight:600;color:${color};">${value}</span>
+  </div>`;
+}
+
+async function hargaShowResult() {
+  const displayName = document.getElementById('h-country').value;
+  const p = document.getElementById('h-pkg').value;   // '' = semua paket
+  const d = parseInt(document.getElementById('h-day').value) || 0; // 0 = semua durasi
+  const resultEl = document.getElementById('h-result');
+  if (!displayName) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara dulu</div>'; return; }
+  if (!p && !d) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih durasi <b>atau</b> paket data untuk melihat harga</div>'; return; }
+
+  const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
+
+  const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
+  const genericPkgs = ['500MB / day','1GB / day','2GB / day','3GB / day','5GB','10GB','20GB','30GB','50GB','Unlimited'];
+  const isGenericPkg = genericPkgs.includes(p);
+  let avRows = [];
+  if (!isGenericPkg) {
+    const src = window._aviroamRows || hargaData;
+    const matchDur = (r) => !d || r[2] === d;
+    const matchPkg = (r) => !p || r[1] === p;
+    avRows = src.filter(r => {
+      const name = (r[0] || '').toLowerCase().trim();
+      return matchDur(r) && matchPkg(r) && avKeywords.some(kw => name === kw.toLowerCase());
+    });
+    if (!avRows.length) {
+      avRows = src.filter(r => {
+        const name = (r[0] || '').toLowerCase();
+        return matchDur(r) && matchPkg(r) && avKeywords.some(kw => name.includes(kw)) && name.length <= 35;
+      });
+    }
+    if (!avRows.length) {
+      avRows = src.filter(r => {
+        const name = (r[0] || '').toLowerCase();
+        return matchDur(r) && matchPkg(r) && avKeywords.some(kw => name.includes(kw));
+      });
+    }
+  }
+  // Dedup berdasarkan negara+paket+durasi (bukan negara saja)
+  const avRowsUniq = avRows.filter((r, i, arr) =>
+    arr.findIndex(x => x[0] === r[0] && x[1] === r[1] && x[2] === r[2]) === i
+  );
+  const row = avRowsUniq[0] || null;
+  const [,,,,,, esimPar] = row || [null,null,d,0,0,0,0];
+  const effectiveDay = d || (row ? row[2] : 7);
+  const c = displayName;
+
+  const kurs   = hargaGetKurs();
+  const markup = hargaGetMarkup();
+
+  // Sync input values dari localStorage saat render
+  const kursEl   = document.getElementById('h-kurs-usd');
+  const markupEl = document.getElementById('h-markup-pct');
+  if (kursEl)   kursEl.value   = kurs;
+  if (markupEl) markupEl.value = markup;
+
+  // Build Aviroam cards — satu card per kategori
+  const aviroamCards = avRowsUniq.length === 0
+    ? '<div style="font-size:11px;color:var(--text-muted);">Data tidak tersedia</div>'
+    : avRowsUniq.map(r => {
+        const [,,,simPub, simPar, esimPub, esimPar] = r;
+        const rowDur = r[2] ? `${r[2]} hari` : '';
+        const rowPkg = r[1] ? escH(r[1]) : '';
+        const badgeExtra = (!d || !p) ? `<span style="font-size:9px;color:#0369a1;background:#e0f2fe;border-radius:3px;padding:1px 5px;margin-left:4px;">${[rowDur, rowPkg].filter(Boolean).join(' · ')}</span>` : '';
+        return `
+          <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+            <div style="margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+              <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;display:inline-block;">🌏 ${escH(r[0])}</div>
+              ${badgeExtra}
+            </div>
+            <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
+            ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
+            ${hargaRowAviroam('Partner', hargaFmtIDR(simPar), 'agen')}
+            <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin:6px 0 4px;text-transform:uppercase;letter-spacing:0.4px;">eSIM</div>
+            ${hargaRowAviroam('Publish', hargaFmtIDR(esimPub), 'customer')}
+            ${hargaRowAviroam('Partner', hargaFmtIDR(esimPar), 'agen')}
+          </div>`;
+      }).join('');
+
+  const summaryParts = [];
+  if (d) summaryParts.push(`${d} hari`);
+  if (p) summaryParts.push(escH(p));
+  const summaryLabel = summaryParts.length ? summaryParts.join(' &bull; ') : 'Semua paket';
+
+  resultEl.innerHTML = `
+    <div style="display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 10px;color:var(--text-muted);margin-bottom:1rem;">${summaryLabel}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
+
+      <!-- KIRI: Aviroam -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">🌐 Aviroam</div>
+        ${aviroamCards}
+      </div>
+
+      <!-- TENGAH: eSIM Access -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">📡 eSIM Access</div>
+        <div id="esim-access-result" style="font-size:12px;color:var(--text-muted);">
+          <i class="ti ti-loader spin"></i> Memuat...
+        </div>
+      </div>
+
+      <!-- KANAN: iRoamly -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">🟣 iRoamly</div>
+        <div id="iroamly-result" style="font-size:12px;color:var(--text-muted);">
+          <i class="ti ti-loader spin"></i> Memuat...
+        </div>
+      </div>
+
+      <!-- KANAN 2: eSIMCard -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">🟦 eSIMCard</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button onclick="esimcardOpenRiwayat()" style="font-size:10px;padding:4px 10px;background:#f1f5f9;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-family:var(--font);">📋 Riwayat eSIM</button>
+          <button onclick="esimcardOpenSettingEmail()" style="font-size:10px;padding:4px 10px;background:#f1f5f9;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-family:var(--font);">⚙️ Setting Email</button>
+        </div>
+        <div id="esimcard-result" style="font-size:12px;color:var(--text-muted);">
+          <i class="ti ti-loader spin"></i> Memuat...
+        </div>
+      </div>
+
+    </div>`;
+
+  // Fetch eSIM Access, iRoamly & eSIMCard (async, tidak block render Aviroam)
+  loadEsimAccessPrice(c, effectiveDay, kurs, markup, parseFloat(esimPar) || 0);
+  loadIroamlyPrice(c, effectiveDay, kurs, markup, parseFloat(esimPar) || 0);
+  loadEsimCardPrice(c, effectiveDay, kurs, markup, parseFloat(esimPar) || 0);
+}
+
+// Mapping nama negara Aviroam → ISO code eSIM Access
+const ESIM_COUNTRY_MAP = {
+  'Malaysia': 'MY', 'China': 'CN', 'Singapore': 'SG', 'Thailand': 'TH',
+  'Japan': 'JP', 'South Korea': 'KR', 'Korea': 'KR', 'Hong Kong': 'HK',
+  'Taiwan': 'TW', 'Indonesia': 'ID', 'Philippines': 'PH', 'Vietnam': 'VN',
+  'Cambodia': 'KH', 'Myanmar': 'MM', 'Laos': 'LA', 'Brunei': 'BN',
+  'India': 'IN', 'Australia': 'AU', 'New Zealand': 'NZ', 'United Kingdom': 'GB',
+  'UK': 'GB', 'USA': 'US', 'United States': 'US', 'Europe': 'EU',
+  'Saudi Arabia': 'SA', 'UAE': 'AE', 'United Arab Emirates': 'AE',
+  'Turkey': 'TR', 'Egypt': 'EG', 'France': 'FR', 'Germany': 'DE',
+  'Italy': 'IT', 'Spain': 'ES', 'Netherlands': 'NL', 'Switzerland': 'CH',
+  'Canada': 'CA', 'Mexico': 'MX', 'Brazil': 'BR', 'Argentina': 'AR',
+  'South Africa': 'ZA', 'Kenya': 'KE', 'Morocco': 'MA',
+  'Bangladesh': 'BD', 'Pakistan': 'PK', 'Sri Lanka': 'LK', 'Nepal': 'NP',
+  'Macau': 'MO', 'Macao': 'MO', 'Russia': 'RU', 'Kazakhstan': 'KZ',
+};
+
+async function loadEsimAccessPrice(countryDisplay, day, kurs, markup, aviroamPartnerEsim) {
+  const el = document.getElementById('esim-access-result');
+  if (!el) return;
+  try {
+    const countryObjEA = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === countryDisplay);
+    const code = countryObjEA?.iso || countryDisplay.toUpperCase().substring(0, 2);
+    const selDay = parseInt(document.getElementById('h-day')?.value) || 0;
+    const selPkg = (document.getElementById('h-pkg')?.value || '').trim();
+
+    const cacheKey = `esimaccess_pkgs_${code}`;
+    let rawPackages = window._esimAccessCache?.[cacheKey];
+    if (!rawPackages) {
+      const res = await fetch(
+        `https://goho-proxy.gohotravel.workers.dev?action=getEsimPackages&country=${encodeURIComponent(code)}`
+      );
+      const data = await res.json();
+      if (!data.ok || !data.data || data.data.success === false) {
+        const errMsg = data.data?.errorMsg || 'Negara tidak didukung';
+        el.innerHTML = `<span style="font-size:11px;color:var(--text-muted);">eSIM Access: ${escH(errMsg)}</span>`;
+        return;
+      }
+      rawPackages = data.data?.packageList || data.data?.obj || data.packages || [];
+      if (!rawPackages.length) {
+        el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
+        return;
+      }
+      if (!window._esimAccessCache) window._esimAccessCache = {};
+      window._esimAccessCache[cacheKey] = rawPackages;
+    }
+
+    const ESIM_REGIONAL_KW = ['asia', 'global', 'worldwide', 'multi', ' & ', ' and '];
+    const singlePkgs = rawPackages.filter(p => {
+      const name = (p.name || p.packageName || p.slug || '').toLowerCase();
+      return !ESIM_REGIONAL_KW.some(kw => name.includes(kw));
+    });
+    let packages = singlePkgs.length ? singlePkgs : rawPackages;
+
+    if (selDay) packages = packages.filter(p => parseInt(p.duration || p.day || 0) === selDay);
+    if (selPkg) {
+      const selLower = selPkg.toLowerCase();
+      const isUnlimited = selLower.includes('unlimited');
+      const gbMatch = selLower.match(/(\d+)\s*gb/i);
+      const gbVal = gbMatch ? parseInt(gbMatch[1]) : null;
+      packages = packages.filter(p => {
+        const name = (p.name || p.packageName || '').toLowerCase();
+        if (isUnlimited && gbVal) return name.includes('unlimited') || name.includes(gbVal + 'gb') || name.includes(gbVal + ' gb');
+        if (isUnlimited) return name.includes('unlimited');
+        if (gbVal) return name.includes(gbVal + 'gb') || name.includes(gbVal + ' gb');
+        return true;
+      });
+    }
+
+    if (!packages.length) {
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok untuk filter ini</span>';
+      return;
+    }
+
+    packages.sort((a, b) => {
+      const dd = parseInt(a.duration || a.day || 0) - parseInt(b.duration || b.day || 0);
+      return dd !== 0 ? dd : (a.name || '').localeCompare(b.name || '');
+    });
+
+    const byDay = new Map();
+    packages.forEach(pkg => {
+      const d2 = parseInt(pkg.duration || pkg.day || 0);
+      if (!byDay.has(d2)) byDay.set(d2, []);
+      byDay.get(d2).push(pkg);
+    });
+
+    let html = '';
+    byDay.forEach((dayPkgs, validity) => {
+      if (byDay.size > 1) {
+        html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border);">📅 ${validity} Hari</div>`;
+      }
+      dayPkgs.forEach(pkg => {
+        const buyUSD  = parseFloat(pkg.price || pkg.retailPrice || 0) / 10000;
+        const buyIDR  = Math.round(buyUSD * kurs);
+        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+        const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+        const bg     = isCheaper ? '#f0fdf4' : 'white';
+        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+        const pkgName = escH(pkg.name || pkg.packageName || pkg.slug || '-');
+        const pkgDay  = pkg.duration || pkg.day || validity;
+        const locList = pkg.locationNetworkList || pkg.locationList || [];
+        const coverageEA = locList.length > 1 ? locList.map(l => escH(l.locationName || l.name || l.locationCode || '')).filter(Boolean).join(' · ') : '';
+        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;"><span style="font-size:11px;font-weight:600;color:var(--text);">${pkgName}</span>${cheapBadge}</div>
+          ${coverageEA ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:4px;display:inline-block;">🌏 ${coverageEA}</div>` : ''}
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:5px;">${pkgDay} hari</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:#1d4ed8;">${hargaFmtIDR(sellIDR)}</span>
+          </div>
+        </div>`;
+      });
+    });
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
+  } catch(e) {
+    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${e.message}</span>`;
+  }
+}
+
+// Mapping nama negara Aviroam → region_index iRoamly
+const IROAMLY_COUNTRY_MAP = {
+  'Japan': 'japan', 'South Korea': 'south-korea', 'Korea': 'south-korea',
+  'Malaysia': 'malaysia', 'Singapore': 'singapore', 'Thailand': 'thailand',
+  'China': 'china', 'Hong Kong': 'hong-kong', 'Taiwan': 'taiwan',
+  'Indonesia': 'indonesia', 'Philippines': 'philippines', 'Vietnam': 'vietnam',
+  'Cambodia': 'cambodia', 'Myanmar': 'myanmar', 'India': 'india',
+  'Australia': 'australia', 'New Zealand': 'new-zealand',
+  'United Kingdom': 'united-kingdom', 'UK': 'united-kingdom',
+  'USA': 'united-states', 'United States': 'united-states',
+  'Saudi Arabia': 'saudi-arabia', 'UAE': 'united-arab-emirates',
+  'United Arab Emirates': 'united-arab-emirates', 'Turkey': 'turkey',
+  'Egypt': 'egypt', 'France': 'france', 'Germany': 'germany',
+  'Italy': 'italy', 'Spain': 'spain', 'Netherlands': 'netherlands',
+  'Switzerland': 'switzerland', 'Canada': 'canada', 'Mexico': 'mexico',
+  'Macau': 'macau', 'Macao': 'macau', 'Bangladesh': 'bangladesh',
+  'Pakistan': 'pakistan', 'Sri Lanka': 'sri-lanka', 'Nepal': 'nepal',
+  'Brunei': 'brunei', 'Laos': 'laos', 'Mongolia': 'mongolia',
+  'Qatar': 'qatar', 'Kuwait': 'kuwait', 'Bahrain': 'bahrain',
+  'Jordan': 'jordan', 'Israel': 'israel', 'Morocco': 'morocco',
+  'South Africa': 'south-africa', 'Kenya': 'kenya', 'Nigeria': 'nigeria',
+  'Brazil': 'brazil', 'Argentina': 'argentina', 'Chile': 'chile',
+  'Portugal': 'portugal', 'Greece': 'greece', 'Poland': 'poland',
+  'Czech': 'czech-republic', 'Austria': 'austria', 'Sweden': 'sweden',
+  'Norway': 'norway', 'Denmark': 'denmark', 'Finland': 'finland',
+  'Belgium': 'belgium', 'Hungary': 'hungary', 'Romania': 'romania',
+};
+
+// Smart mapping untuk nama regional Aviroam yang mengandung nama negara
+function iroamlyGetRegion(countryName) {
+  if (!countryName) return null;
+  // Exact match dulu
+  if (IROAMLY_COUNTRY_MAP[countryName]) return IROAMLY_COUNTRY_MAP[countryName];
+  // Cari nama negara yang terkandung dalam string (prioritas urutan map)
+  const lower = countryName.toLowerCase();
+  for (const [name, region] of Object.entries(IROAMLY_COUNTRY_MAP)) {
+    if (lower.includes(name.toLowerCase())) return region;
+  }
+  return null;
+}
+
+
+// iRoamly regional coverage — dari tab region xlsx
+const IROAMLY_REGIONS = {
+  'hong-kong-and-macau': 'Hong Kong · Macau',
+  'usa-ca': 'USA · Canada',
+  'southeast-asia-4-countries': 'Singapore · Malaysia · Indonesia · Thailand',
+  'au-nz': 'Australia · New Zealand',
+  'singapore-malaysia-thailand': 'Singapore · Malaysia · Thailand',
+  'usa-canada-mexico': 'USA · Canada · Mexico',
+  'central-asia-4-countries': 'Kazakhstan · Kyrgyzstan · Pakistan · Uzbekistan',
+  'south-america-8-countries': 'Brazil · Argentina · Chile · Peru · Paraguay · Uruguay · Ecuador · Colombia',
+  'china-mainland-hong-kong-macau': 'China · Hong Kong · Macau',
+  'africa-18-countries': 'Algeria · Chad · Congo · Egypt · Gabon · Ghana · Kenya · Madagascar · Malawi · Mauritius · Morocco · Niger · Nigeria · Réunion · Tanzania · Tunisia · Uganda',
+  'south-america-6-countries': 'Brazil · Argentina · Chile · Ecuador · Peru · Uruguay',
+  'singapore-malaysia': 'Singapore · Malaysia',
+  'africa-6-countries': 'Algeria · Tunisia · Egypt · South Africa · Ghana · Réunion',
+  'europe-34-countries': 'Austria · Belgium · Bulgaria · Switzerland · Cyprus · Czech Republic · Germany · Denmark · Spain · Estonia · Finland · France · UK · Greece · Croatia · Hungary · Ireland · Iceland · Italy · Liechtenstein · Lithuania · Luxembourg · Latvia · Moldova · Malta · Netherlands · Norway · Portugal · Romania · Slovakia · Slovenia · Sweden · Ukraine',
+  'saipan-guam': 'Saipan · Guam',
+  'asia-12-countries': 'Asia 12 Countries',
+  'middle-east-5-countries': 'Middle East 5 Countries',
+};
+
+async function loadIroamlyPrice(country, day, kurs, markup, aviroamPartnerEsim) {
+  const el = document.getElementById('iroamly-result');
+  if (!el) return;
+  try {
+    const countryObj2 = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
+    const region = countryObj2?.iroamly || iroamlyGetRegion(country);
+    if (!region) {
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia di iRoamly</span>';
+      return;
+    }
+    const selDay = parseInt(document.getElementById('h-day')?.value) || 0;
+    const selPkg = (document.getElementById('h-pkg')?.value || '').trim();
+
+    const cacheKey = `iroamly_pkgs_${region}`;
+    let rawData = window._iroamlyCache?.[cacheKey];
+    if (!rawData) {
+      const res = await fetch(
+        `https://goho-proxy.gohotravel.workers.dev?action=getIroamlyPackages&region=${encodeURIComponent(region)}`
+      );
+      const data = await res.json();
+      if (!data.ok || !data.data || !data.data.length) {
+        el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
+        return;
+      }
+      rawData = data.data;
+      if (!window._iroamlyCache) window._iroamlyCache = {};
+      window._iroamlyCache[cacheKey] = rawData;
+    }
+
+    const totalPkgs = rawData.filter(p => p.type === 'Total');
+    let allPkgs = totalPkgs.length ? totalPkgs : rawData;
+
+    if (selDay) allPkgs = allPkgs.filter(p => parseInt(p.duration) === selDay);
+    if (selPkg) {
+      const selLower = selPkg.toLowerCase();
+      const isUnlimited = selLower.includes('unlimited');
+      const gbMatch = selLower.match(/(\d+)\s*gb/i);
+      const gbVal = gbMatch ? parseInt(gbMatch[1]) : null;
+      allPkgs = allPkgs.filter(p => {
+        const dataStr = (p.data || '').toLowerCase();
+        if (isUnlimited && gbVal) return dataStr.includes('unlimited') || dataStr.includes(gbVal + 'gb') || dataStr.includes(gbVal + ' gb');
+        if (isUnlimited) return dataStr.includes('unlimited');
+        if (gbVal) return dataStr.includes(gbVal + 'gb') || dataStr.includes(gbVal + ' gb');
+        return true;
+      });
+    }
+
+    if (!allPkgs.length) {
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok untuk filter ini</span>';
+      return;
+    }
+
+    allPkgs.sort((a, b) => {
+      const dd = parseInt(a.duration) - parseInt(b.duration);
+      return dd !== 0 ? dd : (a.data || '').localeCompare(b.data || '');
+    });
+
+    const byDay = new Map();
+    allPkgs.forEach(pkg => {
+      const d2 = parseInt(pkg.duration);
+      if (!byDay.has(d2)) byDay.set(d2, []);
+      byDay.get(d2).push(pkg);
+    });
+
+    let html = '';
+    byDay.forEach((dayPkgs, validity) => {
+      if (byDay.size > 1) {
+        html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border);">📅 ${validity} Hari</div>`;
+      }
+      dayPkgs.forEach(pkg => {
+        const buyUSD  = parseFloat(pkg.credit || 0);
+        const buyIDR  = Math.round(buyUSD * kurs);
+        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+        const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+        const bg     = isCheaper ? '#f0fdf4' : 'white';
+        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+        const dataLabel  = escH(pkg.data || '-');
+        const planType   = pkg.plan_type && pkg.plan_type !== 'default' ? ` · ${escH(pkg.plan_type)}` : '';
+        const operator   = escH(pkg.operator || '');
+        const coverageIR = IROAMLY_REGIONS[pkg.region_index || ''] || '';
+        const network    = escH(pkg.network_type || pkg.network || '4G');
+        const canHotspot = pkg.hotspot !== false;
+        const dayQuota   = pkg.day_quota || pkg.daily_quota || '';
+        const throttleSpd = pkg.throttle_speed || '';
+        let speedInfo = '';
+        if (dayQuota) speedInfo = `${escH(String(dayQuota))}/hari full speed, sisanya throttle`;
+        else if (throttleSpd) speedInfo = `Setelah kuota: ${escH(throttleSpd)}`;
+        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${dataLabel} · ${validity}h</span>
+            ${cheapBadge}
+          </div>
+          ${coverageIR ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:4px;display:inline-block;">🌏 ${coverageIR}</div>` : ''}
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${operator}${planType}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${network}</span>
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot ? '✅' : '❌'}</span>
+          </div>
+          ${speedInfo ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${speedInfo}</div>` : ''}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:#7c3aed;">${hargaFmtIDR(sellIDR)}</span>
+          </div>
+        </div>`;
+      });
+    });
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
+  } catch(e) {
+    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${e.message}</span>`;
+  }
+}
+// ============================================================
+// eSIMCard PURCHASE FLOW
+// ============================================================
+
+// ============================================================
+// eSIMCard RIWAYAT & SETTING EMAIL
+// ============================================================
+
+async function esimcardOpenRiwayat() {
+  // Buat modal riwayat
+  let modal = document.getElementById('esimcard-riwayat-modal');
+  if (modal) { modal.remove(); }
+
+  modal = document.createElement('div');
+  modal.id = 'esimcard-riwayat-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:480px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">📋 Riwayat Pembelian eSIMCard</h3>
+        <button onclick="document.getElementById('esimcard-riwayat-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+      <div id="ec-riwayat-list" style="font-size:12px;color:var(--text-muted);">⏳ Memuat riwayat...</div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimcardOrders');
+    const data = await res.json();
+    const listEl = document.getElementById('ec-riwayat-list');
+    if (!listEl) return;
+
+    if (!data.ok || !data.orders?.length) {
+      listEl.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada transaksi</div>';
+      return;
+    }
+
+    // Render sebagai list compact — klik "Buka" untuk expand detail
+    listEl.innerHTML = data.orders.map((o, idx) => {
+      const tgl = o.created_at ? new Date(o.created_at).toLocaleString('id-ID', { dateStyle:'short', timeStyle:'short' }) : '-';
+      const namaLine = o.nama_pembeli
+        ? `👤 ${escH(o.nama_pembeli)}${o.hp_pembeli ? ' · ' + escH(o.hp_pembeli) : ''}`
+        : escH(o.package_name || '-');
+      const paketLine = o.nama_pembeli ? `<div style="font-size:10px;color:var(--text);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(o.package_name || '-')}</div>` : '';
+      return `
+        <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;cursor:pointer;background:#f8fafc;" onclick="ecToggleRiwayat(${idx})">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${namaLine}</div>
+              ${paketLine}
+              <div style="font-size:10px;color:var(--text-muted);">${tgl}${o.staff ? ' · ' + escH(o.staff) : ''} · <span style="color:#166534;">${escH(o.status||'Released')}</span></div>
+            </div>
+            <button id="ec-rw-btn-${idx}" style="font-size:10px;padding:3px 10px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;margin-left:8px;flex-shrink:0;">▶ Buka</button>
+          </div>
+          <div id="ec-rw-detail-${idx}" style="display:none;padding:12px;border-top:1px solid var(--border);">
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;">${escH(o.package_name || '-')}</div>
+            ${o.nama_pembeli ? `<div style="font-size:10px;color:#2563eb;font-weight:600;margin-bottom:8px;">👤 ${escH(o.nama_pembeli)}${o.hp_pembeli ? ' · ' + escH(o.hp_pembeli) : ''}</div>` : ''}
+            ${o.lpa_string ? `
+            <div style="text-align:center;margin-bottom:8px;">
+              <div id="rw-qr-${o.id}" style="display:inline-block;padding:6px;background:white;border:1px solid #e2e8f0;border-radius:6px;"></div>
+              <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap;">
+                <button onclick="ecCopy('${escH(o.lpa_string)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy LPA</button>
+                <button onclick="ecDownloadQR('rw-qr-${o.id}','esim-${escH(o.iccid||'qr')}.png')" style="font-size:10px;padding:3px 8px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">⬇️ Download QR</button>
+                <button onclick="ecCopyPesanWA(${idx})" style="font-size:10px;padding:3px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">📲 Copy Pesan WA</button>
+              </div>
+            </div>` : ''}
+            <div style="font-size:10px;color:#64748b;margin-bottom:6px;">
+              ICCID: <b>${escH(o.iccid || '-')}</b>
+              <button onclick="ecCopy('${escH(o.iccid||'')}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${o.link_ios ? `<a href="${escH(o.link_ios)}" target="_blank" style="font-size:10px;background:#2563eb;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🍎 iPhone</a>` : ''}
+              ${o.link_android ? `<a href="${escH(o.link_android)}" target="_blank" style="font-size:10px;background:#16a34a;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;">🤖 Android</a>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Simpan data orders ke window untuk dipakai ecCopyPesanWA
+    window._ecOrders = data.orders;
+
+    // Tidak auto-generate QR — generate saat di-expand saja (lihat ecToggleRiwayat)
+
+  } catch(e) {
+    const listEl = document.getElementById('ec-riwayat-list');
+    if (listEl) listEl.innerHTML = `<div style="color:var(--red);">Error: ${escH(e.message)}</div>`;
+  }
+}
+
+function ecToggleRiwayat(idx) {
+  const detail = document.getElementById('ec-rw-detail-' + idx);
+  const btn    = document.getElementById('ec-rw-btn-' + idx);
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? '▶ Buka' : '▼ Tutup';
+  // Generate QR saat pertama dibuka
+  if (!isOpen && window._ecOrders?.[idx]?.lpa_string) {
+    setTimeout(() => ecGenerateQR(window._ecOrders[idx].lpa_string, 'rw-qr-' + window._ecOrders[idx].id), 100);
+  }
+}
+
+function ecCopyPesanWA(idx) {
+  const o = window._ecOrders?.[idx];
+  if (!o) return;
+  const nama = o.nama_pembeli ? `Halo ${o.nama_pembeli}` : 'Halo Kak';
+  const paket = o.package_name || 'eSIM';
+  let pesan = `${nama} 😊\n\nBerikut eSIM kamu:\n📦 Paket: ${paket}\n\n`;
+  if (o.link_ios || o.link_android) {
+    pesan += `📲 *Install eSIM:*\n`;
+    if (o.link_ios)     pesan += `• iPhone: ${o.link_ios}\n`;
+    if (o.link_android) pesan += `• Android: ${o.link_android}\n`;
+  }
+  pesan += `\n📶 eSIM aktif otomatis saat pertama connect ke jaringan.\nSelamat berlibur! ✈️`;
+  navigator.clipboard.writeText(pesan).then(() => {
+    const btn = document.querySelector(`#ec-rw-detail-${idx} button[onclick="ecCopyPesanWA(${idx})"]`);
+    if (btn) { const ori = btn.textContent; btn.textContent = '✅ Tersalin!'; setTimeout(() => btn.textContent = ori, 1800); }
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = pesan; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+
+// Alias untuk tombol navbar
+function ecOpenRiwayatPanel() { esimcardOpenRiwayat(); }
+
+async function esimcardOpenSettingEmail() {
+  // Ambil setting email saat ini
+  let currentEmail = '';
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getSetting&key=esimcard_email');
+    const data = await res.json();
+    currentEmail = data.value || '';
+  } catch(e) {}
+
+  const modal = document.createElement('div');
+  modal.id = 'esimcard-email-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:380px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">⚙️ Setting Email eSIMCard</h3>
+        <button onclick="document.getElementById('esimcard-email-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
+        Email ini digunakan sebagai penerima notifikasi QR code dari eSIMCard setelah pembelian berhasil.
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Email penerima QR eSIMCard</label>
+        <input id="ec-setting-email" type="email" value="${escH(currentEmail)}" placeholder="contoh: gohotravel@gmail.com"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;">
+      </div>
+      <div id="ec-email-status" style="display:none;margin-bottom:12px;font-size:11px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('esimcard-email-modal').remove()"
+          style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">
+          Batal
+        </button>
+        <button onclick="esimcardSaveEmail()"
+          style="flex:2;padding:9px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">
+          💾 Simpan
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function esimcardSaveEmail() {
+  const email = document.getElementById('ec-setting-email')?.value?.trim();
+  const statusEl = document.getElementById('ec-email-status');
+  if (!email) { alert('Email tidak boleh kosong'); return; }
+
+  statusEl.style.display = 'block';
+  statusEl.style.cssText = 'display:block;margin-bottom:12px;font-size:11px;color:#6366f1;background:#ede9fe;padding:8px;border-radius:6px;';
+  statusEl.textContent = '⏳ Menyimpan...';
+
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'saveSetting', key: 'esimcard_email', value: email })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      statusEl.style.cssText = 'display:block;margin-bottom:12px;font-size:11px;color:#166534;background:#dcfce7;padding:8px;border-radius:6px;';
+      statusEl.textContent = '✅ Email berhasil disimpan!';
+      setTimeout(() => document.getElementById('esimcard-email-modal')?.remove(), 1500);
+    } else {
+      throw new Error(data.msg || 'Gagal simpan');
+    }
+  } catch(e) {
+    statusEl.style.cssText = 'display:block;margin-bottom:12px;font-size:11px;color:#991b1b;background:#fee2e2;padding:8px;border-radius:6px;';
+    statusEl.textContent = '❌ Error: ' + e.message;
+  }
+}
+
+function esimcardOpenBeli(pkgStr) {
+  let pkg;
+  try { pkg = typeof pkgStr === 'string' ? JSON.parse(pkgStr) : pkgStr; }
+  catch(e) { alert('Error parse paket: ' + e.message); return; }
+
+  const modal = document.createElement('div');
+  modal.id = 'esimcard-beli-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:420px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:92vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">🛒 Beli eSIMCard</h3>
+        <button onclick="document.getElementById('esimcard-beli-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">${escH(pkg.name || '')}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${escH(String(pkg.dataQty))} · ${pkg.validity} hari</div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+          <span style="font-size:11px;color:var(--text-muted);">Beli: <b style="color:var(--text);">${hargaFmtIDR(pkg.buyIDR)}</b> <span style="font-size:10px;">(USD ${pkg.buyUSD.toFixed(2)})</span></span>
+          <span style="font-size:11px;color:var(--text-muted);">Jual: <b style="color:#2563eb;">${hargaFmtIDR(pkg.sellIDR)}</b></span>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;">👤 Data Pembeli <span style="font-weight:400;color:var(--text-muted);">(opsional)</span></div>
+        <input id="ec-nama-pembeli" type="text" placeholder="Nama tamu (mis: Budi Santoso)"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);margin-bottom:6px;outline:none;" />
+        <input id="ec-hp-pembeli" type="text" placeholder="No HP / WA (mis: 08123456789)"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;" />
+      </div>
+      <div id="ec-status" style="display:none;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('esimcard-beli-modal').remove()"
+          style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">
+          Batal
+        </button>
+        <button id="ec-beli-btn" onclick="esimcardDoPurchase('${pkg.id}', '${escH(pkg.name)}')"
+          style="flex:2;padding:9px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">
+          ✅ Konfirmasi Beli
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function ecCopy(text, btnEl) {
+  navigator.clipboard.writeText(text).then(() => {
+    const ori = btnEl.textContent; btnEl.textContent = '✅';
+    setTimeout(() => { btnEl.textContent = ori; }, 1500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    const ori = btnEl.textContent; btnEl.textContent = '✅';
+    setTimeout(() => { btnEl.textContent = ori; }, 1500);
+  });
+}
+
+function ecGenerateQR(lpaString, containerId) {
+  if (!lpaString || !containerId) return;
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const doGen = () => {
+    el.innerHTML = '';
+    new QRCode(el, { text: lpaString, width: 180, height: 180, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  };
+  if (typeof QRCode === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    script.onload = doGen;
+    document.head.appendChild(script);
+  } else { doGen(); }
+}
+
+function ecDownloadQR(containerId, filename) {
+  const el = document.getElementById(containerId);
+  const canvas = el?.querySelector('canvas');
+  if (!canvas) { alert('QR belum siap, coba lagi'); return; }
+  const a = document.createElement('a');
+  a.download = filename || 'esim-qr.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+function ecSaveOrder(simData, fallbackSimId, packageId, packageName) {
+  const namaPembeli = document.getElementById('ec-nama-pembeli')?.value?.trim() || '';
+  const hpPembeli   = document.getElementById('ec-hp-pembeli')?.value?.trim() || '';
+  fetch('https://goho-proxy.gohotravel.workers.dev', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'saveEsimcardOrder',
+      simId: simData.id || fallbackSimId || '',
+      iccid: simData.iccid || '',
+      packageId: packageId || '',
+      packageName: packageName || '',
+      lpaString: simData.qr_code_text || '',
+      linkIos: simData.universal_link || '',
+      linkAndroid: simData.android_universal_link || '',
+      smdpAddress: simData.smdp_address || '',
+      activationCode: simData.matching_id || '',
+      status: simData.status || 'Released',
+      staff: currentStaff?.nama || '',
+      namaPembeli: namaPembeli,
+      hpPembeli: hpPembeli
+    })
+  }).catch(e => console.log('Save order error:', e));
+}
+
+function ecShowPurchaseResult(statusEl, beliBtn, sim, packageName) {
+  beliBtn.style.background = '#16a34a';
+  beliBtn.textContent = '✅ Berhasil!';
+  beliBtn.disabled = true;
+
+  const iccid   = sim.iccid    || '-';
+  const simId   = sim.id       || '-';
+  const lpa     = sim.qr_code_text || '';
+  const smdp    = sim.smdp_address || '';
+  const matchId = sim.matching_id  || '';
+  const linkIos = sim.universal_link || '';
+  const linkAnd = sim.android_universal_link || '';
+  const status  = sim.status   || 'Released';
+  const bundle  = sim.last_bundle || packageName || '-';
+
+  const rowCopy = (label, val) => val && val !== '-' ? `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9;">
+      <span style="font-size:10px;color:#64748b;min-width:90px;">${label}</span>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <span style="font-size:10px;font-weight:600;color:#1e293b;word-break:break-all;text-align:right;max-width:220px;">${escH(val)}</span>
+        <button onclick="ecCopy('${escH(val).replace(/'/g,"\'")}',this)"
+          style="font-size:9px;padding:2px 5px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;flex-shrink:0;">📋</button>
+      </div>
+    </div>` : '';
+
+  const qrId = 'ec-qr-' + Date.now();
+
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = `
+    <div style="background:#dcfce7;border-radius:8px;padding:10px 12px;margin-bottom:10px;color:#166534;font-weight:700;font-size:12px;">
+      ✅ Pembelian berhasil! eSIM siap diinstall.
+    </div>
+    ${lpa ? `
+    <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:10px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:8px;">📷 QR Code eSIM</div>
+      <div id="${qrId}" style="display:inline-block;padding:8px;background:white;border:1px solid #e2e8f0;border-radius:8px;"></div>
+      <div style="font-size:10px;color:#64748b;margin-top:6px;">Scan QR ini untuk install eSIM</div>
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:8px;">
+        <button onclick="ecCopy('${escH(lpa)}',this)" style="font-size:10px;padding:4px 10px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy LPA</button>
+        <button onclick="ecDownloadQR('${qrId}','esim-qr.png')" style="font-size:10px;padding:4px 10px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">⬇️ Download QR</button>
+      </div>
+    </div>` : ''}
+    <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:6px;">📱 Info eSIM</div>
+      ${rowCopy('Paket', bundle)}
+      ${rowCopy('Status', status)}
+      ${rowCopy('ICCID', iccid)}
+      ${rowCopy('eSIM ID', simId)}
+    </div>
+    <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:8px;">🔧 Cara Install</div>
+      ${linkIos ? `<a href="${escH(linkIos)}" target="_blank" style="display:block;background:#2563eb;color:white;text-align:center;padding:8px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;margin-bottom:6px;">🍎 Install di iPhone</a>` : ''}
+      ${linkAnd ? `<a href="${escH(linkAnd)}" target="_blank" style="display:block;background:#16a34a;color:white;text-align:center;padding:8px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;margin-bottom:8px;">🤖 Install di Android</a>` : ''}
+      ${smdp && matchId ? `
+      <div style="border-top:1px solid #e2e8f0;padding-top:8px;">
+        <div style="font-size:10px;font-weight:600;color:#64748b;margin-bottom:4px;">📝 Install Manual</div>
+        ${rowCopy('SM-DP+ Address', smdp)}
+        ${rowCopy('Activation Code', matchId)}
+        ${lpa ? rowCopy('LPA String', lpa) : ''}
+      </div>` : ''}
+    </div>
+    ${(linkIos || linkAnd || lpa) ? `
+    <div style="background:#f0fdf4;border-radius:8px;padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:11px;font-weight:700;color:#166534;">💬 Pesan WA untuk Customer</div>
+        <button onclick="ecCopy(document.getElementById('ec-wa-msg').innerText,this)" style="font-size:10px;padding:3px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">📋 Copy</button>
+      </div>
+      <div id="ec-wa-msg" style="font-size:11px;color:#1e293b;line-height:1.6;white-space:pre-wrap;background:white;border-radius:6px;padding:8px;border:1px solid #bbf7d0;">eSIM Anda sudah siap! 🎉
+
+Paket: ${escH(bundle)}
+ICCID: ${escH(iccid)}
+
+*Cara install:*
+${linkIos ? `📱 iPhone: ${linkIos}` : ''}
+${linkAnd ? `📱 Android: ${linkAnd}` : ''}
+${smdp ? `
+📝 Manual:
+SM-DP+ Address: ${smdp}
+Activation Code: ${matchId}` : ''}
+
+eSIM aktif otomatis saat pertama connect ke jaringan.
+Selamat berlibur! ✈️</div>
+    </div>` : ''}
+  `;
+  if (lpa) setTimeout(() => ecGenerateQR(lpa, qrId), 100);
+
+  // Simpan/update ke D1 — dipanggil di sini agar data sudah lengkap (termasuk kasus polling)
+  ecSaveOrder(sim, sim.id || '', '', packageName);
+}
+
+async function ecFetchSimData(simId, statusEl, beliBtn, packageName) {
+  statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px 12px;font-size:11px;color:#92400e;">⏳ eSIM sedang diproses... Mengecek status dalam 15 detik.</div>`;
+  let attempts = 0;
+  const maxAttempts = 10;
+  const poll = async () => {
+    attempts++;
+    try {
+      const res = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardSim&simId=${encodeURIComponent(simId)}`);
+      const data = await res.json();
+      const sim = data.raw?.data?.sim || data.sim || {};
+      if (sim.status === 'Released' || sim.qr_code_text || sim.universal_link) {
+        ecShowPurchaseResult(statusEl, beliBtn, sim, packageName);
+      } else if (attempts < maxAttempts) {
+        statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px 12px;font-size:11px;color:#92400e;">⏳ eSIM sedang diproses... Cek ke-${attempts}/${maxAttempts}. Harap tunggu.</div>`;
+        setTimeout(poll, 15000);
+      } else {
+        statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px 12px;font-size:11px;color:#991b1b;">⚠️ eSIM masih diproses. Cek di portal eSIMCard.<br><b>SIM ID: ${escH(simId)}</b></div>`;
+      }
+    } catch(e) { if (attempts < maxAttempts) setTimeout(poll, 15000); }
+  };
+  setTimeout(poll, 15000);
+}
+
+async function esimcardDoPurchase(packageId, packageName) {
+  const statusEl = document.getElementById('ec-status');
+  const beliBtn  = document.getElementById('ec-beli-btn');
+  beliBtn.disabled = true;
+  beliBtn.textContent = '⏳ Memproses...';
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = `<div style="background:#ede9fe;border-radius:8px;padding:10px 12px;font-size:11px;color:#6366f1;">⏳ Mengirim request ke eSIMCard...</div>`;
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'esimcardPurchase', packageId, packageName })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const simApplied = data.raw?.data?.sim_applied;
+      const sim        = data.raw?.data?.sim || {};
+      const simId      = data.raw?.data?.sim_id || sim.id || '';
+      if (simApplied === true && sim.id) {
+        ecShowPurchaseResult(statusEl, beliBtn, sim, packageName);
+      } else if (simId) {
+        beliBtn.textContent = '⏳ Menunggu...';
+        ecFetchSimData(simId, statusEl, beliBtn, packageName);
+      } else {
+        beliBtn.style.background = '#16a34a';
+        beliBtn.textContent = '✅ Berhasil!';
+        statusEl.innerHTML = `<div style="background:#dcfce7;border-radius:8px;padding:10px;font-size:11px;color:#166534;">✅ Pembelian berhasil!<br><span style="font-size:10px;color:#64748b;">Data eSIM sedang diproses.</span></div>`;
+      }
+      console.log('[eSIMCard Purchase]', data);
+
+      // Simpan ke D1 hanya kalau sim_applied true dan data sudah lengkap.
+      // Kalau sim_applied false (polling), save dipanggil dari ecShowPurchaseResult setelah polling selesai.
+      if (simApplied === true && sim.id) {
+        ecSaveOrder(sim, data.raw?.data?.sim_id || '', packageId, packageName);
+      }
+
+    } else {
+      throw new Error(data.msg || data.error || 'Purchase gagal');
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:11px;color:#991b1b;">❌ Error: ${escH(e.message)}</div>`;
+    beliBtn.disabled = false;
+    beliBtn.textContent = '✅ Coba Lagi';
+    beliBtn.style.background = '#2563eb';
+  }
+}
+
+
+async function loadEsimCardPrice(country, day, kurs, markup, aviroamPartnerEsim) {
+  const el = document.getElementById('esimcard-result');
+  if (!el) return;
+  try {
+    const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
+    const iso = (countryObj?.iso || '').toLowerCase();
+    if (!iso) {
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia di eSIMCard</span>';
+      return;
+    }
+    const selDay = parseInt(document.getElementById('h-day')?.value) || 0;
+    const selPkg = (document.getElementById('h-pkg')?.value || '').trim();
+
+    const cacheKey = `esimcard_pkgs_${iso}`;
+    let pkgs = window._esimcardCache?.[cacheKey];
+    if (!pkgs) {
+      const res = await fetch(
+        `https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`
+      );
+      const data = await res.json();
+      if (!data.ok || !data.data?.data?.length) {
+        el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
+        return;
+      }
+      pkgs = data.data.data;
+      if (!window._esimcardCache) window._esimcardCache = {};
+      window._esimcardCache[cacheKey] = pkgs;
+    }
+
+    function pkgDataLabel(pkg) {
+      const qty = pkg.data_quantity;
+      const name = (pkg.name || '').toLowerCase();
+      if (qty > 0) return `${qty}${pkg.data_unit}`;
+      if (name.includes('premium')) return 'Unlimited Premium';
+      if (name.includes('plus'))    return 'Unlimited Plus';
+      return 'Unlimited';
+    }
+
+    let filtered = pkgs;
+    if (selDay) filtered = filtered.filter(p => parseInt(p.package_validity) === selDay);
+    if (selPkg) {
+      const selLower = selPkg.toLowerCase();
+      const isUnlimited = selLower.includes('unlimited');
+      const gbMatch = selLower.match(/(\d+)\s*gb/i);
+      const gbVal = gbMatch ? parseInt(gbMatch[1]) : null;
+      filtered = filtered.filter(p => {
+        const qty = p.data_quantity;
+        const unit = (p.data_unit || '').toLowerCase();
+        const isEsimUnlimited = qty <= 0 || qty === null;
+        if (isUnlimited && gbVal) return isEsimUnlimited || (qty === gbVal && unit === 'gb');
+        if (isUnlimited) return isEsimUnlimited;
+        if (gbVal) return qty === gbVal && unit === 'gb';
+        return true;
+      });
+    }
+
+    if (!filtered.length) {
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok untuk filter ini</span>';
+      return;
+    }
+
+    filtered.sort((a, b) => {
+      const dd = parseInt(a.package_validity) - parseInt(b.package_validity);
+      return dd !== 0 ? dd : parseFloat(a.price) - parseFloat(b.price);
+    });
+
+    const byDay = new Map();
+    filtered.forEach(pkg => {
+      const d2 = parseInt(pkg.package_validity);
+      if (!byDay.has(d2)) byDay.set(d2, []);
+      byDay.get(d2).push(pkg);
+    });
+
+    let html = '';
+    byDay.forEach((dayPkgs, validity) => {
+      if (byDay.size > 1) {
+        html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border);">📅 ${validity} Hari</div>`;
+      }
+      dayPkgs.forEach(pkg => {
+        const buyUSD  = parseFloat(pkg.price || 0);
+        const buyIDR  = Math.round(buyUSD * kurs);
+        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+        const dataQty = pkgDataLabel(pkg);
+        const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+        const bg     = isCheaper ? '#f0fdf4' : 'white';
+        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+
+        // Detail info
+        const connectivity = escH(pkg.connectivity || '4G');
+        const canHotspot   = pkg.tether !== false;
+        const canRenew     = pkg.can_renew === true;
+        const isThrottle   = pkg.throttle === true;
+        const throttleSpd  = pkg.throttle_speed || '';
+        const unthrottleQty = pkg.unthrottle_data || '';
+        let speedInfo = '';
+        if (isThrottle && unthrottleQty && unthrottleQty !== 'Unlimited') {
+          speedInfo = `${escH(unthrottleQty)}/hari full speed → throttle ${escH(throttleSpd || '384kbps')}`;
+        } else if (isThrottle && throttleSpd) {
+          speedInfo = `Setelah kuota: throttle ${escH(throttleSpd)}`;
+        } else if (!isThrottle && pkg.data_quantity <= 0) {
+          speedInfo = 'Full speed unlimited (tanpa throttle)';
+        }
+        const actType = pkg.activation_type || '';
+        const actInfo = actType === 'API' ? 'Aktivasi manual via link' : 'Aktif otomatis saat data pertama dipakai';
+        const coverage  = pkg.coverage || [];
+        const operators = [...new Set(coverage.map(c => c.network_code || c.network_name || '').filter(Boolean))];
+        const operatorStr = operators.slice(0, 3).join(' · ');
+
+        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)} · ${validity}h</span>
+            ${cheapBadge}
+          </div>
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.name || '')}</div>
+          ${operatorStr ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">🏢 ${escH(operatorStr)}</div>` : ''}
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${connectivity}</span>
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot ? '✅' : '❌'}</span>
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔄 Perpanjang: ${canRenew ? '✅' : '❌'}</span>
+          </div>
+          ${speedInfo ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${speedInfo}</div>` : ''}
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">🔌 ${escH(actInfo)}</div>
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">⏳ Aktivasi kartu maks. 30 hari</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:#2563eb;">${hargaFmtIDR(sellIDR)}</span>
+          </div>
+          <button onclick="esimcardOpenBeli(${JSON.stringify({
+            id: pkg.id,
+            name: pkg.name,
+            dataQty: dataQty,
+            validity: validity,
+            buyUSD: buyUSD,
+            buyIDR: buyIDR,
+            sellIDR: sellIDR
+          }).replace(/"/g,'&quot;')})" style="width:100%;margin-top:8px;padding:7px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">
+            🛒 Beli eSIMCard
+          </button>
+        </div>`;
+      });
+    });
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
+  } catch(e) {
+    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${e.message}</span>`;
+  }
+}
+// ===================== MDAC =====================
+var mdacBookingInfo = null;
+var mdacPaxList = [];
+var mdacSearchTimer = null;
+
+function openMdacModal() {
+  mdacBookingInfo = null;
+  mdacPaxList = [];
+  document.getElementById('mdac-pnr').value = '';
+  document.getElementById('mdac-pnr-result').classList.remove('show');
+  document.getElementById('mdac-pnr-notfound').classList.remove('show');
+  document.getElementById('mdac-search-pax').value = '';
+  document.getElementById('mdac-search-results').classList.remove('show');
+  document.getElementById('mdac-pax-list').innerHTML = '';
+  document.getElementById('mdac-alamat').value = '';
+  document.getElementById('mdac-state').value = '';
+  document.getElementById('mdac-city').value = '';
+  document.getElementById('mdac-postcode').value = '';
+  document.getElementById('mdac-accommodation').value = 'Hotel';
+  document.getElementById('mdac-email').value = '';
+  document.getElementById('mdac-kontak').value = '';
+  document.getElementById('mdac-tgl-pulang').value = '';
+  document.getElementById('mdac-summary-box').style.display = 'none';
+  document.getElementById('modal-mdac').style.display = 'flex';
+  // Auto-fill no kontak dari chat aktif
+  if (currentRoom && currentRoom.noWa) {
+    var noWaClean = currentRoom.noWa.toString().replace(/\D/g,'');
+    document.getElementById('mdac-kontak').value = noWaClean;
+  }
+  if (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches) {
+    makeModalDraggable('modal-mdac');
+  }
+}
+
+async function cariPnrMdac() {
+  var pnr = document.getElementById('mdac-pnr').value.trim().toUpperCase();
+  var notfoundBox = document.getElementById('mdac-pnr-notfound');
+  var resultBox   = document.getElementById('mdac-pnr-result');
+  notfoundBox.classList.remove('show');
+  resultBox.classList.remove('show');
+  mdacBookingInfo = null;
+  if (!pnr) return;
+
+  try {
+    var res = await apiGet({ action: 'cariBookingPnrMdac', kodePnr: pnr });
+    if (!res.found || !res.bookings || res.bookings.length === 0) {
+      notfoundBox.classList.add('show');
+      return;
+    }
+    var b = res.bookings[0];
+    mdacBookingInfo = b;
+    document.getElementById('mdac-result-nama').textContent     = b.namaTamu || '-';
+    document.getElementById('mdac-result-maskapai').textContent = b.maskapai || '-';
+    document.getElementById('mdac-result-flight').textContent   = b.kodeFlight || '-';
+    document.getElementById('mdac-result-rute').textContent     = b.rute || '-';
+    document.getElementById('mdac-result-tgl').textContent      = b.tglTerbang || '-';
+    resultBox.classList.add('show');
+    
+    // Auto-fill kontak dari noWa customer di chat aktif (kalau belum diisi)
+    var kontakInput = document.getElementById('mdac-kontak');
+    if (!kontakInput.value && currentRoom && currentRoom.noWa) {
+      kontakInput.value = currentRoom.noWa.toString().replace(/\D/g,'');
+    }
+
+    // v33: auto-fill tanggal pulang kalau tiket PP dan tgl pulang sudah ada di booking.
+    // Kalau one-way atau tgl pulang kosong, biarkan field kosong supaya staff isi manual
+    // (estimasi lama tinggal), JANGAN dipaksa isi supaya tidak salah data.
+    var tglPulangInput = document.getElementById('mdac-tgl-pulang');
+    if (b.jenisTiket && b.jenisTiket.indexOf('PP') !== -1 && b.tglPulang) {
+      // Konversi dd/MM/yyyy -> yyyy-MM-dd untuk input type="date"
+      var parts = b.tglPulang.split('/');
+      if (parts.length === 3) {
+        tglPulangInput.value = parts[2] + '-' + parts[1] + '-' + parts[0];
+      }
+    } else {
+      tglPulangInput.value = '';
+    }
+  } catch (e) {
+    notfoundBox.classList.add('show');
+  }
+}
+
+
+function searchPaxMdac(query) {
+  clearTimeout(mdacSearchTimer);
+  var results = document.getElementById('mdac-search-results');
+  if (!query || query.trim().length < 2) { results.classList.remove('show'); return; }
+  mdacSearchTimer = setTimeout(async function() {
+    try {
+      var res = await apiGet({ action: 'getPassengersByName', query: query.trim() });
+      if (!res.ok || !res.passengers || res.passengers.length === 0) {
+        results.innerHTML = '<div style="padding:8px 10px;font-size:12px;color:var(--text-muted);">Tidak ditemukan</div>';
+        results.classList.add('show');
+        return;
+      }
+      results.innerHTML = res.passengers.map(function(p, idx) {
+        return '<div class="mpx-result-item" onclick="pilihPaxMdac(' + idx + ')">' +
+          '<div class="mpx-result-foto" id="mdac-foto-' + p.passengerId + '" onclick="event.stopPropagation();showFotoPopup(event,\'mdac-foto-' + p.passengerId + '\')" onmouseenter="showFotoPopup(event,\'mdac-foto-' + p.passengerId + '\')" onmouseleave="hideFotoPopup()">' + getInitials(p.namaLengkap) + '</div>' +
+          '<div class="mpx-result-info">' +
+            '<div class="mpx-result-nama">' + escH(p.namaLengkap) + '</div>' +
+            '<div class="mpx-result-paspor">' + (p.noPaspor || '-') + ' · ' + (p.tglLahir || '-') + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      window._mdacSearchOptions = res.passengers;
+      results.classList.add('show');
+      res.passengers.forEach(function(p) {
+        if (p.fotoFileId) loadFotoPreview('mdac-foto-' + p.passengerId, p.fotoFileId);
+      });
+    } catch(e) {
+      results.innerHTML = '<div style="padding:8px 10px;font-size:12px;color:var(--red);">Error mencari</div>';
+      results.classList.add('show');
+    }
+  }, 350);
+}
+function pilihPaxMdac(idx) {
+  var p = window._mdacSearchOptions[idx];
+  if (!p) return;
+  if (mdacPaxList.find(function(x) { return x.noPaspor === p.noPaspor && p.noPaspor; })) {
+    showToast('Peserta ini sudah ditambahkan');
+    return;
+  }
+  mdacPaxList.push(p);
+  document.getElementById('mdac-search-pax').value = '';
+  document.getElementById('mdac-search-results').classList.remove('show');
+  renderMdacPaxList();
+}
+
+function hapusPaxMdac(idx) {
+  mdacPaxList.splice(idx, 1);
+  renderMdacPaxList();
+}
+
+function renderMdacPaxList() {
+  var list = document.getElementById('mdac-pax-list');
+  if (mdacPaxList.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--text-hint);padding:8px 0;">Belum ada peserta ditambahkan</div>';
+    return;
+  }
+  list.innerHTML = mdacPaxList.map(function(p, i) {
+    return '<div class="mdac-pax-card"><b>' + (i+1) + '.</b> ' + escH(p.namaLengkap) +
+      ' <span style="color:var(--text-muted);font-size:11px;">(' + (p.noPaspor||'-') + ')</span>' +
+      '<button onclick="hapusPaxMdac(' + i + ')" title="Hapus">✕</button></div>';
+  }).join('');
+}
+
+function prosesMdac() {
+  if (!mdacBookingInfo) { showToast('Cari PNR yang valid dulu'); return; }
+  if (mdacPaxList.length === 0) { showToast('Tambahkan minimal 1 peserta'); return; }
+  var alamat        = document.getElementById('mdac-alamat').value.trim();
+  var state         = document.getElementById('mdac-state').value.trim();
+  var city          = document.getElementById('mdac-city').value.trim();
+  var postcode      = document.getElementById('mdac-postcode').value.trim();
+  var accommodation = document.getElementById('mdac-accommodation').value.trim();
+  var email         = document.getElementById('mdac-email').value.trim();
+  var kontak        = document.getElementById('mdac-kontak').value.trim();
+  if (!alamat || !email || !kontak) { showToast('Lengkapi alamat, email, dan nomor kontak'); return; }
+
+  // v33 MDAC: tanggal kembali (Date of Departure) — diisi staff di field
+  // mdac-tgl-pulang (lihat HTML baru), karena belum ada kolom one-way/PP
+  // di Form Responses 1. Field ini WAJIB untuk form MDAC asli.
+  var tglPulang = document.getElementById('mdac-tgl-pulang').value.trim();
+  if (!tglPulang) { showToast('Isi tanggal kembali / keluar dari Malaysia'); return; }
+
+  var lines = [];
+  lines.push('=== RINGKASAN DATA MDAC ===');
+  lines.push('Maskapai   : ' + mdacBookingInfo.maskapai);
+  lines.push('No Flight  : ' + mdacBookingInfo.kodeFlight);
+  lines.push('Rute       : ' + mdacBookingInfo.rute);
+  lines.push('Tgl Datang : ' + mdacBookingInfo.tglTerbang);
+  lines.push('Tgl Pulang : ' + tglPulang);
+  lines.push('Mode Travel: AIR');
+  lines.push('Last Port  : INDONESIA');
+  lines.push('Accommodation : ' + accommodation);
+  lines.push('Alamat/Hotel  : ' + alamat);
+  if (state)    lines.push('State         : ' + state);
+  if (city)     lines.push('City          : ' + city);
+  if (postcode) lines.push('Postcode      : ' + postcode);
+  lines.push('Email         : ' + email);
+  lines.push('Kontak        : ' + kontak);
+  lines.push('');
+  mdacPaxList.forEach(function(p, i) {
+    var kelamin = p.jenisKelamin === 'L' || p.jenisKelamin === 'Laki-laki' ? 'MALE'
+                : p.jenisKelamin === 'P' || p.jenisKelamin === 'Perempuan' ? 'FEMALE'
+                : '-';
+    var kewarganegaraan = p.kewarganegaraan || 'INDONESIA';
+    lines.push('--- Peserta ' + (i+1) + ' ---');
+    lines.push('Nama         : ' + p.namaLengkap);
+    lines.push('No Paspor    : ' + (p.noPaspor || '-'));
+    lines.push('Tgl Lahir    : ' + (p.tglLahir || '-'));
+    lines.push('Sex          : ' + kelamin);
+    lines.push('Exp Paspor   : ' + (p.expiryPaspor || '-'));
+    lines.push('Kewarganegaraan: ' + kewarganegaraan);
+    lines.push('Tempat Lahir : ' + kewarganegaraan); // asumsi tempat lahir = kewarganegaraan
+    lines.push('');
+  });
+
+  var ringkasanText = lines.join('\n');
+  var summaryBox = document.getElementById('mdac-summary-box');
+  summaryBox.textContent = ringkasanText;
+  summaryBox.style.display = 'block';
+
+  var _mdacMsg = { type: 'GOHO_MDAC_DATA', ringkasan: ringkasanText };
+  var _mdacRetry = 0;
+  var _mdacSend = function() {
+  window.postMessage(_mdacMsg, '*');
+  if (_mdacRetry++ < 3) setTimeout(_mdacSend, 300);
+  };
+  _mdacSend();
+
+  window.open('https://imigresen-online.imi.gov.my/mdac/main?registerMain', '_blank');
+  showToast('✅ Data dikirim ke extension — form MDAC dibuka otomatis');
+  }
+
+// ===================== TICKER REMINDER =====================
+let _tickerReminders = [];
+
+async function loadTicker() {
+  try {
+    const res = await apiGet({ action: 'getReminders' });
+    if (!res.ok || !res.reminders || res.reminders.length === 0) {
+      document.getElementById('ticker-bar').style.display = 'none';
+      return;
+    }
+    _tickerReminders = res.reminders;
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
+    const parts = res.reminders.map(r => {
+      const emoji = tagEmoji[r.tag] || '📌';
+      const tgl = r.deadline ? ' · ' + formatDeadline(r.deadline) : '';
+      return emoji + ' ' + escH(r.namaCustomer) + ': ' + escH(r.text) + tgl;
+    });
+    document.getElementById('ticker-text').innerHTML = parts.join('<span style="color:#f59e0b; margin:0 30px; font-weight:900;">┃</span>');
+    const bar = document.getElementById('ticker-bar');
+const track = document.getElementById('ticker-track');
+bar.style.display = 'block';
+track.style.animation = 'none';
+track.offsetHeight;
+track.style.animation = '';
+  } catch(e) {}
+}
+
+function formatDeadline(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diff = Math.round((d - today) / 86400000);
+    if (diff === 0) return '⚡ HARI INI';
+    if (diff === 1) return '⏰ Besok';
+    if (diff <= 3) return '⏳ ' + diff + ' hari lagi';
+    return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short' });
+  } catch(e) { return dateStr; }
+}
+
+function openReminderModal() {
+  if (!_tickerReminders.length) return;
+  const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️', DONE: '✅' };
+  const tagColor = { TODO: '#854d0e', INFO: '#1e3a5f', PENTING: '#7f1d1d', DONE: '#14532d' };
+  const html = _tickerReminders.map(r => `
+    <div style="padding:10px 12px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="background:${tagColor[r.tag]||'#333'};color:white;font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;">${tagEmoji[r.tag]||'📌'} ${r.tag}</span>
+        <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(r.namaCustomer)}</span>
+        <span style="margin-left:auto;font-size:10px;color:${r.deadline?'#c05c00':'var(--text-muted)'};">${formatDeadline(r.deadline)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text);">${escH(r.text)}</div>
+    </div>`).join('');
+  let modal = document.getElementById('modal-reminders');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-reminders';
+    modal.className = 'modal';
+    modal.style.display = 'none';
+    modal.innerHTML = `<div class="modal-box modal-sm">
+      <div class="modal-header"><h3>🔔 Reminder Aktif</h3><button onclick="closeModal('modal-reminders')">✕</button></div>
+      <div class="modal-body" id="modal-reminders-body" style="max-height:400px;overflow-y:auto;"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('modal-reminders-body').innerHTML = html;
+  modal.style.display = 'flex';
+}
+
+// ===================== GLOBAL REMINDER MODAL =====================
+let _grType = 'global';
+let _grTag = 'TODO';
+let _grSelectedNoWa = '';
+let _grSearchTimer = null;
+
+function openGlobalReminderModal() {
+  _grType = 'global'; _grTag = 'TODO'; _grSelectedNoWa = '';
+  document.getElementById('gr-text').value = '';
+  document.getElementById('gr-deadline').value = '';
+  document.getElementById('gr-customer-search').value = '';
+  document.getElementById('gr-customer-selected').style.display = 'none';
+  document.getElementById('gr-customer-row').style.display = 'none';
+  document.getElementById('gr-customer-results').style.display = 'none';
+  setGrType('global');
+  document.getElementById('modal-global-reminder').style.display = 'flex';
+  loadGrList();
+}
+
+function setGrType(type) {
+  _grType = type;
+  const btnGlobal = document.getElementById('gr-type-global');
+  const btnCustomer = document.getElementById('gr-type-customer');
+  const customerRow = document.getElementById('gr-customer-row');
+  if (type === 'global') {
+    btnGlobal.style.background = 'var(--green-mid)'; btnGlobal.style.color = 'white'; btnGlobal.style.borderColor = 'var(--green-mid)';
+    btnCustomer.style.background = 'white'; btnCustomer.style.color = 'var(--text)'; btnCustomer.style.borderColor = 'var(--border)';
+    customerRow.style.display = 'none';
+  } else {
+    btnCustomer.style.background = 'var(--green-mid)'; btnCustomer.style.color = 'white'; btnCustomer.style.borderColor = 'var(--green-mid)';
+    btnGlobal.style.background = 'white'; btnGlobal.style.color = 'var(--text)'; btnGlobal.style.borderColor = 'var(--border)';
+    customerRow.style.display = 'block';
+  }
+}
+
+function setGrTag(el, tag) {
+  _grTag = tag;
+  document.querySelectorAll('#modal-global-reminder .sn-tag').forEach(t => { t.style.opacity = '0.5'; t.style.fontWeight = '500'; });
+  el.style.opacity = '1'; el.style.fontWeight = '700';
+}
+
+function searchGrContact(query) {
+  clearTimeout(_grSearchTimer);
+  const results = document.getElementById('gr-customer-results');
+  if (!query || query.trim().length < 2) { results.style.display = 'none'; return; }
+  _grSearchTimer = setTimeout(() => {
+    const q = query.toLowerCase();
+    const matches = allContactsCache.filter(c =>
+      String(c.nama||'').toLowerCase().includes(q) ||
+      String(c.noWa||'').toLowerCase().includes(q)
+    ).slice(0, 6);
+    if (!matches.length) { results.innerHTML = '<div style="padding:8px;font-size:11px;color:var(--text-muted);">Tidak ditemukan</div>'; results.style.display = 'block'; return; }
+    results.innerHTML = matches.map(c => `<div onclick="selectGrContact('${escH(c.noWa)}','${escH(c.nama||c.noWa)}')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'"><div style="width:28px;height:28px;border-radius:50%;background:var(--green-mid);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">${getInitials(c.nama||c.noWa)}</div><div><div style="font-weight:600;">${escH(c.nama||c.noWa)}</div><div style="font-size:10px;color:var(--text-muted);">${c.noWa}</div></div></div>`).join('');
+    results.style.display = 'block';
+  }, 300);
+}
+
+function selectGrContact(noWa, nama) {
+  _grSelectedNoWa = noWa;
+  document.getElementById('gr-customer-search').value = nama + ' (' + noWa + ')';
+  document.getElementById('gr-customer-results').style.display = 'none';
+  const sel = document.getElementById('gr-customer-selected');
+  sel.textContent = '✅ ' + nama + ' · ' + noWa;
+  sel.style.display = 'block';
+}
+
+async function submitGlobalReminder() {
+  const text = document.getElementById('gr-text').value.trim();
+  if (!text) { showToast('Isi reminder tidak boleh kosong'); return; }
+  const noWa = _grType === 'customer' ? _grSelectedNoWa : 'GLOBAL';
+  if (_grType === 'customer' && !noWa) { showToast('Pilih customer dulu'); return; }
+  const deadline = document.getElementById('gr-deadline').value || null;
+  try {
+    const res = await apiPost({ action: 'saveSmartNote', noWa, text, tag: _grTag, staffName: currentStaff?.nama || 'STAFF', deadline });
+    if (res.ok || res.success) {
+      showToast('✅ Reminder disimpan!');
+      document.getElementById('gr-text').value = '';
+      document.getElementById('gr-deadline').value = '';
+      _grSelectedNoWa = '';
+      document.getElementById('gr-customer-selected').style.display = 'none';
+      document.getElementById('gr-customer-search').value = '';
+      loadGrList();
+      loadTicker();
+    } else showToast('Gagal: ' + (res.msg || ''));
+  } catch(e) { showToast('Error: ' + e.toString()); }
+}
+
+async function loadGrList() {
+  const el = document.getElementById('gr-list');
+  const countEl = document.getElementById('gr-count');
+  if (!el) return;
+  el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:8px;">Memuat...</div>';
+  try {
+    const res = await apiGet({ action: 'getReminders' });
+    const all = res.reminders || [];
+    countEl.textContent = all.length + ' aktif';
+    if (!all.length) { el.innerHTML = '<div style="font-size:11px;color:var(--text-hint);text-align:center;padding:16px;">Belum ada reminder aktif</div>'; return; }
+    const tagEmoji = { TODO: '📌', INFO: 'ℹ️', PENTING: '⚠️' };
+    const tagColor = { TODO: '#854d0e', INFO: '#1e3a5f', PENTING: '#7f1d1d' };
+    el.innerHTML = all.map(r => `
+      <div style="padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <span style="background:${tagColor[r.tag]||'#333'};color:white;font-size:9px;padding:1px 6px;border-radius:4px;font-weight:700;">${tagEmoji[r.tag]||'📌'} ${r.tag}</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text);">${escH(r.namaCustomer === 'GLOBAL' ? '🌐 Internal' : r.namaCustomer)}</span>
+          ${r.deadline ? `<span style="margin-left:auto;font-size:10px;color:#c05c00;">${formatDeadline(r.deadline)}</span>` : ''}
+        </div>
+        <div style="font-size:11px;color:var(--text);margin-bottom:4px;">${escH(r.text)}</div>
+        <div style="display:flex;gap:4px;justify-content:flex-end;">
+          <button onclick="deleteGrReminder(${r.noteId})" style="background:none;border:1px solid #fca5a5;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#dc2626;">🗑️ Hapus</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div style="font-size:11px;color:var(--red);padding:8px;">Gagal memuat</div>'; }
+}
+
+async function deleteGrReminder(noteId) {
+  if (!confirm('Hapus reminder ini?')) return;
+  try {
+    const res = await apiPost({ action: 'deleteSmartNote', noteId: String(noteId) });
+    if (res.ok || res.success) { showToast('🗑️ Reminder dihapus!'); loadGrList(); loadTicker(); }
+    else showToast('Gagal: ' + (res.msg || ''));
+  } catch(e) { showToast('Error: ' + e.toString()); }
+}
+
+// ===================== PNR SEARCH BY NAMA =====================
+var _pnrSearchTimer = null;
+
+async function searchPnrByNama(keyword, mode, dropdownId, pnrFieldId) {
+  clearTimeout(_pnrSearchTimer);
+  var dd = document.getElementById(dropdownId);
+  if (!keyword || keyword.trim().length < 2) { dd.style.display = 'none'; return; }
+  _pnrSearchTimer = setTimeout(async function() {
+    dd.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:var(--text-muted);">Mencari...</div>';
+    dd.style.display = 'block';
+    try {
+      var res = await apiGet({ action: 'cariPnrByNama', nama: keyword.trim(), mode: mode });
+      if (!res.ok || !res.results || res.results.length === 0) {
+        dd.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:var(--text-muted);">Tidak ada hasil</div>';
+        return;
+      }
+      dd.innerHTML = res.results.map(function(r, i) {
+        var tglInfo = mode === 'arrival' && r.tglPulang ? r.tglPulang : r.tglTerbang;
+        var label   = mode === 'arrival' && r.tglPulang ? '🛬 Pulang: ' : '🛫 Terbang: ';
+        return '<div onclick="pilihPnrResult(\'' + escH(r.pnr) + '\',\'' + escH(pnrFieldId) + '\',\'' + escH(dropdownId) + '\')" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'white\'">' +
+          '<div style="display:flex;justify-content:space-between;">' +
+            '<span style="font-weight:700;color:var(--primary);">' + escH(r.pnr) + '</span>' +
+            '<span style="font-size:10px;background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;">' + escH(r.jenisTiket) + '</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text);">' + escH(r.namaTamu) + '</div>' +
+          '<div style="font-size:10px;color:var(--text-muted);">' + escH(r.rute) + ' · ' + label + escH(tglInfo) + '</div>' +
+        '</div>';
+      }).join('');
+    } catch(e) {
+      dd.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:red;">Error: ' + e.toString() + '</div>';
+    }
+  }, 600);
+}
+
+function pilihPnrResult(pnr, pnrFieldId, dropdownId) {
+  document.getElementById(pnrFieldId).value = pnr;
+  document.getElementById(dropdownId).style.display = 'none';
+  // Delay supaya onblur tidak bentrok dengan trigger manual
+  setTimeout(function() {
+    if (pnrFieldId === 'mdac-pnr')  cariPnrMdac();
+    if (pnrFieldId === 'alli-pnr')  cariPnrAlli();
+  }, 150);
+}
+
+// Tutup dropdown kalau klik di luar
+document.addEventListener('click', function(e) {
+  ['mdac-pnr-name-dropdown','alli-pnr-name-dropdown'].forEach(function(id) {
+    var dd = document.getElementById(id);
+    var inputId = id === 'mdac-pnr-name-dropdown' ? 'mdac-pnr' : 'alli-pnr';
+    var inp = document.getElementById(inputId);
+    if (dd && !dd.contains(e.target) && e.target !== inp) dd.style.display = 'none';
+  });
+});
