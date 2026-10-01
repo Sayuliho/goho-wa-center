@@ -77,7 +77,7 @@ async function apiPost(body) {
 function autoExpandTextarea(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
 
 // ===================== PWA =====================
-if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); }); }
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {}); }); }
 function updateAppBadge(count) { if ('setAppBadge' in navigator) { if (count > 0) navigator.setAppBadge(count).catch(() => {}); else navigator.clearAppBadge().catch(() => {}); } }
 
 // ===================== LOGIN =====================
