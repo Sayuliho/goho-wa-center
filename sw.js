@@ -1,5 +1,5 @@
 // GOHO WA Center - Service Worker
-const CACHE_NAME = 'goho-wa-v3';
+const CACHE_NAME = 'goho-wa-v4';
 
 const STATIC_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap',
