@@ -4613,7 +4613,11 @@ async function esimcardOpenRiwayat() {
               ${paketLine}
               <div style="font-size:10px;color:var(--text-muted);">${tgl}${o.staff ? ' · ' + escH(o.staff) : ''} · <span style="color:#166534;">${escH(o.status||'Released')}</span></div>
             </div>
-            <button id="ec-rw-btn-${idx}" style="font-size:10px;padding:3px 10px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;margin-left:8px;flex-shrink:0;">▶ Buka</button>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;flex-shrink:0;">
+              <button id="ec-rw-btn-${idx}" style="font-size:10px;padding:3px 10px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">▶ Buka</button>
+              <button onclick="ecCheckUsage(${idx},event)" style="font-size:10px;padding:3px 10px;background:#0891b2;color:white;border:none;border-radius:4px;cursor:pointer;">📊 Sisa Data</button>
+              <button onclick="ecCheckTopup(${idx},event)" style="font-size:10px;padding:3px 10px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">🔄 Topup</button>
+            </div>
           </div>
           <div id="ec-rw-detail-${idx}" style="display:none;padding:12px;border-top:1px solid var(--border);">
             <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;">${escH(o.package_name || '-')}</div>
@@ -4688,6 +4692,142 @@ function ecCopyPesanWA(idx) {
 
 // Alias untuk tombol navbar
 function ecOpenRiwayatPanel() { esimcardOpenRiwayat(); }
+
+// ── Cek Sisa Data eSIMCard ────────────────────────────────
+async function ecCheckUsage(idx, e) {
+  if (e) e.stopPropagation();
+  const o = window._ecOrders?.[idx];
+  if (!o) return;
+  const btn = e?.target;
+  const oriText = btn?.textContent || '📊 Sisa Data';
+
+  // Tampil loading di bawah row
+  let usageEl = document.getElementById('ec-usage-' + idx);
+  if (!usageEl) {
+    const rowEl = btn?.closest('[style*="border:1px solid"]');
+    if (rowEl) {
+      usageEl = document.createElement('div');
+      usageEl.id = 'ec-usage-' + idx;
+      usageEl.style.cssText = 'padding:8px 12px;background:#f0f9ff;border-top:1px solid #bae6fd;font-size:11px;';
+      rowEl.appendChild(usageEl);
+    }
+  }
+  if (!usageEl) return;
+
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  usageEl.style.display = 'block';
+  usageEl.innerHTML = '⏳ Mengecek sisa data...';
+
+  try {
+    const res = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardUsage&simId=${encodeURIComponent(o.sim_id)}`);
+    const data = await res.json();
+    if (!data.ok || !data.usage) {
+      usageEl.innerHTML = `<span style="color:#dc2626;">❌ Gagal cek usage: ${escH(data.msg || 'Error')}</span>`;
+    } else {
+      const u = data.usage;
+      const init = u.initial_data_quantity;
+      const rem  = u.rem_data_quantity;
+      const unit = u.rem_data_unit || 'GB';
+      const isUnlim = rem === 'Unlimited' || init === 'Unlimited';
+      if (isUnlim) {
+        usageEl.innerHTML = `<span style="color:#0891b2;">📶 Data: <b>Unlimited</b></span>`;
+      } else {
+        const remNum  = parseFloat(rem)  || 0;
+        const initNum = parseFloat(init) || 0;
+        const usedNum = Math.max(0, initNum - remNum);
+        const pct     = initNum > 0 ? Math.round((remNum / initNum) * 100) : 0;
+        const color   = pct > 50 ? '#16a34a' : pct > 20 ? '#d97706' : '#dc2626';
+        usageEl.innerHTML = `
+          <div style="margin-bottom:4px;">📶 Sisa: <b style="color:${color};">${remNum}${unit}</b> / ${initNum}${unit}</div>
+          <div style="background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden;">
+            <div style="background:${color};height:100%;width:${pct}%;transition:width 0.3s;"></div>
+          </div>
+          <div style="font-size:10px;color:#64748b;margin-top:3px;">Terpakai: ${usedNum.toFixed(2)}${unit} (${100-pct}%)</div>`;
+      }
+    }
+  } catch(err) {
+    usageEl.innerHTML = `<span style="color:#dc2626;">❌ Error: ${escH(err.message)}</span>`;
+  } finally {
+    if (btn) { btn.textContent = oriText; btn.disabled = false; }
+  }
+}
+
+// ── Topup eSIMCard ────────────────────────────────────────
+async function ecCheckTopup(idx, e) {
+  if (e) e.stopPropagation();
+  const o = window._ecOrders?.[idx];
+  if (!o || !o.iccid) {
+    alert('ICCID tidak tersedia untuk eSIM ini.');
+    return;
+  }
+  const btn = e?.target;
+  const oriText = btn?.textContent || '🔄 Topup';
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+  try {
+    // Step 1: cek apakah bisa di-topup
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev?action=esimcardCanTopup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'esimcardCanTopup', iccid: o.iccid })
+    });
+    const data = await res.json();
+
+    if (!data.ok) {
+      alert(`❌ Gagal cek topup: ${data.msg || 'Error'}`);
+      return;
+    }
+    if (!data.topup_available) {
+      alert('❌ eSIM ini tidak bisa di-topup saat ini.\n\nKemungkinan paket masih aktif atau eSIM belum diinstall.');
+      return;
+    }
+
+    // Step 2: topup tersedia — extract negara dari package_name
+    // Format: "10GB eSIM Data for 10 Days for Japan" → "Japan"
+    const pkgName = o.package_name || '';
+    const countryMatch = pkgName.match(/for ([A-Za-z\s]+)$/i);
+    const countryName  = countryMatch ? countryMatch[1].trim() : '';
+
+    // Cari di GOHO_COUNTRIES
+    const countryObj = countryName
+      ? GOHO_COUNTRIES.find(c => c.display?.toLowerCase() === countryName.toLowerCase() || c.name?.toLowerCase() === countryName.toLowerCase())
+      : null;
+
+    // Tutup modal riwayat
+    document.getElementById('esimcard-riwayat-modal')?.remove();
+
+    if (!countryObj) {
+      alert(`✅ eSIM ini bisa di-topup!\n\nSilakan buka panel Harga SIM, cari negara secara manual, dan pilih paket yang diinginkan.\n\nIccid: ${o.iccid}`);
+      return;
+    }
+
+    // Step 3: buka panel harga dan auto-select negara
+    // Simpan ICCID untuk dipakai saat purchase topup
+    window._ecTopupIccid  = o.iccid;
+    window._ecTopupSimId  = o.sim_id;
+    window._ecTopupOldPkg = o.package_name;
+
+    // Buka panel harga, set negara ke negara eSIM yang mau di-topup
+    await openHargaModal();
+    setTimeout(() => {
+      const input = document.getElementById('harga-country-input');
+      if (input) {
+        input.value = countryObj.display || countryName;
+        input.dispatchEvent(new Event('input'));
+        // Pilih baris pertama yang match
+        setTimeout(() => {
+          const firstItem = document.querySelector('#harga-country-list .harga-country-item');
+          if (firstItem) firstItem.click();
+        }, 300);
+      }
+    }, 400);
+
+  } catch(err) {
+    alert(`❌ Error: ${err.message}`);
+  } finally {
+    if (btn) { btn.textContent = oriText; btn.disabled = false; }
+  }
+}
 
 async function esimcardOpenSettingEmail() {
   // Ambil setting email saat ini
