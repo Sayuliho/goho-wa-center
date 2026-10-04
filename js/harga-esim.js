@@ -4,8 +4,7 @@
 // Tampilan: 4 kolom card (Aviroam, eSIM Access, iRoamly, eSIMCard)
 // ============================================================
 
-let hargaData   = [];
-let hargaLoaded = false;
+// hargaData & hargaLoaded dideklarasikan di app.js
 
 const GOHO_COUNTRIES = [
   { display: 'Korea', iroamly: 'south-korea', iso: 'KR', aviroam: ['korea selatan', 'south korea'] },
@@ -778,25 +777,22 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
         const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
         const bg     = isCheaper ? '#f0fdf4' : 'white';
         const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
-        const connectivity  = escH(pkg.connectivity || '4G');
-        const canHotspot    = pkg.tether !== false;
-        const canRenew      = pkg.can_renew === true;
-        const isThrottle    = pkg.throttle === true;
-        const throttleSpd   = pkg.throttle_speed || '';
-        const unthrottleQty = pkg.unthrottle_data || '';
-        let speedInfo = '';
-        if (isThrottle && unthrottleQty && unthrottleQty !== 'Unlimited') {
-          speedInfo = `${escH(unthrottleQty)}/hari full speed → throttle ${escH(throttleSpd || '384kbps')}`;
-        } else if (isThrottle && throttleSpd) {
-          speedInfo = `Setelah kuota: throttle ${escH(throttleSpd)}`;
-        } else if (!isThrottle && pkg.data_quantity <= 0) {
-          speedInfo = 'Full speed unlimited (tanpa throttle)';
-        }
-        const actType   = pkg.activation_type || '';
-        const actInfo   = actType === 'API' ? 'Aktivasi manual via link' : 'Aktif otomatis saat data pertama dipakai';
-        const coverage  = pkg.coverage || [];
-        const operators = [...new Set(coverage.map(c => c.network_code || c.network_name || '').filter(Boolean))];
-        const operatorStr = operators.slice(0, 3).join(' · ');
+        const canRenew = pkg.can_renew === true;
+
+        // Operator dari network_coverage (field di /packages/country/{id})
+        const netCoverage = pkg.network_coverage || [];
+        const operators   = [...new Set(netCoverage.map(n => n.network_code || n.network_name || '').filter(Boolean))];
+        const operatorStr = operators.slice(0, 4).join(' · ');
+
+        // Connectivity dari network flags
+        const hasG5 = netCoverage.some(n => n.five_G);
+        const hasG4 = netCoverage.some(n => n.four_G);
+        const hasG3 = netCoverage.some(n => n.three_g);
+        const connectivity = hasG5 ? '2G,3G,4G,5G' : hasG4 ? '2G,3G,4G' : hasG3 ? '2G,3G' : '4G';
+
+        // Scope: local = 1 negara, regional = multi
+        const scope = pkg.scope || 'local';
+        const speedInfo = '';
         const pkgDataStr  = escH(JSON.stringify({ id: pkg.id, name: pkg.name||'', dataQty, validity, buyUSD, buyIDR, sellIDR }));
 
         html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
@@ -804,14 +800,11 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
             <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)} · ${validity}h</span>${cheapBadge}
           </div>
           <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.name||'')}</div>
-          ${operatorStr ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">🏢 ${escH(operatorStr)}</div>` : ''}
+          ${operatorStr ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">📡 ${escH(operatorStr)}</div>` : ''}
           <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
             <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${connectivity}</span>
-            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot?'✅':'❌'}</span>
             <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔄 Perpanjang: ${canRenew?'✅':'❌'}</span>
           </div>
-          ${speedInfo ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${speedInfo}</div>` : ''}
-          <div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">🔌 ${escH(actInfo)}</div>
           <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">⏳ Aktivasi kartu maks. 30 hari</div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
             <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
