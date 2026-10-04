@@ -888,7 +888,8 @@ function esimRiwayatFilterTab(tab) {
       ? '<span style="font-size:9px;background:#dbeafe;color:#1d4ed8;border-radius:3px;padding:1px 5px;font-weight:700;">🟦 eSIMCard</span>'
       : '<span style="font-size:9px;background:#ede9fe;color:#6366f1;border-radius:3px;padding:1px 5px;font-weight:700;">📡 eSIM Access</span>';
     const paket = isEc ? (o.package_name || o.catatan || '-') : (o.package_code || o.catatan || '-');
-    const nama  = o.nama_customer || o.no_wa_customer || '-';
+    const nama  = isEc ? (o.nama_pembeli || o.nama_customer || '-') : (o.nama_customer || '-');
+    const noWa  = isEc ? (o.hp_pembeli || '') : (o.no_wa_customer || o.noWa || '');
     const detailId = `rw-detail-${o._supplier}-${idx}`;
     const btnId    = `rw-btn-${o._supplier}-${idx}`;
 
@@ -896,7 +897,7 @@ function esimRiwayatFilterTab(tab) {
       <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#f8fafc;cursor:pointer;" onclick="esimRwToggle('${detailId}','${btnId}')">
           <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">${suppLabel}<span style="font-size:11px;font-weight:700;color:var(--text);">${escH(nama)}</span></div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">${suppLabel}<span style="font-size:11px;font-weight:700;color:var(--text);">${escH(nama !== '-' ? nama : (noWa || '-'))}</span>${noWa && nama !== '-' ? `<span style="font-size:10px;color:var(--text-muted);">· ${escH(noWa)}</span>` : ''}</div>
             <div style="font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(paket)}</div>
             <div style="font-size:10px;color:${sc};font-weight:600;">${o.status||'PENDING'} · ${tgl} · ${escH(o.staff||'')}</div>
           </div>
