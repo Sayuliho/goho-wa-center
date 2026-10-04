@@ -496,7 +496,7 @@ async function hargaShowResult() {
         📅 ${dur} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:500;color:#6366f1;text-transform:none;">(perbandingan)</span>' : ''}
       </div>`;
       rows.forEach(r => {
-        const [,, rowDurAv, , simPub, esimPub, esimPar2] = r;
+        const [,, rowDurAv, simPub, simPar, esimPub, esimPar2] = r;
         const pkg = r[1] || '';
         const durColor = isExactDur ? '#0369a1' : '#6366f1';
         const durBg    = isExactDur ? '#e0f2fe' : '#ede9fe';
@@ -510,7 +510,7 @@ async function hargaShowResult() {
             </div>
             <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
             ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
-            ${hargaRowAviroam('Partner', hargaFmtIDR(r[4]), 'agen')}
+            ${hargaRowAviroam('Partner', hargaFmtIDR(simPar), 'agen')}
             <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin:6px 0 4px;text-transform:uppercase;letter-spacing:0.4px;">eSIM</div>
             ${hargaRowAviroam('Publish', hargaFmtIDR(esimPub), 'customer')}
             ${hargaRowAviroam('Partner', hargaFmtIDR(esimPar2), 'agen')}
