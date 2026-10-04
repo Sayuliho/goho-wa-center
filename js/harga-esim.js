@@ -434,33 +434,49 @@ async function hargaShowResult() {
   if (kursEl)   kursEl.value   = kurs;
   if (markupEl) markupEl.value = markup;
 
-  // Aviroam — filter durasi >= lamaHari
+  // Aviroam — semua paket durasi >= lamaHari, group by durasi ASC
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
   const src = window._aviroamRows || hargaData;
+
+  // Filter negara + durasi >= lamaHari
   let avRows = src.filter(r => {
     const name   = (r[0] || '').toLowerCase().trim();
     const rowDur = r[2] || 0;
     return rowDur >= lamaHari && avKeywords.some(kw => name.includes(kw.toLowerCase()));
   });
   avRows = avRows.filter((r, i, arr) => arr.findIndex(x => x[0] === r[0] && x[1] === r[1] && x[2] === r[2]) === i);
+  // Sort durasi ASC
+  avRows.sort((a, b) => (a[2] || 0) - (b[2] || 0));
 
   const row       = avRows[0] || null;
   const esimPar   = row ? parseFloat(row[6]) || 0 : 0;
   const c         = displayName;
 
-  // Build Aviroam cards
-  const aviroamCards = avRows.length === 0
-    ? '<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket ≥ ' + lamaHari + ' hari</div>'
-    : avRows.map(r => {
-        const [,, dur,, simPub, esimPub, esimPar2] = r;
+  // Build Aviroam cards — group by durasi
+  let aviroamCards = '';
+  if (!avRows.length) {
+    aviroamCards = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket ${lamaHari} hari atau lebih di Aviroam</div>`;
+  } else {
+    // Group by durasi
+    const avByDur = new Map();
+    avRows.forEach(r => {
+      const d = r[2] || 0;
+      if (!avByDur.has(d)) avByDur.set(d, []);
+      avByDur.get(d).push(r);
+    });
+    avByDur.forEach((rows, dur) => {
+      const isExactDur = dur === lamaHari;
+      aviroamCards += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${aviroamCards ? '10px' : '0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+        📅 ${dur} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#6366f1;">(perbandingan)</span>' : ''}
+      </div>`;
+      rows.forEach(r => {
+        const [,, , , simPub, esimPub, esimPar2] = r;
         const pkg = r[1] || '';
-        const rowDur = dur ? `${dur} hari` : '';
-        const rowPkg = pkg ? escH(pkg) : '';
-        return `
+        aviroamCards += `
           <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
             <div style="margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
               <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;display:inline-block;">🌏 ${escH(r[0])}</div>
-              <span style="font-size:9px;color:#0369a1;background:#e0f2fe;border-radius:3px;padding:1px 5px;">${[rowDur, rowPkg].filter(Boolean).join(' · ')}</span>
+              ${pkg ? `<span style="font-size:9px;color:#0369a1;background:#e0f2fe;border-radius:3px;padding:1px 5px;">${escH(pkg)}</span>` : ''}
             </div>
             <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
             ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
@@ -469,11 +485,13 @@ async function hargaShowResult() {
             ${hargaRowAviroam('Publish', hargaFmtIDR(esimPub), 'customer')}
             ${hargaRowAviroam('Partner', hargaFmtIDR(esimPar2), 'agen')}
           </div>`;
-      }).join('');
+      });
+    });
+  }
 
   resultEl.innerHTML = `
     <div style="font-size:11px;background:#f1f5f9;border-radius:6px;padding:4px 10px;color:var(--text-muted);margin-bottom:12px;display:inline-block;">
-      ${escH(displayName)} · ${lamaHari} hari · Paket durasi ≥ ${lamaHari} hari
+      ${escH(displayName)} · ${lamaHari} hari
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
 
@@ -538,92 +556,77 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
       window._esimAccessCache[cacheKey] = rawPackages;
     }
 
-    // Pisah paket murni vs regional
+    // Filter paket murni (bukan regional/global), durasi >= lamaHari
     const REGIONAL_KW = ['asia', 'global', 'worldwide', 'global139', 'global (', 'asia-20', 'aukus', 'oceania'];
     const isPure = p => {
       const name = (p.name || '').toLowerCase();
       const locList = p.locationNetworkList || [];
       return !REGIONAL_KW.some(kw => name.includes(kw)) && locList.length <= 2;
     };
+    const purePkgs = rawPackages.filter(isPure);
+    const workingPkgs = (purePkgs.length ? purePkgs : rawPackages).filter(p => parseInt(p.duration || 0) >= lamaHari);
 
-    const purePkgs     = rawPackages.filter(isPure);
-    const regionalPkgs = rawPackages.filter(p => !isPure(p));
-    const workingPkgs  = purePkgs.length ? purePkgs : rawPackages;
-
-    // Cari semua durasi yang tersedia
-    const availDurations = [...new Set(workingPkgs.map(p => parseInt(p.duration || 0)))].sort((a,b) => a-b);
-
-    // Logika: eksak dulu, fallback ke durasi terdekat di atas lamaHari
-    const exactPkgs = workingPkgs.filter(p => parseInt(p.duration || 0) === lamaHari);
-    let packages, nearestDur = null, isExact = true;
-
-    if (exactPkgs.length) {
-      packages = exactPkgs;
-    } else {
-      // Cari durasi terdekat di atas lamaHari
-      nearestDur = availDurations.find(d => d > lamaHari) || null;
-      if (!nearestDur) {
-        el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIM Access untuk ${lamaHari} hari atau lebih</div>`;
-        return;
-      }
-      packages = workingPkgs.filter(p => parseInt(p.duration || 0) === nearestDur);
-      isExact  = false;
+    if (!workingPkgs.length) {
+      el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIM Access untuk ≥ ${lamaHari} hari</div>`;
+      return;
     }
 
-    // Sort by harga ASC
-    packages.sort((a, b) => (a.priceRaw || 0) - (b.priceRaw || 0));
-
-    // Banner kalau tidak eksak
-    let html = '';
-    if (!isExact) {
-      html += `<div style="background:#fef3c7;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:10px;color:#92400e;">
-        ⚠️ Tidak ada paket <b>${lamaHari} hari</b> di eSIM Access<br>
-        Menampilkan paket terdekat: <b>${nearestDur} hari</b>
-        ${availDurations.length ? `<span style="color:#6b7280;"> · Tersedia: ${availDurations.join(', ')} hari</span>` : ''}
-      </div>`;
-    }
-
-    packages.forEach(pkg => {
-      const dur     = parseInt(pkg.duration || 0);
-      const buyUSD  = (pkg.priceRaw || 0) / 10000;
-      const buyIDR  = Math.round(buyUSD * kurs);
-      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-      const isCheaper  = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
-      const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
-      const bg     = isCheaper ? '#f0fdf4' : 'white';
-      const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
-      const notes   = parsePackageNotes(pkg.name || '');
-      const noteHtml = notes.length ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">${notes.join(' · ')}</div>` : '';
-      const locList = pkg.locationNetworkList || [];
-      const ops     = locList.flatMap(l => (l.networkList || []).map(n => n.operatorName || '')).filter(Boolean).slice(0, 3);
-      const opStr   = ops.length ? ops.join(' · ') : '';
-      const durBadge = !isExact ? `<span style="font-size:9px;background:#ede9fe;color:#6366f1;border-radius:3px;padding:1px 5px;margin-left:4px;">${dur} hari</span>` : '';
-      const pkgId  = 'ea-' + (pkg.packageCode||'').replace(/[^a-zA-Z0-9]/g,'_');
-      window._eaPkgCache = window._eaPkgCache || {};
-      window._eaPkgCache[pkgId] = { packageCode: pkg.packageCode||'', name: pkg.name||'', priceUSD: buyUSD, buyIDR, sellIDR, duration: dur, volumeFormatted: pkg.volumeFormatted||'', speed: pkg.speed||'' };
-      html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
-        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;">
-          <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.name||'-')}</span>${cheapBadge}${durBadge}
-        </div>
-        ${noteHtml}
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
-          ${pkg.speed ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(pkg.speed)}</span>` : ''}
-          ${pkg.volumeFormatted ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📦 ${escH(pkg.volumeFormatted)}</span>` : ''}
-          ${pkg.hotspot ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ✅</span>` : ''}
-        </div>
-        ${opStr ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">📡 ${escH(opStr)}</div>` : ''}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
-          <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
-          <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);margin-bottom:4px;">
-          <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
-          <span style="font-size:13px;font-weight:700;color:#6366f1;">${hargaFmtIDR(sellIDR)}</span>
-        </div>
-        <button onclick="esimAccessOpenBeliById('${pkgId}')" style="width:100%;padding:5px;background:#6366f1;color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">📡 Beli eSIM Access</button>
-      </div>`;
+    // Group by durasi ASC, dalam durasi sort by harga ASC
+    const byDurEA = new Map();
+    workingPkgs.forEach(p => {
+      const d = parseInt(p.duration || 0);
+      if (!byDurEA.has(d)) byDurEA.set(d, []);
+      byDurEA.get(d).push(p);
+    });
+    [...byDurEA.keys()].sort((a,b) => a-b).forEach(d => {
+      byDurEA.get(d).sort((a,b) => (a.priceRaw||0) - (b.priceRaw||0));
     });
 
+    let html = '';
+    [...byDurEA.entries()].sort((a,b) => a[0]-b[0]).forEach(([dur, pkgs]) => {
+      const isExactDur = dur === lamaHari;
+      html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+        📅 ${dur} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#6366f1;">(perbandingan)</span>' : ''}
+      </div>`;
+      pkgs.forEach(pkg => {
+        const buyUSD  = (pkg.priceRaw || 0) / 10000;
+        const buyIDR  = Math.round(buyUSD * kurs);
+        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+        const isCheaper  = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+        const bg     = isCheaper ? '#f0fdf4' : 'white';
+        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+        const notes   = parsePackageNotes(pkg.name || '');
+        const noteHtml = notes.length ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">${notes.join(' · ')}</div>` : '';
+        const locList = pkg.locationNetworkList || [];
+        const ops     = locList.flatMap(l => (l.networkList || []).map(n => n.operatorName || '')).filter(Boolean).slice(0, 3);
+        const opStr   = ops.length ? ops.join(' · ') : '';
+        const pkgId  = 'ea-' + (pkg.packageCode||'').replace(/[^a-zA-Z0-9]/g,'_');
+        window._eaPkgCache = window._eaPkgCache || {};
+        window._eaPkgCache[pkgId] = { packageCode: pkg.packageCode||'', name: pkg.name||'', priceUSD: buyUSD, buyIDR, sellIDR, duration: dur, volumeFormatted: pkg.volumeFormatted||'', speed: pkg.speed||'' };
+        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.name||'-')}</span>${cheapBadge}
+          </div>
+          ${noteHtml}
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+            ${pkg.speed ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(pkg.speed)}</span>` : ''}
+            ${pkg.volumeFormatted ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📦 ${escH(pkg.volumeFormatted)}</span>` : ''}
+            ${pkg.hotspot ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ✅</span>` : ''}
+          </div>
+          ${opStr ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">📡 ${escH(opStr)}</div>` : ''}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);margin-bottom:4px;">
+            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:#6366f1;">${hargaFmtIDR(sellIDR)}</span>
+          </div>
+          <button onclick="esimAccessOpenBeliById('${pkgId}')" style="width:100%;padding:5px;background:#6366f1;color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">📡 Beli eSIM Access</button>
+        </div>`;
+      });
+    });
     el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
   } catch(e) {
     if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${escH(e.message)}</span>`;
@@ -650,38 +653,27 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
       window._iroamlyCache[cacheKey] = rawData;
     }
 
-    // Filter Total Data
+    // Filter Total Data, durasi >= lamaHari, group by durasi ASC
     const totalPkgs = rawData.filter(p => p.type === 'Total');
-    const workIR = totalPkgs.length ? totalPkgs : rawData;
+    const workIR    = (totalPkgs.length ? totalPkgs : rawData).filter(p => parseInt(p.duration) >= lamaHari);
 
-    // Logika eksak dulu, fallback terdekat
-    const availDurIR = [...new Set(workIR.map(p => parseInt(p.duration)))].sort((a,b) => a-b);
-    const exactIR    = workIR.filter(p => parseInt(p.duration) === lamaHari);
-    let allPkgs, nearestDurIR = null, isExactIR = true;
+    if (!workIR.length) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket iRoamly untuk ≥ ${lamaHari} hari</div>`; return; }
 
-    if (exactIR.length) {
-      allPkgs = exactIR;
-    } else {
-      nearestDurIR = availDurIR.find(d => d > lamaHari) || null;
-      if (!nearestDurIR) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket iRoamly untuk ${lamaHari} hari atau lebih</div>`; return; }
-      allPkgs   = workIR.filter(p => parseInt(p.duration) === nearestDurIR);
-      isExactIR = false;
-    }
-
-    allPkgs.sort((a, b) => parseFloat(a.credit||0) - parseFloat(b.credit||0));
+    const byDurIR = new Map();
+    workIR.forEach(p => {
+      const d = parseInt(p.duration);
+      if (!byDurIR.has(d)) byDurIR.set(d, []);
+      byDurIR.get(d).push(p);
+    });
 
     let html = '';
-    if (!isExactIR) {
-      html += `<div style="background:#fef3c7;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:10px;color:#92400e;">
-        ⚠️ Tidak ada paket <b>${lamaHari} hari</b> di iRoamly<br>
-        Menampilkan paket terdekat: <b>${nearestDurIR} hari</b>
-        <span style="color:#6b7280;"> · Tersedia: ${availDurIR.join(', ')} hari</span>
+    [...byDurIR.entries()].sort((a,b) => a[0]-b[0]).forEach(([validity, dayPkgs]) => {
+      const isExactDur = validity === lamaHari;
+      html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+        📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#7c3aed;">(perbandingan)</span>' : ''}
       </div>`;
-    }
-
-    const validity = isExactIR ? lamaHari : nearestDurIR;
-    const dayPkgs  = allPkgs;
-    {
+      dayPkgs.sort((a, b) => parseFloat(a.credit||0) - parseFloat(b.credit||0));
+      {
       dayPkgs.forEach(pkg => {
         const buyUSD  = parseFloat(pkg.credit || 0);
         const buyIDR  = Math.round(buyUSD * kurs);
@@ -715,7 +707,8 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
           </div>
         </div>`;
       });
-    }
+      }
+    });
     el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
   } catch(e) {
     if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${escH(e.message)}</span>`;
@@ -742,35 +735,27 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       window._esimcardCache[cacheKey] = pkgs;
     }
 
-    // Logika eksak dulu, fallback terdekat
-    const getDur  = p => parseInt(p.package_validity || p.duration || p.validity || 0);
-    const availEC = [...new Set(pkgs.map(getDur))].filter(d => d > 0).sort((a,b) => a-b);
-    const exactEC = pkgs.filter(p => getDur(p) === lamaHari);
-    let filtered, nearestEC = null, isExactEC = true;
+    // Filter durasi >= lamaHari, group by durasi ASC
+    const getDur = p => parseInt(p.package_validity || p.duration || p.validity || 0);
+    const filteredEC = pkgs.filter(p => getDur(p) >= lamaHari);
 
-    if (exactEC.length) {
-      filtered = exactEC;
-    } else {
-      nearestEC = availEC.find(d => d > lamaHari) || null;
-      if (!nearestEC) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIMCard untuk ${lamaHari} hari atau lebih</div>`; return; }
-      filtered  = pkgs.filter(p => getDur(p) === nearestEC);
-      isExactEC = false;
-    }
+    if (!filteredEC.length) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIMCard untuk ≥ ${lamaHari} hari</div>`; return; }
 
-    filtered.sort((a, b) => parseFloat(a.cost||0) - parseFloat(b.cost||0));
+    const byDurEC = new Map();
+    filteredEC.forEach(p => {
+      const d = getDur(p);
+      if (!byDurEC.has(d)) byDurEC.set(d, []);
+      byDurEC.get(d).push(p);
+    });
 
     let html = '';
-    if (!isExactEC) {
-      html += `<div style="background:#fef3c7;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:10px;color:#92400e;">
-        ⚠️ Tidak ada paket <b>${lamaHari} hari</b> di eSIMCard<br>
-        Menampilkan paket terdekat: <b>${nearestEC} hari</b>
-        <span style="color:#6b7280;"> · Tersedia: ${availEC.join(', ')} hari</span>
+    [...byDurEC.entries()].sort((a,b) => a[0]-b[0]).forEach(([validity, dayPkgs]) => {
+      const isExactDur = validity === lamaHari;
+      html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+        📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>' : ''}
       </div>`;
-    }
-
-    const validity = isExactEC ? lamaHari : nearestEC;
-    const dayPkgs  = filtered;
-    {
+      dayPkgs.sort((a, b) => parseFloat(a.cost||0) - parseFloat(b.cost||0));
+      {
       dayPkgs.forEach(p => {
         const buyUSD  = parseFloat(p.cost || 0);
         const buyIDR  = Math.round(buyUSD * kurs);
@@ -797,7 +782,7 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
           <button onclick="esimcardOpenBeli('${pkgDataStr}')" style="width:100%;padding:5px;background:#1d4ed8;color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">🛒 Beli eSIMCard</button>
         </div>`;
       });
-    }
+    });
     el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
   } catch(e) {
     if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${escH(e.message)}</span>`;
