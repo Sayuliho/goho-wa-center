@@ -282,6 +282,7 @@ function hargaReset() {
   window._esimcardCache   = {};
   window._esimAccessCache = {};
   window._iroamlyCache    = {};
+  window._eaPkgCache      = {};
 }
 
 function initHargaPanelDrag() {
