@@ -759,22 +759,34 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
         📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>' : ''}
       </div>`;
-      dayPkgs.sort((a, b) => parseFloat(a.cost||0) - parseFloat(b.cost||0));
+      dayPkgs.sort((a, b) => parseFloat(a.price||a.cost||0) - parseFloat(b.price||b.cost||0));
       dayPkgs.forEach(p => {
-        const buyUSD  = parseFloat(p.cost || 0);
+        const buyUSD  = parseFloat(p.price || p.cost || 0);
         const buyIDR  = Math.round(buyUSD * kurs);
         const sellIDR = Math.round(buyIDR * (1 + markup / 100));
         const isCheaper  = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
         const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
         const bg     = isCheaper ? '#f0fdf4' : 'white';
         const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
-        const op     = escH(p.network_provider || p.operator || '');
-        const pkgDataStr = escH(JSON.stringify({ id: p.id, name: p.name||'', dataQty: p.data_quantity||'', validity, buyUSD, buyIDR, sellIDR }));
+        const op     = escH(p.network_provider || p.network || p.operator || '');
+        // Data info
+        const dataQty  = p.data_quantity > 0 ? `${p.data_quantity}${p.data_unit||'GB'}` : '';
+        const isUnlim  = (p.name||'').toLowerCase().includes('unlimited');
+        const dataLabel = dataQty || (isUnlim ? 'Unlimited' : '');
+        const throttle = p.throttle_speed ? `Setelah kuota: ${escH(p.throttle_speed)}` : '';
+        const canRenew = p.can_renew;
+        const pkgDataStr = escH(JSON.stringify({ id: p.id, name: p.name||'', dataQty: dataLabel, validity, buyUSD, buyIDR, sellIDR }));
         html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;">
             <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(p.name||'-')}</span>${cheapBadge}
           </div>
-          ${op ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">${op}</div>` : ''}
+          ${op ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">📡 ${op}</div>` : ''}
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+            ${dataLabel ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📦 ${escH(dataLabel)}</span>` : ''}
+            ${p.connectivity ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(p.connectivity)}</span>` : ''}
+            ${canRenew ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔄 Perpanjang: ✅</span>` : ''}
+          </div>
+          ${throttle ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${throttle}</div>` : ''}
           <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
             <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
             <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
