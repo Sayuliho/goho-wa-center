@@ -597,7 +597,10 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
         const locList = pkg.locationNetworkList || [];
         const ops = locList.flatMap(l => (l.networkList || []).map(n => n.operatorName || '')).filter(Boolean).slice(0, 3);
         const opStr = ops.length ? ops.join(' · ') : '';
-        const pkgDataStr = escH(JSON.stringify({ packageCode: pkg.packageCode, name: pkg.name||'', priceUSD: buyUSD, buyIDR, sellIDR, duration: validity, volumeFormatted: pkg.volumeFormatted||'', speed: pkg.speed||'' }));
+        const pkgId = 'ea-' + (pkg.packageCode||'').replace(/[^a-zA-Z0-9]/g,'_');
+        const pkgObj = { packageCode: pkg.packageCode||'', name: pkg.name||'', priceUSD: buyUSD, buyIDR, sellIDR, duration: validity, volumeFormatted: pkg.volumeFormatted||'', speed: pkg.speed||'' };
+        window._eaPkgCache = window._eaPkgCache || {};
+        window._eaPkgCache[pkgId] = pkgObj;
         html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;">
             <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.name||'-')}</span>${cheapBadge}
@@ -617,7 +620,7 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
             <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
             <span style="font-size:13px;font-weight:700;color:#6366f1;">${hargaFmtIDR(sellIDR)}</span>
           </div>
-          <button onclick='esimAccessOpenBeli(${JSON.stringify(pkgDataStr)})' style="width:100%;padding:5px;background:#6366f1;color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">📡 Beli eSIM Access</button>
+          <button onclick="esimAccessOpenBeliById('${pkgId}')" style="width:100%;padding:5px;background:#6366f1;color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">📡 Beli eSIM Access</button>
         </div>`;
       });
     });
@@ -902,6 +905,12 @@ function eaCopyPesanWA(idx) {
 }
 
 // ── eSIM Access Beli ──────────────────────────────────────────
+function esimAccessOpenBeliById(pkgId) {
+  const pkg = window._eaPkgCache?.[pkgId];
+  if (!pkg) { showToast('Data paket tidak ditemukan'); return; }
+  esimAccessOpenBeli(pkg);
+}
+
 function esimAccessOpenBeli(pkgStr) {
   let pkg;
   try { pkg = typeof pkgStr === 'string' ? JSON.parse(pkgStr) : pkgStr; } catch(e) { showToast('Error: ' + e.message); return; }
