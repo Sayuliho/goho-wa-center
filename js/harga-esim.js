@@ -673,7 +673,6 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
         📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#7c3aed;">(perbandingan)</span>' : ''}
       </div>`;
       dayPkgs.sort((a, b) => parseFloat(a.credit||0) - parseFloat(b.credit||0));
-      {
       dayPkgs.forEach(pkg => {
         const buyUSD  = parseFloat(pkg.credit || 0);
         const buyIDR  = Math.round(buyUSD * kurs);
@@ -707,7 +706,6 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
           </div>
         </div>`;
       });
-      }
     });
     el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
   } catch(e) {
@@ -755,7 +753,6 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
         📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>' : ''}
       </div>`;
       dayPkgs.sort((a, b) => parseFloat(a.cost||0) - parseFloat(b.cost||0));
-      {
       dayPkgs.forEach(p => {
         const buyUSD  = parseFloat(p.cost || 0);
         const buyIDR  = Math.round(buyUSD * kurs);
