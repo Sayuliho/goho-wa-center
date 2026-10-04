@@ -492,8 +492,8 @@ async function hargaShowResult() {
     });
     avByDur.forEach((rows, dur) => {
       const isExactDur = dur === lamaHari;
-      aviroamCards += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${aviroamCards ? '10px' : '0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
-        📅 ${dur} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#6366f1;">(perbandingan)</span>' : ''}
+      aviroamCards += `<div style="font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.5px;margin:${aviroamCards ? '12px' : '0'} 0 6px;padding-bottom:4px;border-bottom:2px solid var(--border);">
+        📅 ${dur} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:500;color:#6366f1;text-transform:none;">(perbandingan)</span>' : ''}
       </div>`;
       rows.forEach(r => {
         const [,, rowDurAv, , simPub, esimPub, esimPar2] = r;
