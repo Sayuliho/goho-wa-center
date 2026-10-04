@@ -438,11 +438,15 @@ async function hargaShowResult() {
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
   const src = window._aviroamRows || hargaData;
 
-  // Filter negara + durasi >= lamaHari
+  // Exclude kata kunci multi-region
+  const MULTI_KW = ['multi region', 'asia pacific', 'multi-region', 'global', 'worldwide'];
+
+  // Filter negara + durasi >= lamaHari + bukan multi-region
   let avRows = src.filter(r => {
     const name   = (r[0] || '').toLowerCase().trim();
     const rowDur = r[2] || 0;
-    return rowDur >= lamaHari && avKeywords.some(kw => name.includes(kw.toLowerCase()));
+    const isMulti = MULTI_KW.some(kw => name.includes(kw));
+    return rowDur >= lamaHari && !isMulti && avKeywords.some(kw => name.includes(kw.toLowerCase()));
   });
   avRows = avRows.filter((r, i, arr) => arr.findIndex(x => x[0] === r[0] && x[1] === r[1] && x[2] === r[2]) === i);
   // Sort durasi ASC
@@ -734,7 +738,9 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
     }
 
     // Filter durasi >= lamaHari, group by durasi ASC
-    const getDur = p => parseInt(p.package_validity || p.duration || p.validity || 0);
+    const getDur = p => parseInt(p.package_validity || p.duration || p.validity || p.day || 0);
+    // Debug: lihat field durasi dari paket pertama
+    if (pkgs.length) console.log('[eSIMCard] sample pkg fields:', JSON.stringify({ package_validity: pkgs[0].package_validity, duration: pkgs[0].duration, validity: pkgs[0].validity, day: pkgs[0].day, name: pkgs[0].name }));
     const filteredEC = pkgs.filter(p => getDur(p) >= lamaHari);
 
     if (!filteredEC.length) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIMCard untuk ≥ ${lamaHari} hari</div>`; return; }
