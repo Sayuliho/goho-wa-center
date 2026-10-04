@@ -1,15 +1,12 @@
 // ============================================================
 // HARGA SIM/ESIM — Panel, Aviroam, eSIM Access, iRoamly
-// Revisi: Logika baru lama perjalanan + Section Rekomendasi
-//         + Tabel Lengkap (Total Data / Kuota Harian)
-//         + eSIM Access info lengkap + Riwayat + Beli
+// Logika baru: filter durasi >= lama perjalanan
+// Tampilan: 4 kolom card (Aviroam, eSIM Access, iRoamly, eSIMCard)
 // ============================================================
 
-// ── Global state ────────────────────────────────────────────
 let hargaData   = [];
 let hargaLoaded = false;
 
-// ── Master country list ──────────────────────────────────────
 const GOHO_COUNTRIES = [
   { display: 'Korea', iroamly: 'south-korea', iso: 'KR', aviroam: ['korea selatan', 'south korea'] },
   { display: 'United Arab Emirates', iroamly: 'united-arab-emirates', iso: 'AE', aviroam: ['emirates', 'uae', 'dubai'] },
@@ -132,6 +129,21 @@ const IROAMLY_COUNTRY_MAP = {
   'Armenia': 'armenia', 'Russia': 'russia',
 };
 
+const IROAMLY_REGIONS = {
+  'hong-kong-and-macau': 'Hong Kong · Macau',
+  'usa-ca': 'USA · Canada',
+  'southeast-asia-4-countries': 'Singapore · Malaysia · Indonesia · Thailand',
+  'au-nz': 'Australia · New Zealand',
+  'singapore-malaysia-thailand': 'Singapore · Malaysia · Thailand',
+  'usa-canada-mexico': 'USA · Canada · Mexico',
+  'europe-34-countries': 'Europe 34 Countries',
+  'asia-12-countries': 'Asia 12 Countries',
+  'middle-east-5-countries': 'Middle East 5 Countries',
+  'china-mainland-hong-kong-macau': 'China · Hong Kong · Macau',
+  'south-america-8-countries': 'South America 8 Countries',
+  'africa-18-countries': 'Africa 18 Countries',
+};
+
 function iroamlyGetRegion(countryName) {
   if (!countryName) return null;
   if (IROAMLY_COUNTRY_MAP[countryName]) return IROAMLY_COUNTRY_MAP[countryName];
@@ -142,38 +154,16 @@ function iroamlyGetRegion(countryName) {
   return null;
 }
 
-// ── Parse package type dari nama ────────────────────────────
-function detectPackageType(name) {
-  const n = (name || '').toLowerCase();
-  if (n.includes('unlimited premium')) return { type: 'daily', gbPerDay: 3 };
-  if (n.includes('unlimited plus'))    return { type: 'daily', gbPerDay: 2 };
-  if (n.includes('unlimited'))         return { type: 'daily', gbPerDay: 1 };
-  if (n.includes('/day') || n.includes('per day') || n.includes('daily')) return { type: 'daily', gbPerDay: null };
-  const gbMatch = n.match(/(\d+(?:\.\d+)?)\s*gb/i);
-  if (gbMatch) return { type: 'total', gb: parseFloat(gbMatch[1]) };
-  const mbMatch = n.match(/(\d+)\s*mb/i);
-  if (mbMatch) return { type: 'total', gb: parseFloat(mbMatch[1]) / 1024 };
-  return { type: 'total', gb: null };
-}
-
 function parsePackageNotes(name) {
   const notes = [];
   const n = (name || '').toLowerCase();
   if (n.includes('nonhkip')) notes.push('⚠️ Tidak berlaku di HK/India/Pakistan');
-  if (n.includes('iij'))     notes.push('📡 Jaringan IIJ');
-  if (n.includes('ntt'))     notes.push('📡 Jaringan NTT');
-  if (n.includes('docomo'))  notes.push('📡 Docomo');
+  if (n.includes('iij'))     notes.push('IIJ');
+  if (n.includes('ntt'))     notes.push('NTT');
   return notes;
 }
 
-function isRegionalPackage(pkg) {
-  const name = (pkg.name || pkg.packageName || '').toLowerCase();
-  const locList = pkg.locationNetworkList || pkg.locationList || [];
-  const REGIONAL_KW = ['asia', 'global', 'worldwide', 'multi', ' & ', ' countries', 'aukus', 'europe'];
-  return locList.length > 2 || REGIONAL_KW.some(kw => name.includes(kw));
-}
-
-// ── Helpers ─────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────
 function hargaGetKurs()   { return parseFloat(window._appSettings?.esim_kurs_usd || localStorage.getItem('esim_kurs_usd') || '16000'); }
 function hargaGetMarkup() { return parseFloat(window._appSettings?.esim_markup_pct || localStorage.getItem('esim_markup_pct') || '20'); }
 function hargaFmtIDR(v)   { return v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—'; }
@@ -189,7 +179,7 @@ function hargaRowAviroam(label, value, type) {
   </div>`;
 }
 
-// ── Panel setup ──────────────────────────────────────────────
+// ── Panel setup ───────────────────────────────────────────────
 function openHargaModal() {
   const panel = document.getElementById('panel-harga');
   if (!panel) return;
@@ -271,7 +261,7 @@ async function hargaSaveSetting(key, value) {
   localStorage.setItem(key, value);
   try {
     await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveSetting', key, value }) });
-  } catch(e) { console.warn('[hargaSaveSetting]', e); }
+  } catch(e) {}
 }
 
 function closeHargaPanel() {
@@ -292,8 +282,6 @@ function hargaReset() {
   window._esimcardCache   = {};
   window._esimAccessCache = {};
   window._iroamlyCache    = {};
-  window._eaAllPackages   = null;
-  window._irAllPackages   = null;
 }
 
 function initHargaPanelDrag() {
@@ -323,7 +311,7 @@ function initHargaPanelDrag() {
   document.addEventListener('touchend', dragEnd);
 }
 
-// ── Data loading ─────────────────────────────────────────────
+// ── Data loading ──────────────────────────────────────────────
 async function loadHargaData() {
   const loading = document.getElementById('h-loading');
   const result  = document.getElementById('h-result');
@@ -365,7 +353,7 @@ async function fetchHargaDataBackground() {
   } catch(e) { hargaLoaded = true; window._hargaCountries = GOHO_COUNTRIES.map(c => c.display); }
 }
 
-// ── Country dropdown ─────────────────────────────────────────
+// ── Country dropdown ──────────────────────────────────────────
 function hargaShowCountryDropdown() { hargaFilterCountry(document.getElementById('h-country-search').value); }
 
 function hargaFilterCountry(query) {
@@ -388,7 +376,9 @@ function hargaSelectByIndex(i) {
   document.getElementById('h-country').value = country;
   document.getElementById('h-country-dropdown').style.display = 'none';
   window._selectedCountry = GOHO_COUNTRIES.find(c => c.display === country) || null;
-  hargaOnCountryChange();
+  window._esimAccessCache = {};
+  window._iroamlyCache    = {};
+  hargaShowResult();
 }
 
 function hargaSelectCountry(country) {
@@ -397,24 +387,16 @@ function hargaSelectCountry(country) {
   document.getElementById('h-country').value = clean;
   document.getElementById('h-country-dropdown').style.display = 'none';
   window._selectedCountry = GOHO_COUNTRIES.find(c => c.display === clean) || null;
-  hargaOnCountryChange();
-}
-
-function hargaOnCountryChange() {
-  // Reset cache paket saat negara berubah
-  window._eaAllPackages = null;
-  window._irAllPackages = null;
+  window._esimAccessCache = {};
+  window._iroamlyCache    = {};
   hargaShowResult();
 }
 
-// Tutup dropdown saat blur
 document.addEventListener('DOMContentLoaded', function() {
   const inp = document.getElementById('h-country-search');
-  if (inp) {
-    inp.addEventListener('blur', function() {
-      setTimeout(() => { const dd = document.getElementById('h-country-dropdown'); if (dd) dd.style.display = 'none'; }, 200);
-    });
-  }
+  if (inp) inp.addEventListener('blur', function() {
+    setTimeout(() => { const dd = document.getElementById('h-country-dropdown'); if (dd) dd.style.display = 'none'; }, 200);
+  });
 });
 document.addEventListener('click', function(e) {
   const dd  = document.getElementById('h-country-dropdown');
@@ -422,22 +404,19 @@ document.addEventListener('click', function(e) {
   if (dd && inp && !dd.contains(e.target) && e.target !== inp) dd.style.display = 'none';
 });
 
-// ── Lama perjalanan input handler ────────────────────────────
+// ── Lama perjalanan input handler ─────────────────────────────
 function hargaOnLamaChange() {
-  // Debounce 500ms
   clearTimeout(window._lamaTimer);
-  window._lamaTimer = setTimeout(() => {
-    hargaShowResult();
-  }, 500);
+  window._lamaTimer = setTimeout(() => hargaShowResult(), 600);
 }
 
-// Legacy stubs — dipanggil dari index.html
-function hargaUpdateDay()    { hargaShowResult(); }
-function hargaOnDayChange()  { hargaShowResult(); }
-function hargaOnPkgChange()  { hargaShowResult(); }
-function hargaUpdatePkg()    { hargaShowResult(); }
+// Legacy stubs
+function hargaUpdateDay()   { hargaShowResult(); }
+function hargaOnDayChange() { hargaShowResult(); }
+function hargaOnPkgChange() { hargaShowResult(); }
+function hargaUpdatePkg()   { hargaShowResult(); }
 
-// ── MAIN: hargaShowResult ────────────────────────────────────
+// ── MAIN hargaShowResult — 4 kolom card ──────────────────────
 async function hargaShowResult() {
   const displayName = document.getElementById('h-country')?.value || '';
   const lamaHari    = hargaGetLamaPerjalanan();
@@ -445,597 +424,417 @@ async function hargaShowResult() {
   if (!displayName) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara dulu</div>'; return; }
   if (!lamaHari)    { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Isi lama perjalanan (hari)</div>'; return; }
 
-  const kurs   = hargaGetKurs();
-  const markup = hargaGetMarkup();
+  const kurs       = hargaGetKurs();
+  const markup     = hargaGetMarkup();
   const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
 
-  // Sync kurs/markup ke input
+  // Sync input
   const kursEl   = document.getElementById('h-kurs-usd');
   const markupEl = document.getElementById('h-markup-pct');
   if (kursEl)   kursEl.value   = kurs;
   if (markupEl) markupEl.value = markup;
 
-  // Aviroam rows — filter durasi >= lamaHari
+  // Aviroam — filter durasi >= lamaHari
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
   const src = window._aviroamRows || hargaData;
   let avRows = src.filter(r => {
-    const name = (r[0] || '').toLowerCase().trim();
+    const name   = (r[0] || '').toLowerCase().trim();
     const rowDur = r[2] || 0;
     return rowDur >= lamaHari && avKeywords.some(kw => name.includes(kw.toLowerCase()));
   });
-  // Dedup
   avRows = avRows.filter((r, i, arr) => arr.findIndex(x => x[0] === r[0] && x[1] === r[1] && x[2] === r[2]) === i);
 
-  const row = avRows[0] || null;
-  const [,,,,,, esimPar] = row || [];
+  const row       = avRows[0] || null;
+  const esimPar   = row ? parseFloat(row[6]) || 0 : 0;
+  const c         = displayName;
 
-  // Render frame dulu — kolom eSIM load async
+  // Build Aviroam cards
+  const aviroamCards = avRows.length === 0
+    ? '<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket ≥ ' + lamaHari + ' hari</div>'
+    : avRows.map(r => {
+        const [,, dur,, simPub, esimPub, esimPar2] = r;
+        const pkg = r[1] || '';
+        const rowDur = dur ? `${dur} hari` : '';
+        const rowPkg = pkg ? escH(pkg) : '';
+        return `
+          <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+            <div style="margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+              <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;display:inline-block;">🌏 ${escH(r[0])}</div>
+              <span style="font-size:9px;color:#0369a1;background:#e0f2fe;border-radius:3px;padding:1px 5px;">${[rowDur, rowPkg].filter(Boolean).join(' · ')}</span>
+            </div>
+            <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
+            ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
+            ${hargaRowAviroam('Partner', hargaFmtIDR(r[4]), 'agen')}
+            <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin:6px 0 4px;text-transform:uppercase;letter-spacing:0.4px;">eSIM</div>
+            ${hargaRowAviroam('Publish', hargaFmtIDR(esimPub), 'customer')}
+            ${hargaRowAviroam('Partner', hargaFmtIDR(esimPar2), 'agen')}
+          </div>`;
+      }).join('');
+
   resultEl.innerHTML = `
-    <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span style="font-size:12px;font-weight:600;color:var(--text);">${escH(displayName)}</span>
-      <span style="font-size:11px;background:#ede9fe;color:#6366f1;border-radius:4px;padding:2px 8px;">${lamaHari} hari perjalanan</span>
-      <span style="font-size:10px;color:var(--text-muted);">Paket durasi ≥ ${lamaHari} hari ditampilkan</span>
+    <div style="font-size:11px;background:#f1f5f9;border-radius:6px;padding:4px 10px;color:var(--text-muted);margin-bottom:12px;display:inline-block;">
+      ${escH(displayName)} · ${lamaHari} hari · Paket durasi ≥ ${lamaHari} hari
     </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
 
-    <!-- SECTION 1: REKOMENDASI -->
-    <div style="margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-        🏆 REKOMENDASI TERBAIK
-        <span style="font-size:10px;font-weight:400;color:var(--text-muted);">sort by harga termurah</span>
+      <!-- KIRI: Aviroam -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">🌐 Aviroam</div>
+        ${aviroamCards}
       </div>
-      <div id="h-rekomendasi" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
-        <div style="font-size:11px;color:var(--text-muted);padding:12px;"><i class="ti ti-loader spin"></i> Memuat...</div>
-      </div>
-    </div>
 
-    <!-- SECTION 2: TABEL LENGKAP -->
-    <div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-        <div style="font-size:11px;font-weight:700;color:var(--text);">📊 SEMUA PAKET</div>
-        <div style="display:flex;gap:4px;">
-          <button id="htab-total" onclick="hargaSwitchTab('total')" style="font-size:10px;padding:3px 10px;border:1px solid #6366f1;border-radius:4px;background:#6366f1;color:white;cursor:pointer;font-family:var(--font);">Total Data</button>
-          <button id="htab-daily" onclick="hargaSwitchTab('daily')" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:white;color:var(--text);cursor:pointer;font-family:var(--font);">Kuota Harian</button>
+      <!-- eSIM Access -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);">📡 eSIM Access</div>
+          <button onclick="esimAccessOpenRiwayat()" style="font-size:10px;padding:3px 8px;background:#ede9fe;border:1px solid #c4b5fd;color:#6366f1;border-radius:5px;cursor:pointer;font-family:var(--font);">📋 Riwayat</button>
+        </div>
+        <div id="esim-access-result" style="font-size:12px;color:var(--text-muted);">
+          <i class="ti ti-loader spin"></i> Memuat...
         </div>
       </div>
-      <div id="h-tabel-total" style="display:block;">
-        <div style="font-size:11px;color:var(--text-muted);padding:12px;"><i class="ti ti-loader spin"></i> Memuat tabel...</div>
+
+      <!-- iRoamly -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">🟣 iRoamly</div>
+        <div id="iroamly-result" style="font-size:12px;color:var(--text-muted);">
+          <i class="ti ti-loader spin"></i> Memuat...
+        </div>
       </div>
-      <div id="h-tabel-daily" style="display:none;">
-        <div style="font-size:11px;color:var(--text-muted);padding:12px;"><i class="ti ti-loader spin"></i> Memuat tabel...</div>
+
+      <!-- eSIMCard -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">🟦 eSIMCard</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button onclick="esimcardOpenRiwayat()" style="font-size:10px;padding:4px 10px;background:#f1f5f9;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-family:var(--font);">📋 Riwayat eSIM</button>
+          <button onclick="esimcardOpenSettingEmail()" style="font-size:10px;padding:4px 10px;background:#f1f5f9;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-family:var(--font);">⚙️ Setting Email</button>
+        </div>
+        <div id="esimcard-result" style="font-size:12px;color:var(--text-muted);">
+          <i class="ti ti-loader spin"></i> Memuat...
+        </div>
       </div>
+
     </div>`;
 
-  // Load semua data async
-  loadHargaRekomendasi(displayName, lamaHari, kurs, markup, parseFloat(esimPar) || 0, avRows, countryObj);
-  loadHargaTabelTotal(displayName, lamaHari, kurs, markup, countryObj, avRows);
-  loadHargaTabelDaily(displayName, lamaHari, kurs, markup, avRows);
+  // Load async
+  loadEsimAccessPrice(c, lamaHari, kurs, markup, esimPar);
+  loadIroamlyPrice(c, lamaHari, kurs, markup, esimPar);
+  loadEsimCardPrice(c, lamaHari, kurs, markup, esimPar);
 }
 
-function hargaSwitchTab(tab) {
-  document.getElementById('h-tabel-total').style.display = tab === 'total' ? 'block' : 'none';
-  document.getElementById('h-tabel-daily').style.display = tab === 'daily' ? 'block' : 'none';
-  document.getElementById('htab-total').style.background = tab === 'total' ? '#6366f1' : 'white';
-  document.getElementById('htab-total').style.color      = tab === 'total' ? 'white'   : 'var(--text)';
-  document.getElementById('htab-daily').style.background = tab === 'daily' ? '#6366f1' : 'white';
-  document.getElementById('htab-daily').style.color      = tab === 'daily' ? 'white'   : 'var(--text)';
-}
-
-// ── Section 1: Rekomendasi ───────────────────────────────────
-async function loadHargaRekomendasi(country, lamaHari, kurs, markup, aviroamPartnerEsim, avRows, countryObj) {
-  const el = document.getElementById('h-rekomendasi');
-  if (!el) return;
-
-  // Kumpulkan semua paket dari semua supplier
-  const allItems = [];
-
-  // Aviroam eSIM
-  avRows.forEach(r => {
-    const [,pkg, dur,, simPar, esimPub, esimPar2] = r;
-    const pkgType = detectPackageType(pkg || '');
-    if (pkgType.type === 'total') {
-      allItems.push({ supplier: 'Aviroam', type: 'eSIM', name: escH(pkg || ''), dur: dur || 0, buyIDR: parseFloat(esimPub) || 0, sellIDR: parseFloat(esimPar2) || 0, gbPerDay: null, totalGb: pkgType.gb, canBuy: false, badge: '' });
-    }
-  });
-
-  // eSIM Access
-  try {
-    const eaPkgs = await getEsimAccessPackages(countryObj, lamaHari);
-    eaPkgs.forEach(p => {
-      const buyUSD = p.priceRaw / 10000;
-      const buyIDR = Math.round(buyUSD * kurs);
-      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-      const pkgType = detectPackageType(p.name);
-      if (pkgType.type === 'total') {
-        allItems.push({ supplier: 'eSIM Access', type: 'eSIM', name: escH(p.name), dur: p.duration || 0, buyIDR, sellIDR, totalGb: pkgType.gb, speed: p.speed, canBuy: true, packageCode: p.packageCode, volumeFormatted: p.volumeFormatted, badge: '' });
-      }
-    });
-  } catch(e) {}
-
-  // iRoamly
-  try {
-    const irPkgs = await getIroamlyPackages(countryObj, lamaHari);
-    irPkgs.forEach(p => {
-      const buyUSD = parseFloat(p.credit || 0);
-      const buyIDR = Math.round(buyUSD * kurs);
-      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-      const pkgType = detectPackageType(p.data || '');
-      if (pkgType.type === 'total') {
-        allItems.push({ supplier: 'iRoamly', type: 'eSIM', name: escH(p.data || ''), dur: parseInt(p.duration) || 0, buyIDR, sellIDR, totalGb: pkgType.gb, operator: p.operator, canBuy: false, badge: '' });
-      }
-    });
-  } catch(e) {}
-
-  if (!allItems.length) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:12px;">Tidak ada paket untuk ' + lamaHari + ' hari</div>';
-    return;
-  }
-
-  // Sort by harga jual ASC
-  allItems.sort((a, b) => (a.sellIDR || a.buyIDR) - (b.sellIDR || b.buyIDR));
-
-  // Ambil 5 teratas
-  const top5 = allItems.slice(0, 5);
-
-  // Badge
-  if (top5[0]) top5[0].badge = '🥇 TERMURAH';
-  // Best value = GB terbanyak dengan harga reasonable
-  const withGb = top5.filter(x => x.totalGb);
-  if (withGb.length > 1) {
-    withGb.sort((a, b) => (b.totalGb / (b.sellIDR || b.buyIDR || 1)) - (a.totalGb / (a.sellIDR || a.buyIDR || 1)));
-    const bestVal = top5.find(x => x === withGb[0]);
-    if (bestVal && !bestVal.badge) bestVal.badge = '⭐ BEST VALUE';
-  }
-
-  const supplierColor = { 'eSIM Access': '#6366f1', 'iRoamly': '#7c3aed', 'eSIMCard': '#1d4ed8', 'Aviroam': '#0369a1' };
-
-  el.innerHTML = top5.map(item => {
-    const color  = supplierColor[item.supplier] || '#374151';
-    const harga  = item.sellIDR || item.buyIDR;
-    const gbInfo = item.totalGb ? `${item.totalGb}GB` : (item.volumeFormatted || '');
-    const durInfo = item.dur ? `${item.dur} hari` : '';
-    const badgeHtml = item.badge ? `<div style="font-size:9px;font-weight:700;background:#fef3c7;color:#92400e;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">${item.badge}</div>` : '';
-    const buyBtn = item.canBuy && item.packageCode
-      ? `<button onclick="esimAccessOpenBeli(${JSON.stringify(JSON.stringify({packageCode:item.packageCode,name:item.name,priceUSD:(item.buyIDR/kurs),buyIDR:item.buyIDR,sellIDR:item.sellIDR,duration:item.dur,volumeFormatted:item.volumeFormatted||'',speed:item.speed||''}))})"
-           style="width:100%;margin-top:6px;padding:5px;background:${color};color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">📡 Beli</button>`
-      : '';
-
-    return `<div style="min-width:160px;max-width:180px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;padding:10px;background:white;">
-      ${badgeHtml}
-      <div style="font-size:10px;font-weight:700;color:${color};margin-bottom:2px;">${item.supplier}</div>
-      <div style="font-size:10px;color:var(--text);margin-bottom:4px;line-height:1.3;">${item.name}</div>
-      <div style="font-size:9px;color:var(--text-muted);margin-bottom:6px;">${[gbInfo, durInfo].filter(Boolean).join(' · ')}</div>
-      <div style="font-size:13px;font-weight:700;color:${color};">${hargaFmtIDR(harga)}</div>
-      ${buyBtn}
-    </div>`;
-  }).join('');
-}
-
-// ── Section 2: Tabel Total Data ──────────────────────────────
-async function loadHargaTabelTotal(country, lamaHari, kurs, markup, countryObj, avRows) {
-  const el = document.getElementById('h-tabel-total');
-  if (!el) return;
-
-  const rows = []; // { supplier, type, name, dur, buyIDR, sellIDR, totalGb, info, canBuy, packageCode }
-
-  // Aviroam SIM Card & eSIM
-  avRows.forEach(r => {
-    const [negara, pkg, dur,, simPub, esimPub, esimPar2] = r;
-    const pkgType = detectPackageType(pkg || '');
-    if (pkgType.type !== 'total') return;
-    rows.push({ supplier: 'Aviroam', type: 'SIM Card', name: escH(pkg || ''), dur: dur || 0, buyIDR: parseFloat(simPub) || 0, sellIDR: 0, totalGb: pkgType.gb, info: escH(negara || ''), canBuy: false, isAviroam: true, simPub: parseFloat(simPub)||0, simPar: parseFloat(r[4])||0, esimPub: parseFloat(esimPub)||0, esimPar: parseFloat(esimPar2)||0 });
-  });
-
-  // eSIM Access
-  try {
-    const eaPkgs = await getEsimAccessPackages(countryObj, lamaHari);
-    eaPkgs.forEach(p => {
-      const pkgType = detectPackageType(p.name);
-      if (pkgType.type !== 'total') return;
-      const buyUSD = p.priceRaw / 10000;
-      const buyIDR = Math.round(buyUSD * kurs);
-      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-      const notes = parsePackageNotes(p.name);
-      const isRegional = isRegionalPackage(p);
-      const regionLabel = isRegional ? '🌏 Multi-negara' : '';
-      rows.push({ supplier: 'eSIM Access', type: 'eSIM', name: escH(p.name), dur: p.duration || 0, buyIDR, sellIDR, totalGb: pkgType.gb, info: [p.speed || '', notes.join(' '), regionLabel].filter(Boolean).join(' · '), canBuy: true, packageCode: p.packageCode, volumeFormatted: p.volumeFormatted, speed: p.speed });
-    });
-  } catch(e) {}
-
-  // iRoamly
-  try {
-    const irPkgs = await getIroamlyPackages(countryObj, lamaHari);
-    irPkgs.forEach(p => {
-      const pkgType = detectPackageType(p.data || '');
-      if (pkgType.type !== 'total') return;
-      const buyUSD = parseFloat(p.credit || 0);
-      const buyIDR = Math.round(buyUSD * kurs);
-      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-      const canHotspot = p.hotspot !== false;
-      rows.push({ supplier: 'iRoamly', type: 'eSIM', name: escH(p.data || ''), dur: parseInt(p.duration) || 0, buyIDR, sellIDR, totalGb: pkgType.gb, info: `${escH(p.operator||'')} · ${escH(p.network_type||'4G')} · Hotspot:${canHotspot?'✅':'❌'}`, canBuy: false });
-    });
-  } catch(e) {}
-
-  // eSIMCard (dari esimcard.js)
-  // Data ini di-load terpisah oleh loadEsimCardPrice
-  // Kita tampilkan placeholder dulu
-  rows.push({ _esimcardPlaceholder: true });
-
-  // Sort: durasi ASC, lalu harga ASC
-  const sortedRows = rows.filter(r => !r._esimcardPlaceholder).sort((a, b) => {
-    const dd = (a.dur || 0) - (b.dur || 0);
-    return dd !== 0 ? dd : (a.buyIDR || 0) - (b.buyIDR || 0);
-  });
-
-  if (!sortedRows.length) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:12px;">Tidak ada paket Total Data</div>';
-    loadEsimCardPrice(country, lamaHari, kurs, markup, 0, true);
-    return;
-  }
-
-  const supplierColor = { 'eSIM Access': '#6366f1', 'iRoamly': '#7c3aed', 'eSIMCard': '#1d4ed8', 'Aviroam': '#0369a1' };
-
-  let html = `<div style="overflow-x:auto;">
-    <table style="width:100%;border-collapse:collapse;font-size:11px;">
-      <thead>
-        <tr style="background:#f8fafc;border-bottom:2px solid var(--border);">
-          <th style="text-align:left;padding:6px 8px;font-weight:600;color:var(--text-muted);">Supplier</th>
-          <th style="text-align:left;padding:6px 8px;font-weight:600;color:var(--text-muted);">Paket</th>
-          <th style="text-align:center;padding:6px 8px;font-weight:600;color:var(--text-muted);">Dur</th>
-          <th style="text-align:right;padding:6px 8px;font-weight:600;color:var(--text-muted);">Beli</th>
-          <th style="text-align:right;padding:6px 8px;font-weight:600;color:var(--text-muted);">Jual</th>
-          <th style="padding:6px 8px;"></th>
-        </tr>
-      </thead>
-      <tbody>`;
-
-  sortedRows.forEach(r => {
-    const color = supplierColor[r.supplier] || '#374151';
-    if (r.isAviroam) {
-      // Aviroam: 1 row per paket dengan 2 harga
-      html += `<tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:6px 8px;"><span style="color:${color};font-weight:600;">${r.supplier}</span><br><span style="font-size:9px;color:var(--text-muted);">SIM+eSIM</span></td>
-        <td style="padding:6px 8px;">${r.name}<br><span style="font-size:9px;color:var(--text-muted);">${r.info}</span></td>
-        <td style="padding:6px 8px;text-align:center;">${r.dur}hr</td>
-        <td style="padding:6px 8px;text-align:right;">
-          <div style="font-size:10px;color:#0369a1;">SIM: ${hargaFmtIDR(r.simPub)}</div>
-          <div style="font-size:10px;color:#166534;">eSIM: ${hargaFmtIDR(r.esimPub)}</div>
-        </td>
-        <td style="padding:6px 8px;text-align:right;">
-          <div style="font-size:10px;color:#0369a1;">${hargaFmtIDR(r.simPar)}</div>
-          <div style="font-size:10px;color:#166534;">${hargaFmtIDR(r.esimPar)}</div>
-        </td>
-        <td style="padding:6px 8px;"><span style="font-size:9px;color:var(--text-muted);">Info saja</span></td>
-      </tr>`;
-    } else {
-      const buyBtn = r.canBuy && r.packageCode
-        ? `<button onclick="esimAccessOpenBeli(${JSON.stringify(JSON.stringify({packageCode:r.packageCode,name:r.name,priceUSD:(r.buyIDR/kurs),buyIDR:r.buyIDR,sellIDR:r.sellIDR,duration:r.dur,volumeFormatted:r.volumeFormatted||'',speed:r.speed||''}))})"
-             style="font-size:10px;padding:3px 8px;background:${color};color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);white-space:nowrap;">Beli</button>`
-        : `<span style="font-size:9px;color:var(--text-muted);">eSIM</span>`;
-      html += `<tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:6px 8px;"><span style="color:${color};font-weight:600;">${r.supplier}</span></td>
-        <td style="padding:6px 8px;">${r.name}<br><span style="font-size:9px;color:var(--text-muted);">${r.info || ''}</span></td>
-        <td style="padding:6px 8px;text-align:center;">${r.dur}hr</td>
-        <td style="padding:6px 8px;text-align:right;font-weight:600;">${hargaFmtIDR(r.buyIDR)}</td>
-        <td style="padding:6px 8px;text-align:right;font-weight:700;color:${color};">${hargaFmtIDR(r.sellIDR || r.buyIDR)}</td>
-        <td style="padding:6px 8px;">${buyBtn}</td>
-      </tr>`;
-    }
-  });
-
-  // eSIMCard rows (load async, placeholder)
-  html += `<tr id="htabel-esimcard-rows"><td colspan="6" style="padding:8px;font-size:11px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Memuat eSIMCard...</td></tr>`;
-  html += `</tbody></table></div>`;
-  el.innerHTML = html;
-
-  // Load eSIMCard async dan inject ke tabel
-  loadEsimCardIntoTable(country, lamaHari, kurs, markup, supplierColor['eSIMCard']);
-}
-
-// ── Section 2: Tabel Kuota Harian ───────────────────────────
-async function loadHargaTabelDaily(country, lamaHari, kurs, markup, avRows) {
-  const el = document.getElementById('h-tabel-daily');
-  if (!el) return;
-
-  const dailyItems = []; // { supplier, name, gbPerDay, dur, buyIDR, simPub, simPar, esimPub, esimPar, isAviroam, canBuy }
-
-  // Aviroam — per hari (1GB/day, 2GB/day, dll)
-  avRows.forEach(r => {
-    const [negara, pkg, dur,, simPub, esimPub, esimPar2] = r;
-    const pkgType = detectPackageType(pkg || '');
-    if (pkgType.type !== 'daily') return;
-    dailyItems.push({ supplier: 'Aviroam', name: escH(pkg || ''), gbPerDay: pkgType.gbPerDay, dur: dur || 0, simPub: parseFloat(simPub)||0, simPar: parseFloat(r[4])||0, esimPub: parseFloat(esimPub)||0, esimPar: parseFloat(esimPar2)||0, isAviroam: true, canBuy: false });
-  });
-
-  // eSIMCard Unlimited — tambah via placeholder
-  dailyItems.push({ _esimcardDailyPlaceholder: true });
-
-  if (!dailyItems.filter(x => !x._esimcardDailyPlaceholder).length) {
-    el.innerHTML = `<div id="h-daily-esimcard"><div style="font-size:11px;color:var(--text-muted);padding:12px;"><i class="ti ti-loader spin"></i> Memuat eSIMCard Unlimited...</div></div>`;
-    loadEsimCardDailyIntoSection(country, lamaHari, kurs, markup, avRows);
-    return;
-  }
-
-  // Group by gbPerDay
-  const groups = {};
-  dailyItems.filter(x => !x._esimcardDailyPlaceholder).forEach(item => {
-    const key = item.gbPerDay || 'unknown';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(item);
-  });
-
-  let html = '';
-  Object.entries(groups).sort((a,b) => (parseFloat(a[0])||0) - (parseFloat(b[0])||0)).forEach(([gb, items]) => {
-    const label = gb === 'unknown' ? 'Kuota Harian' : `${gb}GB / hari`;
-    html += `<div style="margin-bottom:12px;">
-      <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">📶 ${label}</div>`;
-    items.forEach(item => {
-      if (item.isAviroam) {
-        html += `<div style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;margin-bottom:6px;">
-          <div style="font-size:11px;font-weight:600;color:#0369a1;">🌐 Aviroam · ${item.dur} hari</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;">${item.name}</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-            <div style="font-size:10px;">SIM Card Customer: <b>${hargaFmtIDR(item.simPub)}</b></div>
-            <div style="font-size:10px;">SIM Card Partner: <b style="color:#166534;">${hargaFmtIDR(item.simPar)}</b></div>
-            <div style="font-size:10px;">eSIM Customer: <b>${hargaFmtIDR(item.esimPub)}</b></div>
-            <div style="font-size:10px;">eSIM Partner: <b style="color:#166534;">${hargaFmtIDR(item.esimPar)}</b></div>
-          </div>
-        </div>`;
-      }
-    });
-    html += `</div>`;
-  });
-
-  // eSIMCard daily placeholder
-  html += `<div id="h-daily-esimcard"><div style="font-size:11px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Memuat eSIMCard Unlimited...</div></div>`;
-  el.innerHTML = html;
-
-  loadEsimCardDailyIntoSection(country, lamaHari, kurs, markup, avRows);
-}
-
-// ── eSIM Access package fetcher ──────────────────────────────
-async function getEsimAccessPackages(countryObj, lamaHari) {
-  const iso = countryObj?.iso;
-  if (!iso) return [];
-  const cacheKey = `ea_${iso}`;
-  if (window._eaAllPackages?.[cacheKey]) {
-    return filterEsimAccessByLama(window._eaAllPackages[cacheKey], lamaHari);
-  }
-  try {
-    const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimAccessPackages&locationCode=${iso}`);
-    const data = await res.json();
-    if (!data.ok || !data.packages) return [];
-    if (!window._eaAllPackages) window._eaAllPackages = {};
-    window._eaAllPackages[cacheKey] = data.packages;
-    return filterEsimAccessByLama(data.packages, lamaHari);
-  } catch(e) { return []; }
-}
-
-function filterEsimAccessByLama(packages, lamaHari) {
-  return packages.filter(p => (p.duration || 0) >= lamaHari);
-}
-
-// ── iRoamly package fetcher ──────────────────────────────────
-async function getIroamlyPackages(countryObj, lamaHari) {
-  const region = countryObj?.iroamly || iroamlyGetRegion(countryObj?.display || '');
-  if (!region) return [];
-  const cacheKey = `ir_${region}`;
-  if (window._irAllPackages?.[cacheKey]) {
-    return filterIroamlyByLama(window._irAllPackages[cacheKey], lamaHari);
-  }
-  try {
-    const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getIroamlyPackages&region=${encodeURIComponent(region)}`);
-    const data = await res.json();
-    if (!data.ok || !data.data) return [];
-    const totalPkgs = data.data.filter(p => p.type === 'Total');
-    const pkgs = totalPkgs.length ? totalPkgs : data.data;
-    if (!window._irAllPackages) window._irAllPackages = {};
-    window._irAllPackages[cacheKey] = pkgs;
-    return filterIroamlyByLama(pkgs, lamaHari);
-  } catch(e) { return []; }
-}
-
-function filterIroamlyByLama(packages, lamaHari) {
-  return packages.filter(p => (parseInt(p.duration) || 0) >= lamaHari);
-}
-
-// ── eSIMCard inject ke tabel total ──────────────────────────
-async function loadEsimCardIntoTable(country, lamaHari, kurs, markup, color) {
-  const el = document.getElementById('htabel-esimcard-rows');
+// ── eSIM Access price loader ──────────────────────────────────
+async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviroamPartnerEsim) {
+  const el = document.getElementById('esim-access-result');
   if (!el) return;
   try {
-    const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
-    const iso = (countryObj?.iso || '').toLowerCase();
-    if (!iso) { el.innerHTML = '<tr><td colspan="6" style="padding:8px;font-size:11px;color:var(--text-muted);">eSIMCard: negara tidak tersedia</td></tr>'; return; }
-    const cacheKey = `esimcard_pkgs_${iso}`;
-    let pkgs = window._esimcardCache?.[cacheKey];
-    if (!pkgs) {
-      const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`);
+    const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === countryDisplay);
+    const code = countryObj?.iso;
+    if (!code) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia</span>'; return; }
+
+    const cacheKey = `ea_${code}`;
+    let rawPackages = window._esimAccessCache?.[cacheKey];
+    if (!rawPackages) {
+      const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimAccessPackages&locationCode=${code}`);
       const data = await res.json();
-      if (!data.ok || !data.data?.data?.length) { el.innerHTML = '<tr><td colspan="6" style="padding:8px;font-size:11px;color:var(--text-muted);">eSIMCard: tidak ada paket</td></tr>'; return; }
-      pkgs = data.data.data;
-      if (!window._esimcardCache) window._esimcardCache = {};
-      window._esimcardCache[cacheKey] = pkgs;
+      if (!data.ok || !data.packages?.length) {
+        el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>';
+        return;
+      }
+      rawPackages = data.packages;
+      if (!window._esimAccessCache) window._esimAccessCache = {};
+      window._esimAccessCache[cacheKey] = rawPackages;
     }
 
-    // Filter paket total data saja, durasi >= lamaHari
-    const totalPkgs = pkgs.filter(p => {
+    // Filter: durasi >= lamaHari, exclude paket regional/global
+    const REGIONAL_KW = ['asia', 'global', 'worldwide', 'global139', 'global (', 'asia-20', 'aukus'];
+    let packages = rawPackages.filter(p => {
+      const dur  = parseInt(p.duration || 0);
       const name = (p.name || '').toLowerCase();
-      const dur  = parseInt(p.package_validity || p.duration || 0);
-      const pkgType = detectPackageType(p.name || '');
-      return pkgType.type === 'total' && dur >= lamaHari;
-    }).sort((a, b) => {
-      const da = parseInt(a.package_validity || a.duration || 0);
-      const db = parseInt(b.package_validity || b.duration || 0);
-      return da !== db ? da - db : 0;
+      const isRegional = REGIONAL_KW.some(kw => name.includes(kw));
+      const locList = p.locationNetworkList || [];
+      return dur >= lamaHari && !isRegional && locList.length <= 2;
     });
 
-    if (!totalPkgs.length) { el.innerHTML = '<tr><td colspan="6" style="padding:8px;font-size:11px;color:var(--text-muted);">eSIMCard: tidak ada paket Total Data</td></tr>'; return; }
-
-    el.outerHTML = totalPkgs.map(p => {
-      const dur     = parseInt(p.package_validity || p.duration || 0);
-      const buyUSD  = parseFloat(p.cost || 0);
-      const buyIDR  = Math.round(buyUSD * kurs);
-      const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-      const name    = escH(p.name || '');
-      const op      = escH(p.network_provider || p.operator || '');
-      const pkgDataStr = escH(JSON.stringify({ id: p.id, name: p.name || '', dataQty: p.data_quantity || '', validity: dur, buyUSD, buyIDR, sellIDR }).replace(/'/g,"&#39;"));
-      return `<tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:6px 8px;"><span style="color:${color};font-weight:600;">eSIMCard</span></td>
-        <td style="padding:6px 8px;">${name}<br><span style="font-size:9px;color:var(--text-muted);">${op}</span></td>
-        <td style="padding:6px 8px;text-align:center;">${dur}hr</td>
-        <td style="padding:6px 8px;text-align:right;font-weight:600;">${hargaFmtIDR(buyIDR)}</td>
-        <td style="padding:6px 8px;text-align:right;font-weight:700;color:${color};">${hargaFmtIDR(sellIDR)}</td>
-        <td style="padding:6px 8px;"><button onclick="esimcardOpenBeli('${pkgDataStr}')" style="font-size:10px;padding:3px 8px;background:${color};color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">Beli</button></td>
-      </tr>`;
-    }).join('');
-  } catch(e) {
-    if (el) el.outerHTML = `<tr><td colspan="6" style="padding:8px;font-size:11px;color:var(--red);">eSIMCard error: ${escH(e.message)}</td></tr>`;
-  }
-}
-
-// ── eSIMCard daily inject ────────────────────────────────────
-async function loadEsimCardDailyIntoSection(country, lamaHari, kurs, markup, avRows) {
-  const el = document.getElementById('h-daily-esimcard');
-  if (!el) return;
-  try {
-    const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
-    const iso = (countryObj?.iso || '').toLowerCase();
-    if (!iso) { el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">eSIMCard: negara tidak tersedia</div>'; return; }
-    const cacheKey = `esimcard_pkgs_${iso}`;
-    let pkgs = window._esimcardCache?.[cacheKey];
-    if (!pkgs) {
-      const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`);
-      const data = await res.json();
-      if (!data.ok || !data.data?.data?.length) { el.innerHTML = ''; return; }
-      pkgs = data.data.data;
-      if (!window._esimcardCache) window._esimcardCache = {};
-      window._esimcardCache[cacheKey] = pkgs;
+    if (!packages.length) {
+      // Fallback: tampilkan semua paket durasi >= lamaHari (termasuk regional)
+      packages = rawPackages.filter(p => parseInt(p.duration || 0) >= lamaHari);
     }
 
-    // Filter paket daily/unlimited
-    const dailyPkgs = pkgs.filter(p => {
-      const dur  = parseInt(p.package_validity || p.duration || 0);
-      const pkgType = detectPackageType(p.name || '');
-      return pkgType.type === 'daily' && dur >= lamaHari;
-    }).sort((a, b) => {
-      const ta = detectPackageType(a.name || '');
-      const tb = detectPackageType(b.name || '');
-      return (ta.gbPerDay || 0) - (tb.gbPerDay || 0);
+    if (!packages.length) {
+      el.innerHTML = `<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket untuk ≥ ${lamaHari} hari</span>`;
+      return;
+    }
+
+    // Sort: durasi ASC, lalu harga ASC
+    packages.sort((a, b) => {
+      const dd = parseInt(a.duration || 0) - parseInt(b.duration || 0);
+      return dd !== 0 ? dd : (a.priceRaw || 0) - (b.priceRaw || 0);
     });
 
-    if (!dailyPkgs.length) { el.innerHTML = ''; return; }
-
-    // Group by gbPerDay
-    const groups = {};
-    dailyPkgs.forEach(p => {
-      const pt = detectPackageType(p.name || '');
-      const key = pt.gbPerDay || 'unknown';
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(p);
+    // Group by durasi
+    const byDay = new Map();
+    packages.forEach(pkg => {
+      const d = parseInt(pkg.duration || 0);
+      if (!byDay.has(d)) byDay.set(d, []);
+      byDay.get(d).push(pkg);
     });
 
     let html = '';
-    Object.entries(groups).sort((a,b) => (parseFloat(a[0])||0) - (parseFloat(b[0])||0)).forEach(([gb, items]) => {
-      const label = gb === 'unknown' ? 'Unlimited' : `${gb}GB/hari`;
-      html += `<div style="margin-bottom:12px;">
-        <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">🟦 eSIMCard · ${label}</div>`;
-      items.forEach(p => {
-        const dur    = parseInt(p.package_validity || p.duration || 0);
-        const buyUSD = parseFloat(p.cost || 0);
-        const buyIDR = Math.round(buyUSD * kurs);
+    byDay.forEach((dayPkgs, validity) => {
+      if (byDay.size > 1) {
+        html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border);">📅 ${validity} Hari</div>`;
+      }
+      dayPkgs.forEach(pkg => {
+        const buyUSD  = (pkg.priceRaw || 0) / 10000;
+        const buyIDR  = Math.round(buyUSD * kurs);
         const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-        const pkgDataStr = escH(JSON.stringify({ id: p.id, name: p.name||'', dataQty: p.data_quantity||'', validity: dur, buyUSD, buyIDR, sellIDR }).replace(/'/g,"&#39;"));
-        html += `<div style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;margin-bottom:6px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text);">${escH(p.name||'')}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">${escH(p.network_provider||'')} · ${dur} hari</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-size:10px;color:var(--text-muted);">Beli: <b>${hargaFmtIDR(buyIDR)}</b></div>
-              <div style="font-size:12px;font-weight:700;color:#1d4ed8;">Jual: ${hargaFmtIDR(sellIDR)}</div>
-            </div>
-            <button onclick="esimcardOpenBeli('${pkgDataStr}')" style="font-size:10px;padding:5px 10px;background:#1d4ed8;color:white;border:none;border-radius:5px;cursor:pointer;font-family:var(--font);">🛒 Beli</button>
+        const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+        const bg     = isCheaper ? '#f0fdf4' : 'white';
+        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+        const notes  = parsePackageNotes(pkg.name || '');
+        const noteHtml = notes.length ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">${notes.join(' · ')}</div>` : '';
+        const locList = pkg.locationNetworkList || [];
+        const ops = locList.flatMap(l => (l.networkList || []).map(n => n.operatorName || '')).filter(Boolean).slice(0, 3);
+        const opStr = ops.length ? ops.join(' · ') : '';
+        const pkgDataStr = escH(JSON.stringify({ packageCode: pkg.packageCode, name: pkg.name||'', priceUSD: buyUSD, buyIDR, sellIDR, duration: validity, volumeFormatted: pkg.volumeFormatted||'', speed: pkg.speed||'' }));
+        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.name||'-')}</span>${cheapBadge}
+          </div>
+          ${noteHtml}
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+            ${pkg.speed ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(pkg.speed)}</span>` : ''}
+            ${pkg.volumeFormatted ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📦 ${escH(pkg.volumeFormatted)}</span>` : ''}
+            ${pkg.hotspot ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ✅</span>` : ''}
+          </div>
+          ${opStr ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">📡 ${escH(opStr)}</div>` : ''}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);margin-bottom:4px;">
+            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:#6366f1;">${hargaFmtIDR(sellIDR)}</span>
+          </div>
+          <button onclick='esimAccessOpenBeli(${JSON.stringify(pkgDataStr)})' style="width:100%;padding:5px;background:#6366f1;color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">📡 Beli eSIM Access</button>
+        </div>`;
+      });
+    });
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
+  } catch(e) {
+    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${escH(e.message)}</span>`;
+  }
+}
+
+// ── iRoamly price loader ──────────────────────────────────────
+async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerEsim) {
+  const el = document.getElementById('iroamly-result');
+  if (!el) return;
+  try {
+    const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
+    const region = countryObj?.iroamly || iroamlyGetRegion(country);
+    if (!region) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia di iRoamly</span>'; return; }
+
+    const cacheKey = `ir_${region}`;
+    let rawData = window._iroamlyCache?.[cacheKey];
+    if (!rawData) {
+      const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getIroamlyPackages&region=${encodeURIComponent(region)}`);
+      const data = await res.json();
+      if (!data.ok || !data.data?.length) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>'; return; }
+      rawData = data.data;
+      if (!window._iroamlyCache) window._iroamlyCache = {};
+      window._iroamlyCache[cacheKey] = rawData;
+    }
+
+    // Filter Total Data, durasi >= lamaHari
+    const totalPkgs = rawData.filter(p => p.type === 'Total');
+    let allPkgs = (totalPkgs.length ? totalPkgs : rawData).filter(p => parseInt(p.duration) >= lamaHari);
+
+    if (!allPkgs.length) { el.innerHTML = `<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket untuk ≥ ${lamaHari} hari</span>`; return; }
+
+    allPkgs.sort((a, b) => {
+      const dd = parseInt(a.duration) - parseInt(b.duration);
+      return dd !== 0 ? dd : parseFloat(a.credit||0) - parseFloat(b.credit||0);
+    });
+
+    const byDay = new Map();
+    allPkgs.forEach(pkg => {
+      const d = parseInt(pkg.duration);
+      if (!byDay.has(d)) byDay.set(d, []);
+      byDay.get(d).push(pkg);
+    });
+
+    let html = '';
+    byDay.forEach((dayPkgs, validity) => {
+      if (byDay.size > 1) html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border);">📅 ${validity} Hari</div>`;
+      dayPkgs.forEach(pkg => {
+        const buyUSD  = parseFloat(pkg.credit || 0);
+        const buyIDR  = Math.round(buyUSD * kurs);
+        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+        const isCheaper  = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+        const bg     = isCheaper ? '#f0fdf4' : 'white';
+        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+        const canHotspot = pkg.hotspot !== false;
+        const coverage   = IROAMLY_REGIONS[pkg.region_index || ''] || '';
+        const dayQuota   = pkg.day_quota || pkg.daily_quota || '';
+        let speedInfo = dayQuota ? `${dayQuota}/hari full speed` : '';
+        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.data||'-')} · ${validity}h</span>${cheapBadge}
+          </div>
+          ${coverage ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:4px;display:inline-block;">🌏 ${escH(coverage)}</div>` : ''}
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.operator||'')}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(pkg.network_type||'4G')}</span>
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot?'✅':'❌'}</span>
+          </div>
+          ${speedInfo ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${escH(speedInfo)}</div>` : ''}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:#7c3aed;">${hargaFmtIDR(sellIDR)}</span>
           </div>
         </div>`;
       });
-      html += '</div>';
     });
-    el.innerHTML = html;
-  } catch(e) { if (el) el.innerHTML = ''; }
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
+  } catch(e) {
+    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${escH(e.message)}</span>`;
+  }
 }
 
-// ── loadEsimCardPrice (legacy stub — dipanggil dari kode lama) ──
-async function loadEsimCardPrice(country, day, kurs, markup, aviroamPartnerEsim, skipRender) {
-  // Fungsi ini masih dipanggil dari esimcard.js / kode lama
-  // Di UI baru sudah dihandle oleh loadEsimCardIntoTable
-  // Stub agar tidak error
-  if (skipRender) return;
+// ── loadEsimCardPrice — dipanggil dari esimcard.js ────────────
+async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartnerEsim) {
+  const el = document.getElementById('esimcard-result');
+  if (!el) return;
+  try {
+    const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
+    const iso = (countryObj?.iso || '').toLowerCase();
+    if (!iso) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia</span>'; return; }
+
+    const cacheKey = `esimcard_pkgs_${iso}`;
+    let pkgs = window._esimcardCache?.[cacheKey];
+    if (!pkgs) {
+      const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`);
+      const data = await res.json();
+      if (!data.ok || !data.data?.data?.length) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>'; return; }
+      pkgs = data.data.data;
+      if (!window._esimcardCache) window._esimcardCache = {};
+      window._esimcardCache[cacheKey] = pkgs;
+    }
+
+    // Filter durasi >= lamaHari
+    let filtered = pkgs.filter(p => parseInt(p.package_validity || p.duration || 0) >= lamaHari);
+    if (!filtered.length) { el.innerHTML = `<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket untuk ≥ ${lamaHari} hari</span>`; return; }
+
+    filtered.sort((a, b) => {
+      const da = parseInt(a.package_validity || a.duration || 0);
+      const db = parseInt(b.package_validity || b.duration || 0);
+      return da !== db ? da - db : parseFloat(a.cost||0) - parseFloat(b.cost||0);
+    });
+
+    const byDay = new Map();
+    filtered.forEach(p => {
+      const d = parseInt(p.package_validity || p.duration || 0);
+      if (!byDay.has(d)) byDay.set(d, []);
+      byDay.get(d).push(p);
+    });
+
+    let html = '';
+    byDay.forEach((dayPkgs, validity) => {
+      if (byDay.size > 1) html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border);">📅 ${validity} Hari</div>`;
+      dayPkgs.forEach(p => {
+        const buyUSD  = parseFloat(p.cost || 0);
+        const buyIDR  = Math.round(buyUSD * kurs);
+        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+        const isCheaper  = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+        const bg     = isCheaper ? '#f0fdf4' : 'white';
+        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+        const op     = escH(p.network_provider || p.operator || '');
+        const pkgDataStr = escH(JSON.stringify({ id: p.id, name: p.name||'', dataQty: p.data_quantity||'', validity, buyUSD, buyIDR, sellIDR }));
+        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(p.name||'-')}</span>${cheapBadge}
+          </div>
+          ${op ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">${op}</div>` : ''}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);margin-bottom:4px;">
+            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:#1d4ed8;">${hargaFmtIDR(sellIDR)}</span>
+          </div>
+          <button onclick="esimcardOpenBeli('${pkgDataStr}')" style="width:100%;padding:5px;background:#1d4ed8;color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">🛒 Beli eSIMCard</button>
+        </div>`;
+      });
+    });
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
+  } catch(e) {
+    if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${escH(e.message)}</span>`;
+  }
 }
 
-// ── eSIM Access Riwayat ──────────────────────────────────────
+// ── eSIM Access Riwayat ───────────────────────────────────────
 async function esimAccessOpenRiwayat() {
-  let modal = document.getElementById('esimaccess-riwayat-modal');
-  if (modal) modal.remove();
-
-  modal = document.createElement('div');
+  const old = document.getElementById('esimaccess-riwayat-modal');
+  if (old) old.remove();
+  const modal = document.createElement('div');
   modal.id = 'esimaccess-riwayat-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
   modal.innerHTML = `
     <div style="background:white;border-radius:12px;padding:24px;width:500px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <h3 style="margin:0;font-size:14px;color:var(--text);">📡 Riwayat eSIM Access</h3>
-        <button onclick="document.getElementById('esimaccess-riwayat-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+        <button onclick="document.getElementById('esimaccess-riwayat-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
       </div>
-      <div id="ea-riwayat-list" style="font-size:12px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Memuat...</div>
+      <div id="ea-riwayat-list"><i class="ti ti-loader spin"></i> Memuat...</div>
     </div>`;
   document.body.appendChild(modal);
-
   try {
     const res  = await fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimAccessOrders&limit=50');
     const data = await res.json();
     const listEl = document.getElementById('ea-riwayat-list');
     if (!listEl) return;
-    if (!data.ok || !data.orders?.length) {
-      listEl.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada transaksi eSIM Access</div>';
-      return;
-    }
+    if (!data.ok || !data.orders?.length) { listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada transaksi</div>'; return; }
     window._eaOrders = data.orders;
+    const statusColor = { 'ACTIVE': '#166534', 'RELEASED': '#1e40af', 'PENDING': '#92400e', 'DEPLETED': '#6b7280', 'CANCELLED': '#991b1b' };
     listEl.innerHTML = data.orders.map((o, idx) => {
       const tgl = o.created_at ? new Date(o.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-';
-      const statusColor = { 'ACTIVE': '#166534', 'RELEASED': '#1e40af', 'PENDING': '#92400e', 'DEPLETED': '#6b7280', 'CANCELLED': '#991b1b', 'REVOKED': '#991b1b' };
-      const sc = statusColor[o.status] || '#6b7280';
+      const sc  = statusColor[o.status] || '#6b7280';
       return `
         <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden;">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;cursor:pointer;background:#f8fafc;" onclick="eaToggleRiwayat(${idx})">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                ${escH(o.nama_customer || o.no_wa_customer || '-')}
-              </div>
-              <div style="font-size:10px;color:var(--text-muted);">${escH(o.package_code || '-')} · ${tgl}</div>
-              <div style="font-size:10px;color:${sc};font-weight:600;">${o.status || 'PENDING'}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#f8fafc;cursor:pointer;" onclick="eaToggleRiwayat(${idx})">
+            <div>
+              <div style="font-size:11px;font-weight:700;">${escH(o.nama_customer || o.no_wa_customer || '-')}</div>
+              <div style="font-size:10px;color:var(--text-muted);">${escH(o.package_code||'-')} · ${tgl}</div>
+              <div style="font-size:10px;color:${sc};font-weight:600;">${o.status||'PENDING'}</div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;flex-shrink:0;">
+            <div style="display:flex;flex-direction:column;gap:4px;">
               <button id="ea-rw-btn-${idx}" style="font-size:10px;padding:3px 10px;background:#6366f1;color:white;border:none;border-radius:4px;cursor:pointer;">▶ Buka</button>
               <button onclick="eaCheckUsage(${idx},event)" style="font-size:10px;padding:3px 10px;background:#0891b2;color:white;border:none;border-radius:4px;cursor:pointer;">📊 Sisa Data</button>
             </div>
           </div>
           <div id="ea-rw-detail-${idx}" style="display:none;padding:12px;border-top:1px solid var(--border);">
-            ${o.qr_code_url ? `
-            <div style="text-align:center;margin-bottom:10px;">
-              <img src="${escH(o.qr_code_url)}" style="width:160px;height:160px;border:1px solid var(--border);border-radius:8px;background:white;padding:6px;" onerror="this.style.display='none'"/>
+            ${o.qr_code_url ? `<div style="text-align:center;margin-bottom:10px;">
+              <img src="${escH(o.qr_code_url)}" style="width:160px;height:160px;border:1px solid var(--border);border-radius:8px;padding:6px;" onerror="this.style.display='none'"/>
               <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;">
-                ${o.short_url ? `<a href="${escH(o.short_url)}" target="_blank" style="font-size:10px;padding:3px 8px;background:#6366f1;color:white;border-radius:4px;text-decoration:none;">🔗 Buka Link</a>` : ''}
+                ${o.short_url ? `<a href="${escH(o.short_url)}" target="_blank" style="font-size:10px;padding:3px 8px;background:#6366f1;color:white;border-radius:4px;text-decoration:none;">🔗 Link</a>` : ''}
                 <button onclick="eaCopyRw('${escH(o.qr_code_url)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy URL</button>
               </div>
             </div>` : ''}
-            <div style="font-size:10px;color:#64748b;margin-bottom:4px;">
-              ICCID: <b>${escH(o.iccid || '-')}</b>
+            <div style="font-size:10px;margin-bottom:4px;">ICCID: <b>${escH(o.iccid||'-')}</b>
               ${o.iccid ? `<button onclick="eaCopyRw('${escH(o.iccid)}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>` : ''}
             </div>
-            <div style="font-size:10px;color:#64748b;margin-bottom:4px;">Order No: <b>${escH(o.order_no || '-')}</b></div>
-            <div style="font-size:10px;color:#64748b;margin-bottom:8px;">eSIM Tran No: <b>${escH(o.esim_tran_no || '-')}</b></div>
+            <div style="font-size:10px;margin-bottom:8px;">Order No: <b>${escH(o.order_no||'-')}</b></div>
             <div id="ea-usage-${idx}"></div>
-            ${o.iccid ? `
-            <button onclick="eaCopyPesanWA(${idx})" style="width:100%;margin-top:8px;padding:7px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📲 Copy Pesan WA Customer</button>` : ''}
+            ${o.iccid ? `<button onclick="eaCopyPesanWA(${idx})" style="width:100%;margin-top:8px;padding:7px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📲 Copy Pesan WA</button>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -1046,22 +845,19 @@ async function esimAccessOpenRiwayat() {
 }
 
 function eaToggleRiwayat(idx) {
-  const detail = document.getElementById(`ea-rw-detail-${idx}`);
-  const btn    = document.getElementById(`ea-rw-btn-${idx}`);
-  if (!detail) return;
-  const isOpen = detail.style.display !== 'none';
-  detail.style.display = isOpen ? 'none' : 'block';
-  if (btn) btn.textContent = isOpen ? '▶ Buka' : '▼ Tutup';
+  const d = document.getElementById(`ea-rw-detail-${idx}`);
+  const b = document.getElementById(`ea-rw-btn-${idx}`);
+  if (!d) return;
+  const open = d.style.display !== 'none';
+  d.style.display = open ? 'none' : 'block';
+  if (b) b.textContent = open ? '▶ Buka' : '▼ Tutup';
 }
 
 function eaCopyRw(text, btnEl) {
-  navigator.clipboard.writeText(text).then(() => {
-    const ori = btnEl.textContent; btnEl.textContent = '✅';
-    setTimeout(() => { btnEl.textContent = ori; }, 1500);
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = text;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  }).finally(() => {
     const ori = btnEl.textContent; btnEl.textContent = '✅';
     setTimeout(() => { btnEl.textContent = ori; }, 1500);
   });
@@ -1070,51 +866,45 @@ function eaCopyRw(text, btnEl) {
 async function eaCheckUsage(idx, e) {
   if (e) e.stopPropagation();
   const o = window._eaOrders?.[idx];
-  if (!o || !o.esim_tran_no) { showToast('esimTranNo tidak ada'); return; }
+  if (!o?.esim_tran_no) { showToast('esimTranNo tidak ada'); return; }
   const usageEl = document.getElementById(`ea-usage-${idx}`);
   if (!usageEl) return;
-  usageEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Cek sisa data...</div>';
+  usageEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Cek...</div>';
   try {
     const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimAccessUsage&esimTranNo=${encodeURIComponent(o.esim_tran_no)}`);
     const data = await res.json();
-    if (!data.ok || !data.usageList?.length) { usageEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);">Data usage tidak tersedia</div>'; return; }
+    if (!data.ok || !data.usageList?.length) { usageEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);">Data tidak tersedia</div>'; return; }
     const u = data.usageList[0];
     usageEl.innerHTML = `
-      <div style="background:#f0fdf4;border-radius:6px;padding:8px;font-size:10px;">
+      <div style="background:#f0fdf4;border-radius:6px;padding:8px;font-size:10px;margin-bottom:6px;">
         <div style="font-weight:700;color:#166534;margin-bottom:4px;">📊 Sisa Data</div>
-        <div>Total: <b>${u.totalVolumeFormatted}</b></div>
-        <div>Terpakai: <b>${u.usedVolumeFormatted}</b> (${u.usagePct}%)</div>
-        <div style="color:#166534;font-weight:600;">Sisa: <b>${u.remainingFormatted}</b></div>
-        ${u.expiredTime ? `<div style="color:#92400e;">Expired: ${u.expiredTime.replace('T',' ').substring(0,16)}</div>` : ''}
-        <div style="background:#e2e8f0;border-radius:3px;height:6px;margin-top:6px;">
-          <div style="background:#16a34a;border-radius:3px;height:6px;width:${Math.min(100,u.usagePct)}%;"></div>
+        <div>Total: <b>${u.totalVolumeFormatted}</b> · Terpakai: <b>${u.usedVolumeFormatted}</b></div>
+        <div style="color:#166534;font-weight:600;margin-top:2px;">Sisa: <b>${u.remainingFormatted}</b></div>
+        <div style="background:#e2e8f0;border-radius:3px;height:5px;margin-top:6px;">
+          <div style="background:#16a34a;border-radius:3px;height:5px;width:${Math.min(100,u.usagePct||0)}%;"></div>
         </div>
       </div>`;
-  } catch(e2) { usageEl.innerHTML = `<div style="font-size:10px;color:var(--red);">Error: ${escH(e2.message)}</div>`; }
+  } catch(e2) { usageEl.innerHTML = `<div style="font-size:10px;color:var(--red);">Error</div>`; }
 }
 
 function eaCopyPesanWA(idx) {
   const o = window._eaOrders?.[idx];
   if (!o) return;
-  const nama  = o.nama_customer ? `Halo ${o.nama_customer}` : 'Halo Kak';
-  const paket = o.package_code || 'eSIM';
-  let pesan = `${nama} 😊\n\neSIM Anda sudah siap!\n📦 Paket: ${paket}\nICCID: ${o.iccid || '-'}\n\n`;
-  if (o.short_url) pesan += `📱 Scan QR / buka link: ${o.short_url}\n`;
-  if (o.qr_code_url) pesan += `📷 QR Code: ${o.qr_code_url}\n`;
+  const nama = o.nama_customer ? `Halo ${o.nama_customer}` : 'Halo Kak';
+  let pesan  = `${nama} 😊\n\neSIM Anda sudah siap!\n📦 Paket: ${o.package_code||'-'}\nICCID: ${o.iccid||'-'}\n`;
+  if (o.short_url) pesan += `📱 Scan QR: ${o.short_url}\n`;
   pesan += '\neSIM aktif otomatis saat pertama connect ke jaringan.\nSelamat berlibur! ✈️';
   navigator.clipboard.writeText(pesan).then(() => showToast('✅ Pesan WA tersalin!')).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = pesan; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
+    const ta = document.createElement('textarea'); ta.value = pesan;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
     showToast('✅ Pesan WA tersalin!');
   });
 }
 
-// ── eSIM Access Beli ─────────────────────────────────────────
+// ── eSIM Access Beli ──────────────────────────────────────────
 function esimAccessOpenBeli(pkgStr) {
   let pkg;
-  try { pkg = typeof pkgStr === 'string' ? JSON.parse(pkgStr) : pkgStr; }
-  catch(e) { alert('Error parse paket: ' + e.message); return; }
+  try { pkg = typeof pkgStr === 'string' ? JSON.parse(pkgStr) : pkgStr; } catch(e) { showToast('Error: ' + e.message); return; }
   const old = document.getElementById('esimaccess-beli-modal');
   if (old) old.remove();
   const modal = document.createElement('div');
@@ -1123,26 +913,26 @@ function esimAccessOpenBeli(pkgStr) {
   modal.innerHTML = `
     <div style="background:white;border-radius:12px;padding:24px;width:420px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:92vh;overflow-y:auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h3 style="margin:0;font-size:14px;color:var(--text);">📡 Beli eSIM Access</h3>
-        <button onclick="document.getElementById('esimaccess-beli-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);">✕</button>
+        <h3 style="margin:0;font-size:14px;">📡 Beli eSIM Access</h3>
+        <button onclick="document.getElementById('esimaccess-beli-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:16px;">
-        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">${escH(pkg.name || '')}</div>
-        <div style="font-size:11px;color:var(--text-muted);">${escH(pkg.volumeFormatted || '')} · ${pkg.duration || ''} hari ${pkg.speed ? '· ' + escH(pkg.speed) : ''}</div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px;">${escH(pkg.name||'')}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${escH(pkg.volumeFormatted||'')} · ${pkg.duration||''} hari ${pkg.speed?'· '+escH(pkg.speed):''}</div>
         <div style="display:flex;justify-content:space-between;margin-top:8px;">
-          <span style="font-size:11px;color:var(--text-muted);">Beli: <b style="color:var(--text);">${hargaFmtIDR(pkg.buyIDR)}</b> <span style="font-size:10px;">(USD ${(pkg.priceUSD||0).toFixed(2)})</span></span>
-          <span style="font-size:11px;color:var(--text-muted);">Jual: <b style="color:#2563eb;">${hargaFmtIDR(pkg.sellIDR)}</b></span>
+          <span style="font-size:11px;">Beli: <b>${hargaFmtIDR(pkg.buyIDR)}</b> <span style="font-size:10px;color:var(--text-muted);">(USD ${(pkg.priceUSD||0).toFixed(2)})</span></span>
+          <span style="font-size:11px;">Jual: <b style="color:#2563eb;">${hargaFmtIDR(pkg.sellIDR)}</b></span>
         </div>
       </div>
       <div style="margin-bottom:12px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;">👤 Data Pembeli <span style="font-weight:400;color:var(--text-muted);">(opsional)</span></div>
-        <input id="ea-nama-pembeli" type="text" placeholder="Nama tamu" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);margin-bottom:6px;outline:none;"/>
-        <input id="ea-hp-pembeli" type="text" placeholder="No HP / WA" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"/>
+        <div style="font-size:11px;font-weight:600;margin-bottom:6px;">👤 Data Pembeli <span style="font-weight:400;color:var(--text-muted);">(opsional)</span></div>
+        <input id="ea-nama-pembeli" type="text" placeholder="Nama tamu (mis: Budi Santoso)" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);margin-bottom:6px;outline:none;"/>
+        <input id="ea-hp-pembeli" type="text" placeholder="No HP / WA (mis: 08123456789)" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"/>
       </div>
       <div id="ea-status" style="display:none;margin-bottom:12px;"></div>
       <div style="display:flex;gap:8px;">
         <button onclick="document.getElementById('esimaccess-beli-modal').remove()" style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">Batal</button>
-        <button id="ea-beli-btn" onclick="esimAccessDoPurchase('${escH(pkg.packageCode)}','${escH(pkg.name)}')" style="flex:2;padding:9px;background:#6366f1;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">✅ Konfirmasi Beli</button>
+        <button id="ea-beli-btn" onclick="esimAccessDoPurchase('${escH(pkg.packageCode||'')}','${escH(pkg.name||'')}')" style="flex:2;padding:9px;background:#6366f1;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">✅ Konfirmasi Beli</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -1152,27 +942,23 @@ async function esimAccessDoPurchase(packageCode, packageName) {
   const statusEl = document.getElementById('ea-status');
   const beliBtn  = document.getElementById('ea-beli-btn');
   if (!statusEl || !beliBtn) return;
-  const namaPembeli = document.getElementById('ea-nama-pembeli')?.value?.trim() || '';
-  const hpPembeli   = document.getElementById('ea-hp-pembeli')?.value?.trim() || '';
-  beliBtn.disabled  = true;
-  beliBtn.textContent = '⏳ Memproses...';
+  const nama = document.getElementById('ea-nama-pembeli')?.value?.trim() || '';
+  const hp   = document.getElementById('ea-hp-pembeli')?.value?.trim() || '';
+  beliBtn.disabled = true; beliBtn.textContent = '⏳ Memproses...';
   statusEl.style.display = 'block';
-  statusEl.innerHTML = '<div style="background:#ede9fe;border-radius:8px;padding:10px 12px;font-size:11px;color:#6366f1;">⏳ Mengirim order ke eSIM Access...</div>';
+  statusEl.innerHTML = '<div style="background:#ede9fe;border-radius:8px;padding:10px;font-size:11px;color:#6366f1;">⏳ Mengirim order...</div>';
   try {
     const res  = await fetch('https://goho-proxy.gohotravel.workers.dev', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'esimAccessOrder', packageCode, count: 1, noWaCustomer: hpPembeli ? '62' + hpPembeli.replace(/^0/,'').replace(/\D/g,'') : '', namaCustomer: namaPembeli, staff: currentStaff?.nama || '', catatan: packageName })
+      body: JSON.stringify({ action: 'esimAccessOrder', packageCode, count: 1, noWaCustomer: hp ? '62' + hp.replace(/^0/,'').replace(/\D/g,'') : '', namaCustomer: nama, staff: currentStaff?.nama || '', catatan: packageName })
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.msg || 'Order gagal');
-    const orderNo = data.orderNo;
-    statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px 12px;font-size:11px;color:#92400e;">⏳ Order berhasil (${escH(orderNo)}). Mengambil QR code...</div>`;
-    beliBtn.textContent = '⏳ Menunggu...';
-    setTimeout(() => eaPollResult(orderNo, statusEl, beliBtn, packageName, 1), 3000);
+    statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size:11px;color:#92400e;">⏳ Order dikirim (${escH(data.orderNo)}). Mengambil QR...</div>`;
+    setTimeout(() => eaPollResult(data.orderNo, statusEl, beliBtn, packageName, 1), 3000);
   } catch(e) {
     statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:11px;color:#991b1b;">❌ ${escH(e.message)}</div>`;
-    beliBtn.disabled    = false;
-    beliBtn.textContent = '✅ Coba Lagi';
+    beliBtn.disabled = false; beliBtn.textContent = '✅ Coba Lagi';
   }
 }
 
@@ -1185,52 +971,43 @@ async function eaPollResult(orderNo, statusEl, beliBtn, packageName, attempt) {
     });
     const data = await res.json();
     if (data.ok && data.iccid) {
-      beliBtn.style.background = '#16a34a';
-      beliBtn.textContent      = '✅ Berhasil!';
-      beliBtn.disabled         = true;
-      const qrId = 'ea-qr-' + Date.now();
+      beliBtn.style.background = '#16a34a'; beliBtn.textContent = '✅ Berhasil!'; beliBtn.disabled = true;
       statusEl.innerHTML = `
-        <div style="background:#dcfce7;border-radius:8px;padding:10px 12px;margin-bottom:10px;color:#166534;font-weight:700;font-size:12px;">✅ Pembelian berhasil!</div>
-        ${data.qrCodeUrl ? `
-        <div style="text-align:center;margin-bottom:10px;background:#f8fafc;border-radius:8px;padding:12px;">
-          <img src="${escH(data.qrCodeUrl)}" style="width:160px;height:160px;border:1px solid var(--border);border-radius:8px;background:white;padding:6px;" onerror="this.style.display='none'"/>
-          <div style="display:flex;gap:6px;justify-content:center;margin-top:8px;">
-            ${data.shortUrl ? `<a href="${escH(data.shortUrl)}" target="_blank" style="font-size:10px;padding:4px 10px;background:#6366f1;color:white;border-radius:4px;text-decoration:none;">🔗 Buka Link</a>` : ''}
+        <div style="background:#dcfce7;border-radius:8px;padding:10px;color:#166534;font-weight:700;font-size:12px;margin-bottom:8px;">✅ Pembelian berhasil!</div>
+        ${data.qrCodeUrl ? `<div style="text-align:center;margin-bottom:10px;background:#f8fafc;border-radius:8px;padding:10px;">
+          <img src="${escH(data.qrCodeUrl)}" style="width:150px;height:150px;border:1px solid var(--border);border-radius:8px;padding:4px;" onerror="this.style.display='none'"/>
+          <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;">
+            ${data.shortUrl ? `<a href="${escH(data.shortUrl)}" target="_blank" style="font-size:10px;padding:3px 8px;background:#6366f1;color:white;border-radius:4px;text-decoration:none;">🔗 Link</a>` : ''}
           </div>
         </div>` : ''}
-        <div style="background:#f8fafc;border-radius:8px;padding:10px;margin-bottom:10px;font-size:10px;">
+        <div style="background:#f8fafc;border-radius:8px;padding:10px;font-size:10px;margin-bottom:8px;">
           <div>Paket: <b>${escH(packageName)}</b></div>
           <div>ICCID: <b>${escH(data.iccid)}</b></div>
-          <div>Status: <b>${escH(data.statusLabel||'')}</b></div>
           ${data.expiredTime ? `<div>Expired: <b>${data.expiredTime.replace('T',' ').substring(0,16)}</b></div>` : ''}
           ${data.totalVolumeFormatted ? `<div>Kapasitas: <b>${data.totalVolumeFormatted}</b></div>` : ''}
         </div>
         <div style="background:#f0fdf4;border-radius:8px;padding:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <div style="font-size:11px;font-weight:700;color:#166534;">💬 Pesan WA Customer</div>
-            <button onclick="navigator.clipboard.writeText(document.getElementById('ea-wa-msg-new').innerText).then(()=>showToast('✅ Tersalin!'))" style="font-size:10px;padding:3px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">📋 Copy</button>
+            <div style="font-size:11px;font-weight:700;color:#166534;">💬 Pesan WA</div>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('ea-wa-new').innerText).then(()=>showToast('✅ Tersalin!'))" style="font-size:10px;padding:3px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">📋 Copy</button>
           </div>
-          <div id="ea-wa-msg-new" style="font-size:11px;color:#1e293b;line-height:1.6;white-space:pre-wrap;background:white;border-radius:6px;padding:8px;border:1px solid #bbf7d0;">eSIM Anda sudah siap! 🎉
+          <div id="ea-wa-new" style="font-size:11px;line-height:1.6;white-space:pre-wrap;background:white;border-radius:6px;padding:8px;border:1px solid #bbf7d0;">eSIM Anda sudah siap! 🎉
 
 Paket: ${escH(packageName)}
-ICCID: ${escH(data.iccid || '-')}
-${data.expiredTime ? 'Expired: ' + data.expiredTime.replace('T',' ').substring(0,16) : ''}
-${data.shortUrl ? '📱 Scan QR: ' + data.shortUrl : ''}
+ICCID: ${escH(data.iccid||'-')}
+${data.expiredTime ? 'Expired: '+data.expiredTime.replace('T',' ').substring(0,16) : ''}
+${data.shortUrl ? '📱 Scan QR: '+data.shortUrl : ''}
 
 eSIM aktif otomatis saat pertama connect ke jaringan.
 Selamat berlibur! ✈️</div>
         </div>`;
     } else if (attempt < maxAttempts) {
-      statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px 12px;font-size:11px;color:#92400e;">⏳ Sedang diproses... Cek ke-${attempt}/${maxAttempts}</div>`;
+      statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size:11px;color:#92400e;">⏳ Diproses... (${attempt}/${maxAttempts})</div>`;
       setTimeout(() => eaPollResult(orderNo, statusEl, beliBtn, packageName, attempt + 1), 5000);
     } else {
-      statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px 12px;font-size:11px;color:#991b1b;">⚠️ eSIM masih diproses.<br><b>Order No: ${escH(orderNo)}</b><br>Cek di Riwayat eSIM Access.</div>`;
+      statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:11px;color:#991b1b;">⚠️ Masih diproses. Order No: <b>${escH(orderNo)}</b><br>Cek di Riwayat eSIM Access.</div>`;
     }
   } catch(err) {
     if (attempt < maxAttempts) setTimeout(() => eaPollResult(orderNo, statusEl, beliBtn, packageName, attempt + 1), 5000);
   }
 }
-
-// ── Legacy stubs untuk index.html ───────────────────────────
-function hargaOnDayChange()  { hargaShowResult(); }
-function hargaOnPkgChange()  { hargaShowResult(); }
