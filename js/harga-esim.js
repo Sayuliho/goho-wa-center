@@ -4,7 +4,9 @@
 // Tampilan: 4 kolom card (Aviroam, eSIM Access, iRoamly, eSIMCard)
 // ============================================================
 
-// hargaData & hargaLoaded dideklarasikan di app.js
+// hargaData & hargaLoaded — pakai var agar bisa di-share antar file tanpa konflik
+var hargaData   = typeof hargaData   !== 'undefined' ? hargaData   : [];
+var hargaLoaded = typeof hargaLoaded !== 'undefined' ? hargaLoaded : false;
 
 const GOHO_COUNTRIES = [
   { display: 'Korea', iroamly: 'south-korea', iso: 'KR', aviroam: ['korea selatan', 'south korea'] },
@@ -438,15 +440,35 @@ async function hargaShowResult() {
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
   const src = window._aviroamRows || hargaData;
 
-  // Exclude kata kunci multi-region
+  // Exclude kata kunci multi-region / multi-negara
   const MULTI_KW = ['multi region', 'asia pacific', 'multi-region', 'global', 'worldwide'];
 
   // Filter negara + durasi >= lamaHari + bukan multi-region
   let avRows = src.filter(r => {
     const name   = (r[0] || '').toLowerCase().trim();
     const rowDur = r[2] || 0;
-    const isMulti = MULTI_KW.some(kw => name.includes(kw));
-    return rowDur >= lamaHari && !isMulti && avKeywords.some(kw => name.includes(kw.toLowerCase()));
+    if (rowDur < lamaHari) return false;
+    // Exclude multi-region keyword
+    if (MULTI_KW.some(kw => name.includes(kw))) return false;
+    // Match keyword: exact atau nama diawali keyword (misal 'japan' cocok 'japan', tapi tidak 'japan korea')
+    return avKeywords.some(kw => {
+      const k = kw.toLowerCase();
+      // Exact match
+      if (name === k) return true;
+      // Nama diawali keyword + spasi tapi tidak diikuti nama negara lain
+      // Cek: setelah keyword, tidak ada kata kapital / nama negara (max 2 kata tambahan)
+      if (name.startsWith(k)) {
+        const rest = name.slice(k.length).trim();
+        // Tidak ada sisa (persis), atau sisa pendek (misal angka, ukuran data)
+        if (!rest) return true;
+        // Sisa tidak mengandung nama negara lain yang dikenal
+        const hasOtherCountry = ['hongkong', 'hong kong', 'macau', 'macao', 'korea', 'taiwan',
+          'japan', 'thailand', 'singapore', 'malaysia', 'vietnam', 'indonesia',
+          'australia', 'india', 'pakistan', 'europe', 'america', 'africa'].some(c => rest.includes(c));
+        return !hasOtherCountry;
+      }
+      return false;
+    });
   });
   avRows = avRows.filter((r, i, arr) => arr.findIndex(x => x[0] === r[0] && x[1] === r[1] && x[2] === r[2]) === i);
   // Sort durasi ASC
