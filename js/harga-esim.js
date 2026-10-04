@@ -718,14 +718,14 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
   }
 }
 
-// ── loadEsimCardPrice — dipanggil dari esimcard.js ────────────
+// ── loadEsimCardPrice ─────────────────────────────────────────
 async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartnerEsim) {
   const el = document.getElementById('esimcard-result');
   if (!el) return;
   try {
     const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
     const iso = (countryObj?.iso || '').toLowerCase();
-    if (!iso) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia</span>'; return; }
+    if (!iso) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia di eSIMCard</span>'; return; }
 
     const cacheKey = `esimcard_pkgs_${iso}`;
     let pkgs = window._esimcardCache?.[cacheKey];
@@ -738,17 +738,27 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       window._esimcardCache[cacheKey] = pkgs;
     }
 
-    // Filter durasi >= lamaHari, group by durasi ASC
-    const getDur = p => parseInt(p.package_validity || p.duration || p.validity || p.day || 0);
-    // Debug: lihat field durasi dari paket pertama
-    if (pkgs.length) console.log('[eSIMCard] sample pkg fields:', JSON.stringify({ package_validity: pkgs[0].package_validity, duration: pkgs[0].duration, validity: pkgs[0].validity, day: pkgs[0].day, name: pkgs[0].name }));
-    const filteredEC = pkgs.filter(p => getDur(p) >= lamaHari);
+    function pkgDataLabel(pkg) {
+      const qty  = pkg.data_quantity;
+      const name = (pkg.name || '').toLowerCase();
+      if (qty > 0) return `${qty}${pkg.data_unit || 'GB'}`;
+      if (name.includes('premium')) return 'Unlimited Premium';
+      if (name.includes('plus'))    return 'Unlimited Plus';
+      return 'Unlimited';
+    }
 
+    // Filter durasi >= lamaHari, group by durasi ASC
+    const filteredEC = pkgs.filter(p => parseInt(p.package_validity || 0) >= lamaHari);
     if (!filteredEC.length) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIMCard untuk ≥ ${lamaHari} hari</div>`; return; }
+
+    filteredEC.sort((a, b) => {
+      const dd = parseInt(a.package_validity) - parseInt(b.package_validity);
+      return dd !== 0 ? dd : parseFloat(a.price||0) - parseFloat(b.price||0);
+    });
 
     const byDurEC = new Map();
     filteredEC.forEach(p => {
-      const d = getDur(p);
+      const d = parseInt(p.package_validity || 0);
       if (!byDurEC.has(d)) byDurEC.set(d, []);
       byDurEC.get(d).push(p);
     });
@@ -759,47 +769,63 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
         📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>' : ''}
       </div>`;
-      dayPkgs.sort((a, b) => parseFloat(a.price||a.cost||0) - parseFloat(b.price||b.cost||0));
-      dayPkgs.forEach(p => {
-        const buyUSD  = parseFloat(p.price || p.cost || 0);
-        const buyIDR  = Math.round(buyUSD * kurs);
-        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-        const isCheaper  = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+      dayPkgs.forEach(pkg => {
+        const buyUSD   = parseFloat(pkg.price || 0);
+        const buyIDR   = Math.round(buyUSD * kurs);
+        const sellIDR  = Math.round(buyIDR * (1 + markup / 100));
+        const dataQty  = pkgDataLabel(pkg);
+        const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
         const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
         const bg     = isCheaper ? '#f0fdf4' : 'white';
         const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
-        const op     = escH(p.network_provider || p.network || p.operator || '');
-        // Data info
-        const dataQty  = p.data_quantity > 0 ? `${p.data_quantity}${p.data_unit||'GB'}` : '';
-        const isUnlim  = (p.name||'').toLowerCase().includes('unlimited');
-        const dataLabel = dataQty || (isUnlim ? 'Unlimited' : '');
-        const throttle = p.throttle_speed ? `Setelah kuota: ${escH(p.throttle_speed)}` : '';
-        const canRenew = p.can_renew;
-        const pkgDataStr = escH(JSON.stringify({ id: p.id, name: p.name||'', dataQty: dataLabel, validity, buyUSD, buyIDR, sellIDR }));
+        const connectivity  = escH(pkg.connectivity || '4G');
+        const canHotspot    = pkg.tether !== false;
+        const canRenew      = pkg.can_renew === true;
+        const isThrottle    = pkg.throttle === true;
+        const throttleSpd   = pkg.throttle_speed || '';
+        const unthrottleQty = pkg.unthrottle_data || '';
+        let speedInfo = '';
+        if (isThrottle && unthrottleQty && unthrottleQty !== 'Unlimited') {
+          speedInfo = `${escH(unthrottleQty)}/hari full speed → throttle ${escH(throttleSpd || '384kbps')}`;
+        } else if (isThrottle && throttleSpd) {
+          speedInfo = `Setelah kuota: throttle ${escH(throttleSpd)}`;
+        } else if (!isThrottle && pkg.data_quantity <= 0) {
+          speedInfo = 'Full speed unlimited (tanpa throttle)';
+        }
+        const actType   = pkg.activation_type || '';
+        const actInfo   = actType === 'API' ? 'Aktivasi manual via link' : 'Aktif otomatis saat data pertama dipakai';
+        const coverage  = pkg.coverage || [];
+        const operators = [...new Set(coverage.map(c => c.network_code || c.network_name || '').filter(Boolean))];
+        const operatorStr = operators.slice(0, 3).join(' · ');
+        const pkgDataStr  = escH(JSON.stringify({ id: pkg.id, name: pkg.name||'', dataQty, validity, buyUSD, buyIDR, sellIDR }));
+
         html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;">
-            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(p.name||'-')}</span>${cheapBadge}
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)} · ${validity}h</span>${cheapBadge}
           </div>
-          ${op ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">📡 ${op}</div>` : ''}
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.name||'')}</div>
+          ${operatorStr ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">🏢 ${escH(operatorStr)}</div>` : ''}
           <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
-            ${dataLabel ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📦 ${escH(dataLabel)}</span>` : ''}
-            ${p.connectivity ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(p.connectivity)}</span>` : ''}
-            ${canRenew ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔄 Perpanjang: ✅</span>` : ''}
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${connectivity}</span>
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot?'✅':'❌'}</span>
+            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔄 Perpanjang: ${canRenew?'✅':'❌'}</span>
           </div>
-          ${throttle ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${throttle}</div>` : ''}
+          ${speedInfo ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${speedInfo}</div>` : ''}
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">🔌 ${escH(actInfo)}</div>
+          <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">⏳ Aktivasi kartu maks. 30 hari</div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
             <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
             <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);margin-bottom:4px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
             <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
-            <span style="font-size:13px;font-weight:700;color:#1d4ed8;">${hargaFmtIDR(sellIDR)}</span>
+            <span style="font-size:13px;font-weight:700;color:#2563eb;">${hargaFmtIDR(sellIDR)}</span>
           </div>
-          <button onclick="esimcardOpenBeli('${pkgDataStr}')" style="width:100%;padding:5px;background:#1d4ed8;color:white;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);">🛒 Beli eSIMCard</button>
+          <button onclick="esimcardOpenBeli('${pkgDataStr}')" style="width:100%;margin-top:8px;padding:7px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">🛒 Beli eSIMCard</button>
         </div>`;
       });
     });
-    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
   } catch(e) {
     if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${escH(e.message)}</span>`;
   }
