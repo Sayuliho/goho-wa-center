@@ -496,13 +496,17 @@ async function hargaShowResult() {
         📅 ${dur} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#6366f1;">(perbandingan)</span>' : ''}
       </div>`;
       rows.forEach(r => {
-        const [,, , , simPub, esimPub, esimPar2] = r;
+        const [,, rowDurAv, , simPub, esimPub, esimPar2] = r;
         const pkg = r[1] || '';
+        const durColor = isExactDur ? '#0369a1' : '#6366f1';
+        const durBg    = isExactDur ? '#e0f2fe' : '#ede9fe';
+        const durLabel = `<span style="font-size:9px;background:${durBg};color:${durColor};border-radius:3px;padding:1px 5px;font-weight:600;">${rowDurAv} hari</span>`;
         aviroamCards += `
           <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
             <div style="margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
               <div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;display:inline-block;">🌏 ${escH(r[0])}</div>
               ${pkg ? `<span style="font-size:9px;color:#0369a1;background:#e0f2fe;border-radius:3px;padding:1px 5px;">${escH(pkg)}</span>` : ''}
+              ${durLabel}
             </div>
             <div style="font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">SIM Card</div>
             ${hargaRowAviroam('Publish', hargaFmtIDR(simPub), 'customer')}
