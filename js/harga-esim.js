@@ -955,7 +955,7 @@ function esimRiwayatFilterTab(tab) {
     const suppLabel = isEc
       ? '<span style="font-size:9px;background:#dbeafe;color:#1d4ed8;border-radius:3px;padding:1px 5px;font-weight:700;">🟦 eSIMCard</span>'
       : '<span style="font-size:9px;background:#ede9fe;color:#6366f1;border-radius:3px;padding:1px 5px;font-weight:700;">📡 eSIM Access</span>';
-    const paket = isEc ? (o.package_name || o.catatan || '-') : (o.package_code || o.catatan || '-');
+    const paket = isEc ? (o.package_name || o.catatan || '-') : (o.package_name || o.catatan || o.package_code || '-');
     const nama  = isEc ? (o.nama_pembeli || o.nama_customer || '-') : (o.nama_customer || '-');
     const noWa  = isEc ? (o.hp_pembeli || '') : (o.no_wa_customer || o.noWa || '');
     const detailId = `rw-detail-${o._supplier}-${idx}`;
