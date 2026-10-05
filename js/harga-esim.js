@@ -1287,7 +1287,7 @@ async function esimAccessDoPurchase(packageCode, packageName) {
   try {
     const res  = await fetch('https://goho-proxy.gohotravel.workers.dev', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'esimAccessOrder', packageCode, count: 1, noWaCustomer: hp ? '62' + hp.replace(/^0/,'').replace(/\D/g,'') : '', namaCustomer: nama, staff: currentStaff?.nama || '', catatan: packageName })
+      body: JSON.stringify({ action: 'esimAccessOrder', packageCode, count: 1, noWaCustomer: hp ? '62' + hp.replace(/^0/,'').replace(/\D/g,'') : '', namaCustomer: nama, staff: currentStaff?.nama || '', catatan: packageName, hargaBeli: pkg?.buyIDR || 0 })
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.msg || 'Order gagal');
