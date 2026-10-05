@@ -1096,7 +1096,7 @@ function esimRwCopyWA(supplier, idx) {
   const o = filtered[idx];
   if (!o) return;
   const nama  = o.nama_customer ? `Halo ${o.nama_customer}` : 'Halo Kak';
-  const paket = o.package_name || o.package_code || o.catatan || '-';
+  const paket = o.package_name || o.catatan || o.package_code || '-';
   const iccid = o.iccid || '-';
   const link  = o.short_url || o.activation_url || '';
   let pesan   = `${nama} 😊\n\neSIM Anda sudah siap!\n📦 Paket: ${paket}\nICCID: ${iccid}\n`;
