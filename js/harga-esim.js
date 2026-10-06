@@ -617,8 +617,11 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
             ${pkg.speed ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(pkg.speed)}</span>` : ''}
             ${pkg.volumeFormatted ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📦 ${escH(pkg.volumeFormatted)}</span>` : ''}
             ${pkg.hotspot ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ✅</span>` : ''}
+            ${pkg.smsStatus === 1 ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">💬 SMS</span>` : ''}
             ${pkg.supportsTopUp ? `<span style="font-size:9px;background:#d1fae5;color:#065f46;border-radius:3px;padding:1px 6px;">🔄 Top-up</span>` : ''}
-            ${pkg.ipExport && pkg.ipExport !== 'HK' ? `<span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 6px;">🌐 IP: ${escH(pkg.ipExport)}</span>` : ''}
+            ${pkg.activeType === 2 ? `<span style="font-size:9px;background:#e0f2fe;color:#0369a1;border-radius:3px;padding:1px 6px;">⚡ Auto-aktif</span>` : `<span style="font-size:9px;background:#f1f5f9;color:#374151;border-radius:3px;padding:1px 6px;">🖐 Aktif manual</span>`}
+            ${pkg.unusedValidTime ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">⏳ Valid ${pkg.unusedValidTime}h sebelum pakai</span>` : ''}
+            ${pkg.ipExport && pkg.ipExport !== 'HK' && pkg.ipExport !== '5G' ? `<span style="font-size:9px;background:#f1f5f9;color:#374151;border-radius:3px;padding:1px 6px;">🌐 IP Exit: ${escH(pkg.ipExport)}</span>` : ''}
             ${pkg.fupPolicy ? `<span style="font-size:9px;background:#fef9c3;color:#713f12;border-radius:3px;padding:1px 6px;">⚡ FUP</span>` : ''}
           </div>
           ${opStr ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">📡 ${escH(opStr)}</div>` : ''}
