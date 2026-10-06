@@ -972,6 +972,7 @@ function esimRwDetailHtml(o, isEc, idx) {
       <button onclick="esimRwLoadEaProfile(${idx})" style="font-size:10px;padding:4px 10px;background:#6366f1;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">🔄 Status Live</button>
       <button onclick="esimRwEaAction('suspend',${idx},this)" style="font-size:10px;padding:4px 10px;background:#f59e0b;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">⏸ Suspend</button>
       <button onclick="esimRwEaAction('unsuspend',${idx},this)" style="font-size:10px;padding:4px 10px;background:#0891b2;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">▶ Aktifkan</button>
+      <button onclick="esimRwEaTopup(${idx})" style="font-size:10px;padding:4px 10px;background:#059669;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">📆 Top Up</button>
       <button onclick="esimRwEaAction('revoke',${idx},this)" style="font-size:10px;padding:4px 10px;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">🗑 Revoke</button>
       <button onclick="esimRwEaAction('cancel',${idx},this)" style="font-size:10px;padding:4px 10px;background:#6b7280;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">❌ Cancel Order</button>
     </div>`;
@@ -1365,6 +1366,131 @@ async function esimAccessDoPurchase(packageCode, packageName, buyIDR) {
   } catch(e) {
     statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:11px;color:#991b1b;">❌ ${escH(e.message)}</div>`;
     beliBtn.disabled = false; beliBtn.textContent = '✅ Coba Lagi';
+  }
+}
+
+// ── eSIM Access Top Up ──────────────────────────────────────────
+async function esimRwEaTopup(idx) {
+  const allItems = [
+    ...(window._rwEcOrders || []).map(o => ({ ...o, _supplier: 'esimcard' })),
+    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' }))
+  ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const filtered = allItems.filter(o => o._supplier === 'esimaccess');
+  const o = filtered[idx];
+  if (!o) { showToast('Data order tidak ditemukan'); return; }
+  if (!o.esim_tran_no || !o.package_code) { showToast('esimTranNo atau packageCode tidak ada'); return; }
+
+  const old = document.getElementById('esim-topup-modal');
+  if (old) old.remove();
+
+  const pkgName = o.catatan || o.package_name || o.package_code || '-';
+
+  const modal = document.createElement('div');
+  modal.id = 'esim-topup-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:400px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:92vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:14px;">📆 Top Up Validity eSIM</h3>
+        <button onclick="document.getElementById('esim-topup-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+
+      <div style="background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:14px;font-size:11px;">
+        <div style="font-weight:700;color:#166534;margin-bottom:4px;">ℹ️ Top Up memperpanjang masa berlaku (hari), bukan menambah kuota data</div>
+        <div style="color:#374151;">Paket: <b>${escH(pkgName)}</b></div>
+        <div style="color:#374151;">ICCID: <b>${escH(o.iccid || '-')}</b></div>
+        <div id="topup-expiry-${idx}" style="color:#374151;margin-top:4px;">
+          <span style="color:#6b7280;font-size:10px;"><i>Mengambil expiry live...</i></span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:600;margin-bottom:6px;">Perpanjang berapa hari?</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="topup-days-grid">
+          ${[3,5,7,10,15,20,30].map(d => `
+            <button onclick="esimTopupSelectDays(${d})" id="topup-day-${d}"
+              style="padding:8px 4px;border:2px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:white;transition:all 0.15s;">
+              ${d} hari
+            </button>`).join('')}
+        </div>
+        <input type="hidden" id="topup-selected-days" value=""/>
+      </div>
+
+      <div id="topup-status" style="display:none;margin-bottom:12px;"></div>
+
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('esim-topup-modal').remove()" style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">Batal</button>
+        <button id="topup-confirm-btn" onclick="esimRwEaDoTopup('${escH(o.esim_tran_no)}','${escH(o.package_code)}')" style="flex:2;padding:9px;background:#059669;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">✅ Konfirmasi Top Up</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  // Fetch expiry live di background
+  try {
+    const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimAccessQuery&orderNo=${encodeURIComponent(o.order_no||'')}`);
+    const data = await res.json();
+    const expiryEl = document.getElementById(`topup-expiry-${idx}`);
+    if (expiryEl) {
+      if (data.ok && data.esimList?.[0]?.expiredTime) {
+        const exp = data.esimList[0].expiredTime.replace('T',' ').substring(0,16);
+        expiryEl.innerHTML = `Expired saat ini: <b style="color:#dc2626;">${escH(exp)}</b>`;
+      } else {
+        expiryEl.innerHTML = `<span style="color:#6b7280;font-size:10px;">Expiry tidak tersedia</span>`;
+      }
+    }
+  } catch(_) {
+    const expiryEl = document.getElementById(`topup-expiry-${idx}`);
+    if (expiryEl) expiryEl.innerHTML = '';
+  }
+}
+
+function esimTopupSelectDays(days) {
+  document.querySelectorAll('[id^="topup-day-"]').forEach(btn => {
+    btn.style.background = 'white';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = '#374151';
+  });
+  const sel = document.getElementById(`topup-day-${days}`);
+  if (sel) {
+    sel.style.background = '#059669';
+    sel.style.borderColor = '#059669';
+    sel.style.color = 'white';
+  }
+  const inp = document.getElementById('topup-selected-days');
+  if (inp) inp.value = days;
+}
+
+async function esimRwEaDoTopup(esimTranNo, packageCode) {
+  const periodNum = parseInt(document.getElementById('topup-selected-days')?.value || '0');
+  if (!periodNum) { showToast('Pilih jumlah hari dulu'); return; }
+
+  const statusEl = document.getElementById('topup-status');
+  const confirmBtn = document.getElementById('topup-confirm-btn');
+  if (!statusEl || !confirmBtn) return;
+
+  confirmBtn.disabled = true; confirmBtn.textContent = '⏳ Memproses...';
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div style="background:#ede9fe;border-radius:8px;padding:10px;font-size:11px;color:#6366f1;">⏳ Mengirim top up...</div>';
+
+  try {
+    const res  = await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'esimAccessTopup', esimTranNo, packageCode, periodNum })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || 'Top up gagal');
+
+    confirmBtn.textContent = '✅ Berhasil!';
+    confirmBtn.style.background = '#16a34a';
+    statusEl.innerHTML = `
+      <div style="background:#dcfce7;border-radius:8px;padding:12px;font-size:11px;">
+        <div style="font-weight:700;color:#166534;margin-bottom:6px;">✅ Top Up berhasil! +${periodNum} hari</div>
+        ${data.expiredTime ? `<div>Expired baru: <b style="color:#166534;">${escH(data.expiredTime.replace('T',' ').substring(0,16))}</b></div>` : ''}
+        ${data.orderNo ? `<div style="color:#6b7280;margin-top:4px;">Order: ${escH(data.orderNo)}</div>` : ''}
+      </div>`;
+  } catch(e) {
+    statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:11px;color:#991b1b;">❌ ${escH(e.message)}</div>`;
+    confirmBtn.disabled = false; confirmBtn.textContent = '✅ Coba Lagi';
   }
 }
 
