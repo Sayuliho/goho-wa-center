@@ -965,10 +965,107 @@ function esimRwDetailHtml(o, isEc, idx) {
   ${hargaBeli ? `<div style="font-size:10px;margin-bottom:8px;color:#166534;">Harga Beli: <b>Rp ${Number(hargaBeli).toLocaleString('id-ID')}</b></div>` : '<div style="margin-bottom:8px;"></div>'}
   <div id="rw-usage-${o._supplier}-${idx}"></div>`;
 
+  // eSIM Access: tambah tombol live status + actions
+  if (!isEc) {
+    html += `<div id="rw-ea-profile-${idx}" style="margin-bottom:6px;"></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+      <button onclick="esimRwLoadEaProfile(${idx})" style="font-size:10px;padding:4px 10px;background:#6366f1;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">🔄 Status Live</button>
+      <button onclick="esimRwEaAction('suspend',${idx},this)" style="font-size:10px;padding:4px 10px;background:#f59e0b;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">⏸ Suspend</button>
+      <button onclick="esimRwEaAction('unsuspend',${idx},this)" style="font-size:10px;padding:4px 10px;background:#0891b2;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">▶ Aktifkan</button>
+      <button onclick="esimRwEaAction('revoke',${idx},this)" style="font-size:10px;padding:4px 10px;background:#dc2626;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">🗑 Revoke</button>
+      <button onclick="esimRwEaAction('cancel',${idx},this)" style="font-size:10px;padding:4px 10px;background:#6b7280;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">❌ Cancel Order</button>
+    </div>`;
+  }
+
   if (iccid !== '-') {
     html += `<button onclick="esimRwCopyWA('${o._supplier}',${idx})" style="width:100%;margin-top:8px;padding:7px;background:#16a34a;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📲 Copy Pesan WA Customer</button>`;
   }
   return html;
+}
+
+async function esimRwLoadEaProfile(idx) {
+  const allItems = [
+    ...(window._rwEcOrders || []).map(o => ({ ...o, _supplier: 'esimcard' })),
+    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' }))
+  ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const filtered = allItems.filter(o => o._supplier === 'esimaccess');
+  const o = filtered[idx];
+  const profileEl = document.getElementById(`rw-ea-profile-${idx}`);
+  if (!profileEl || !o) return;
+  if (!o.order_no && !o.esim_tran_no) {
+    profileEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);">Order No tidak tersedia</div>';
+    return;
+  }
+  profileEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Mengambil status live...</div>';
+  try {
+    const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimAccessQuery&orderNo=${encodeURIComponent(o.order_no||'')}`);
+    const data = await res.json();
+    if (!data.ok || !data.esimList?.length) {
+      profileEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);">Data profil tidak tersedia</div>';
+      return;
+    }
+    const e = data.esimList[0];
+    const smdpColor  = { 'RELEASED': '#1d4ed8', 'INSTALLED': '#166534', 'ENABLED': '#166534', 'DELETED': '#991b1b' };
+    const esimColor  = { '1': '#166534', '0': '#6b7280' };
+    const smdpLabel  = e.smdpStatus || '-';
+    const esimLabel  = e.esimStatus === '1' ? '✅ Aktif' : (e.esimStatus === '0' ? '⏸ Nonaktif' : e.esimStatus || '-');
+    const sc         = smdpColor[smdpLabel] || '#374151';
+    const ec         = esimColor[e.esimStatus] || '#374151';
+    const device     = [e.brandName, e.model].filter(Boolean).join(' ');
+    const osType     = e.osType === '1' ? 'iOS' : e.osType === '2' ? 'Android' : (e.osType || '');
+    const installed  = e.installedTime ? e.installedTime.replace('T', ' ').substring(0, 16) : '';
+    const expired    = e.expiredTime || e.expired_time || '';
+    profileEl.innerHTML = `
+      <div style="background:#f8fafc;border-radius:6px;padding:8px;font-size:10px;margin-bottom:4px;">
+        <div style="font-weight:700;color:#374151;margin-bottom:6px;">📡 Status Live eSIM</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+          <span style="background:#e0e7ff;color:${sc};border-radius:3px;padding:1px 6px;font-weight:600;">SMDP: ${escH(smdpLabel)}</span>
+          <span style="background:#f0fdf4;color:${ec};border-radius:3px;padding:1px 6px;font-weight:600;">${escH(esimLabel)}</span>
+          ${osType ? `<span style="background:#f1f5f9;border-radius:3px;padding:1px 6px;">${escH(osType)}</span>` : ''}
+        </div>
+        ${device ? `<div>📱 Perangkat: <b>${escH(device)}</b></div>` : ''}
+        ${installed ? `<div>📅 Install: ${escH(installed)}</div>` : ''}
+        ${expired ? `<div>⏱ Expired: ${escH(expired.replace('T',' ').substring(0,16))}</div>` : ''}
+        ${e.appleInstallUrl ? `<div style="margin-top:4px;"><a href="${escH(e.appleInstallUrl)}" target="_blank" style="color:#6366f1;font-size:10px;">🍎 Link Install iOS</a></div>` : ''}
+        ${e.googlePlayUrl ? `<div><a href="${escH(e.googlePlayUrl)}" target="_blank" style="color:#16a34a;font-size:10px;">🤖 Link Install Android</a></div>` : ''}
+      </div>`;
+  } catch(err) {
+    profileEl.innerHTML = `<div style="font-size:10px;color:var(--red);">Error: ${escH(err.message)}</div>`;
+  }
+}
+
+async function esimRwEaAction(action, idx, btnEl) {
+  const allItems = [
+    ...(window._rwEcOrders || []).map(o => ({ ...o, _supplier: 'esimcard' })),
+    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' }))
+  ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const filtered = allItems.filter(o => o._supplier === 'esimaccess');
+  const o = filtered[idx];
+  if (!o) return;
+
+  const actionLabel = { suspend: 'Suspend', unsuspend: 'Aktifkan', revoke: 'Revoke', cancel: 'Cancel Order' };
+  const actionMap   = { suspend: 'esimAccessSuspend', unsuspend: 'esimAccessUnsuspend', revoke: 'esimAccessRevoke', cancel: 'esimAccessCancel' };
+  const needConfirm = action === 'revoke' || action === 'cancel';
+  if (needConfirm && !confirm(`Yakin ingin ${actionLabel[action]} eSIM ini? Tindakan ini tidak bisa dibatalkan.`)) return;
+
+  const oriText = btnEl.textContent;
+  btnEl.disabled = true; btnEl.textContent = '⏳';
+  try {
+    const body = { action: actionMap[action] };
+    if (action === 'cancel')                        body.orderNo      = o.order_no;
+    else if (action === 'revoke' || action === 'suspend' || action === 'unsuspend') body.esimTranNo = o.esim_tran_no;
+    const res  = await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || 'Aksi gagal');
+    showToast(`✅ ${actionLabel[action]} berhasil`);
+    btnEl.textContent = '✅';
+    setTimeout(() => { btnEl.textContent = oriText; btnEl.disabled = false; }, 2000);
+  } catch(err) {
+    showToast(`❌ ${escH(err.message)}`);
+    btnEl.textContent = oriText; btnEl.disabled = false;
+  }
 }
 
 function esimRwToggle(detailId, btnId) {
