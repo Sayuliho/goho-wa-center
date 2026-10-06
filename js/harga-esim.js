@@ -164,8 +164,19 @@ function parsePackageNotes(name) {
   return notes;
 }
 
+// ── Supplier config (tambah entry untuk supplier baru) ───────
+const ESIM_SUPPLIERS = [
+  { id: 'ea',  label: 'eSIM Access', settingKey: 'esim_kurs_ea',  default: 16000 },
+  { id: 'ir',  label: 'iRoamly',     settingKey: 'esim_kurs_ir',  default: 16000 },
+  { id: 'ec',  label: 'eSIMCard',    settingKey: 'esim_kurs_ec',  default: 16000 },
+];
+
 // ── Helpers ──────────────────────────────────────────────────
-function hargaGetKurs()   { return parseFloat(window._appSettings?.esim_kurs_usd || localStorage.getItem('esim_kurs_usd') || '16000'); }
+function hargaGetKurs(supplierId) {
+  const s = ESIM_SUPPLIERS.find(x => x.id === supplierId);
+  if (!s) return 16000;
+  return parseFloat(window._appSettings?.[s.settingKey] || localStorage.getItem(s.settingKey) || s.default);
+}
 function hargaGetMarkup() { return parseFloat(window._appSettings?.esim_markup_pct || localStorage.getItem('esim_markup_pct') || '20'); }
 function hargaFmtIDR(v)   { return v ? 'Rp ' + Number(v).toLocaleString('id-ID') : '—'; }
 function hargaGetLamaPerjalanan() { return parseInt(document.getElementById('h-lama-perjalanan')?.value) || 0; }
@@ -239,7 +250,8 @@ function initHargaPanelResize() {
 
 async function hargaLoadSettings() {
   try {
-    const keys = ['esim_kurs_usd', 'esim_markup_pct'];
+    // Load markup + per-supplier kurs keys
+    const keys = ['esim_markup_pct', ...ESIM_SUPPLIERS.map(s => s.settingKey)];
     if (!window._appSettings) window._appSettings = {};
     for (const key of keys) {
       const res  = await fetch(`${API}?action=getSetting&key=${key}`);
@@ -249,10 +261,14 @@ async function hargaLoadSettings() {
         localStorage.setItem(key, data.value);
       }
     }
-    const kursEl   = document.getElementById('h-kurs-usd');
+    // Populate markup input
     const markupEl = document.getElementById('h-markup-pct');
-    if (kursEl)   kursEl.value   = window._appSettings['esim_kurs_usd']   || localStorage.getItem('esim_kurs_usd')   || '16000';
     if (markupEl) markupEl.value = window._appSettings['esim_markup_pct'] || localStorage.getItem('esim_markup_pct') || '20';
+    // Populate per-supplier kurs inputs
+    ESIM_SUPPLIERS.forEach(s => {
+      const el = document.getElementById('h-kurs-' + s.id);
+      if (el) el.value = window._appSettings[s.settingKey] || localStorage.getItem(s.settingKey) || s.default;
+    });
   } catch(e) { console.warn('[hargaLoadSettings]', e); }
 }
 
@@ -426,14 +442,11 @@ async function hargaShowResult() {
   if (!displayName) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara dulu</div>'; return; }
   if (!lamaHari)    { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Isi lama perjalanan (hari)</div>'; return; }
 
-  const kurs       = hargaGetKurs();
   const markup     = hargaGetMarkup();
   const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
 
-  // Sync input
-  const kursEl   = document.getElementById('h-kurs-usd');
+  // Sync markup input
   const markupEl = document.getElementById('h-markup-pct');
-  if (kursEl)   kursEl.value   = kurs;
   if (markupEl) markupEl.value = markup;
 
   const avKeywords = countryObj?.aviroam || [displayName.toLowerCase()];
@@ -534,9 +547,9 @@ async function hargaShowResult() {
       </div>
     </div>`;
 
-  loadEsimAccessPrice(c, lamaHari, kurs, markup, esimPar);
-  loadIroamlyPrice(c, lamaHari, kurs, markup, esimPar);
-  loadEsimCardPrice(c, lamaHari, kurs, markup, esimPar);
+  loadEsimAccessPrice(c, lamaHari, hargaGetKurs('ea'), markup, esimPar);
+  loadIroamlyPrice(c, lamaHari, hargaGetKurs('ir'), markup, esimPar);
+  loadEsimCardPrice(c, lamaHari, hargaGetKurs('ec'), markup, esimPar);
 }
 
 // ── eSIM Access price loader ──────────────────────────────────

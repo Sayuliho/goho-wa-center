@@ -710,26 +710,50 @@
   <!-- Body: scrollable -->
   <div style="padding:16px;overflow-y:auto;flex:1;overflow-x:auto;border-radius:0 0 12px 12px;">
 
-    <!-- Kurs USD + Markup eSIM Access -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
+    <!-- Kurs per Supplier + Markup -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px;padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
+      <!-- eSIM Access -->
       <div class="form-group" style="margin:0;">
-        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Kurs USD</label>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-          <input type="number" id="h-kurs-usd"
+        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Kurs eSIM Access</label>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
+          <input type="number" id="h-kurs-ea"
             value="16000" min="1000" step="100"
-            style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
-            onchange="hargaSaveSetting('esim_kurs_usd', this.value); hargaShowResult();">
-          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">IDR / USD</span>
+            style="flex:1;min-width:0;padding:6px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
+            onchange="hargaSaveSetting('esim_kurs_ea', this.value); hargaShowResult();">
+          <span style="font-size:9px;color:var(--text-muted);white-space:nowrap;">IDR</span>
         </div>
       </div>
+      <!-- iRoamly -->
       <div class="form-group" style="margin:0;">
-        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Markup eSIM Access / iRoamly</label>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Kurs iRoamly</label>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
+          <input type="number" id="h-kurs-ir"
+            value="16000" min="1000" step="100"
+            style="flex:1;min-width:0;padding:6px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
+            onchange="hargaSaveSetting('esim_kurs_ir', this.value); hargaShowResult();">
+          <span style="font-size:9px;color:var(--text-muted);white-space:nowrap;">IDR</span>
+        </div>
+      </div>
+      <!-- eSIMCard -->
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Kurs eSIMCard</label>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
+          <input type="number" id="h-kurs-ec"
+            value="16000" min="1000" step="100"
+            style="flex:1;min-width:0;padding:6px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
+            onchange="hargaSaveSetting('esim_kurs_ec', this.value); hargaShowResult();">
+          <span style="font-size:9px;color:var(--text-muted);white-space:nowrap;">IDR</span>
+        </div>
+      </div>
+      <!-- Markup global -->
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">Markup Global</label>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
           <input type="number" id="h-markup-pct"
             value="20" min="0" max="100" step="1"
-            style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
+            style="flex:1;min-width:0;padding:6px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"
             onchange="hargaSaveSetting('esim_markup_pct', this.value); hargaShowResult();">
-          <span style="font-size:10px;color:var(--text-muted);">%</span>
+          <span style="font-size:9px;color:var(--text-muted);">%</span>
         </div>
       </div>
     </div>
