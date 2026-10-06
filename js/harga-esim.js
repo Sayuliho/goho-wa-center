@@ -859,6 +859,7 @@ async function esimOpenRiwayatGabungan() {
         <button onclick="esimRiwayatFilterTab('semua')" id="rw-tab-semua" style="font-size:11px;padding:4px 12px;background:#6366f1;color:white;border:none;border-radius:5px;cursor:pointer;font-family:var(--font);">Semua</button>
         <button onclick="esimRiwayatFilterTab('esimcard')" id="rw-tab-esimcard" style="font-size:11px;padding:4px 12px;background:#f1f5f9;border:1px solid var(--border);color:var(--text);border-radius:5px;cursor:pointer;font-family:var(--font);">🟦 eSIMCard</button>
         <button onclick="esimRiwayatFilterTab('esimaccess')" id="rw-tab-esimaccess" style="font-size:11px;padding:4px 12px;background:#f1f5f9;border:1px solid var(--border);color:var(--text);border-radius:5px;cursor:pointer;font-family:var(--font);">📡 eSIM Access</button>
+        <button onclick="esimRiwayatFilterTab('iroamly')" id="rw-tab-iroamly" style="font-size:11px;padding:4px 12px;background:#f1f5f9;border:1px solid var(--border);color:var(--text);border-radius:5px;cursor:pointer;font-family:var(--font);">🌐 iRoamly</button>
       </div>
       <div id="esim-rw-list" style="overflow-y:auto;flex:1;padding:12px 16px;">
         <div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Memuat riwayat...</div>
@@ -866,20 +867,22 @@ async function esimOpenRiwayatGabungan() {
     </div>`;
   document.body.appendChild(modal);
 
-  const [ecRes, eaRes] = await Promise.allSettled([
+  const [ecRes, eaRes, irRes] = await Promise.allSettled([
     fetch(`${API}?action=getEsimcardOrders&limit=50`).then(r => r.json()),
-    fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimAccessOrders&limit=50').then(r => r.json())
+    fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimAccessOrders&limit=50').then(r => r.json()),
+    fetch('https://goho-proxy.gohotravel.workers.dev?action=getIroamlyOrders&limit=50').then(r => r.json())
   ]);
 
   window._rwEcOrders = ecRes.status === 'fulfilled' && ecRes.value.ok ? (ecRes.value.orders || []) : [];
   window._rwEaOrders = eaRes.status === 'fulfilled' && eaRes.value.ok ? (eaRes.value.orders || []) : [];
+  window._rwIrOrders = irRes.status === 'fulfilled' && irRes.value.ok ? (irRes.value.orders || []) : [];
   window._eaOrders = window._rwEaOrders;
 
   esimRiwayatFilterTab('semua');
 }
 
 function esimRiwayatFilterTab(tab) {
-  ['semua','esimcard','esimaccess'].forEach(t => {
+  ['semua','esimcard','esimaccess','iroamly'].forEach(t => {
     const btn = document.getElementById(`rw-tab-${t}`);
     if (!btn) return;
     btn.style.background = t === tab ? '#6366f1' : '#f1f5f9';
@@ -892,10 +895,12 @@ function esimRiwayatFilterTab(tab) {
 
   const ecOrders = window._rwEcOrders || [];
   const eaOrders = window._rwEaOrders || [];
+  const irOrders = window._rwIrOrders || [];
 
   const allItems = [
     ...ecOrders.map(o => ({ ...o, _supplier: 'esimcard' })),
-    ...eaOrders.map(o => ({ ...o, _supplier: 'esimaccess' }))
+    ...eaOrders.map(o => ({ ...o, _supplier: 'esimaccess' })),
+    ...irOrders.map(o => ({ ...o, _supplier: 'iroamly' }))
   ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
   const filtered = tab === 'semua' ? allItems : allItems.filter(o => o._supplier === tab);
@@ -909,13 +914,15 @@ function esimRiwayatFilterTab(tab) {
 
   listEl.innerHTML = filtered.map((o, idx) => {
     const isEc  = o._supplier === 'esimcard';
+    const isIr  = o._supplier === 'iroamly';
     const tgl   = o.created_at ? new Date(o.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-';
     const sc    = statusColor[o.status] || '#6b7280';
     const suppLabel = isEc
       ? '<span style="font-size:9px;background:#dbeafe;color:#1d4ed8;border-radius:3px;padding:1px 5px;font-weight:700;">🟦 eSIMCard</span>'
-      : '<span style="font-size:9px;background:#ede9fe;color:#6366f1;border-radius:3px;padding:1px 5px;font-weight:700;">📡 eSIM Access</span>';
-    // FIX: prioritaskan catatan sebelum package_code untuk eSIM Access
-    const paket = isEc ? (o.package_name || o.catatan || '-') : (o.package_name || o.catatan || o.package_code || '-');
+      : isIr
+        ? '<span style="font-size:9px;background:#dcfce7;color:#166534;border-radius:3px;padding:1px 5px;font-weight:700;">🌐 iRoamly</span>'
+        : '<span style="font-size:9px;background:#ede9fe;color:#6366f1;border-radius:3px;padding:1px 5px;font-weight:700;">📡 eSIM Access</span>';
+    const paket = isEc ? (o.package_name || o.catatan || '-') : isIr ? (o.plan_name || '-') : (o.package_name || o.catatan || o.package_code || '-');
     const nama  = isEc ? (o.nama_pembeli || o.nama_customer || '-') : (o.nama_customer || '-');
     const noWa  = isEc ? (o.hp_pembeli || '') : (o.no_wa_customer || o.noWa || '');
     const hargaBeli = o.harga_beli || o.hargaBeli || 0;
@@ -943,9 +950,10 @@ function esimRiwayatFilterTab(tab) {
 }
 
 function esimRwDetailHtml(o, isEc, idx) {
+  const isIr     = o._supplier === 'iroamly';
   const iccid    = o.iccid || '-';
-  const orderNo  = o.order_no || o.esim_tran_no || '-';
-  const qr       = o.qr_code_url || o.qrcode_url || '';
+  const orderNo  = o.order_no || o.esim_tran_no || o.order_id || '-';
+  const qr       = o.qr_code_url || o.qrcode_url || o.qrcode || '';
   const shortUrl = o.short_url || o.activation_url || '';
   const hargaBeli = o.harga_beli || o.hargaBeli || 0;
   let html = '';
@@ -958,6 +966,11 @@ function esimRwDetailHtml(o, isEc, idx) {
       </div>
     </div>`;
   }
+  if (isIr && o.redeem_code) {
+    html += `<div style="font-size:10px;margin-bottom:4px;">Redeem Code: <b>${escH(o.redeem_code)}</b>
+      <button onclick="esimRwCopy('${escH(o.redeem_code)}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>
+    </div>`;
+  }
   html += `<div style="font-size:10px;margin-bottom:4px;">ICCID: <b>${escH(iccid)}</b>
     ${iccid !== '-' ? `<button onclick="esimRwCopy('${escH(iccid)}',this)" style="font-size:9px;padding:1px 4px;background:#e2e8f0;border:none;border-radius:3px;cursor:pointer;margin-left:4px;">📋</button>` : ''}
   </div>
@@ -965,8 +978,16 @@ function esimRwDetailHtml(o, isEc, idx) {
   ${hargaBeli ? `<div style="font-size:10px;margin-bottom:8px;color:#166534;">Harga Beli: <b>Rp ${Number(hargaBeli).toLocaleString('id-ID')}</b></div>` : '<div style="margin-bottom:8px;"></div>'}
   <div id="rw-usage-${o._supplier}-${idx}"></div>`;
 
+  // iRoamly: tombol Status Live
+  if (isIr) {
+    html += `<div id="rw-ir-profile-${idx}" style="margin-bottom:6px;"></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+      <button onclick="esimRwLoadIrProfile(${idx})" style="font-size:10px;padding:4px 10px;background:#166534;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">🔄 Status Live</button>
+    </div>`;
+  }
+
   // eSIM Access: tambah tombol live status + actions
-  if (!isEc) {
+  if (!isEc && !isIr) {
     html += `<div id="rw-ea-profile-${idx}" style="margin-bottom:6px;"></div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
       <button onclick="esimRwLoadEaProfile(${idx})" style="font-size:10px;padding:4px 10px;background:#6366f1;color:white;border:none;border-radius:4px;cursor:pointer;font-family:var(--font);">🔄 Status Live</button>
@@ -984,10 +1005,60 @@ function esimRwDetailHtml(o, isEc, idx) {
   return html;
 }
 
+async function esimRwLoadIrProfile(idx) {
+  const irOrders = (window._rwIrOrders || []).map(o => ({ ...o, _supplier: 'iroamly' }));
+  const o = irOrders[idx];
+  const profileEl = document.getElementById(`rw-ir-profile-${idx}`);
+  if (!profileEl || !o) return;
+  if (!o.redeem_code) {
+    profileEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);">Redeem code tidak tersedia</div>';
+    return;
+  }
+  profileEl.innerHTML = '<div style="font-size:10px;color:var(--text-muted);"><i class="ti ti-loader spin"></i> Mengambil status live...</div>';
+  try {
+    const res  = await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'iroamlyGetNetworkFlow', redeemCode: o.redeem_code })
+    });
+    const data = await res.json();
+    if (!data.ok || !data.flow) {
+      profileEl.innerHTML = `<div style="font-size:10px;color:var(--text-muted);">${data.msg || 'Data tidak tersedia'}</div>`;
+      return;
+    }
+    const f = data.flow;
+    const statusMap = { 0: '⏸ Inactive', 1: '✅ Active', 2: '⏰ Expired', 9: '❌ Invalid' };
+    const statusLabel = statusMap[f.status] ?? `Status ${f.status}`;
+    const statusColor = { 0: '#92400e', 1: '#166534', 2: '#6b7280', 9: '#991b1b' };
+    const sc = statusColor[f.status] ?? '#374151';
+    const sisaData = (f.flow_total && f.flow_use != null)
+      ? ((f.flow_total - f.flow_use) / 1024).toFixed(2) + ' GB'
+      : '-';
+    const totalData = f.flow_total ? (f.flow_total / 1024).toFixed(2) + ' GB' : '-';
+    const device = f.installDevice || '-';
+    const installTime = f.installTime ? f.installTime.replace('T', ' ').substring(0, 16) : '-';
+    profileEl.innerHTML = `
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px;font-size:10px;margin-bottom:4px;">
+        <div style="font-weight:700;color:#166534;margin-bottom:6px;">🌐 Status Live iRoamly</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+          <span style="background:#dcfce7;color:${sc};border-radius:3px;padding:1px 6px;font-weight:600;">${escH(statusLabel)}</span>
+          ${f.installCount ? `<span style="background:#f1f5f9;border-radius:3px;padding:1px 6px;">Install: ${f.installCount}x</span>` : ''}
+        </div>
+        <div>📱 Device: <b>${escH(device)}</b></div>
+        ${f.installTime !== '-' ? `<div>📅 Waktu Install: ${escH(installTime)}</div>` : ''}
+        <div>📶 Sisa Data: <b>${escH(sisaData)}</b> / ${escH(totalData)}</div>
+        ${f.start_date ? `<div>🗓 Aktif: ${escH(f.start_date)} s/d ${escH(f.end_date || '-')}</div>` : ''}
+      </div>`;
+  } catch(err) {
+    profileEl.innerHTML = `<div style="font-size:10px;color:var(--red);">Error: ${escH(err.message)}</div>`;
+  }
+}
+
 async function esimRwLoadEaProfile(idx) {
   const allItems = [
     ...(window._rwEcOrders || []).map(o => ({ ...o, _supplier: 'esimcard' })),
-    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' }))
+    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' })),
+    ...(window._rwIrOrders || []).map(o => ({ ...o, _supplier: 'iroamly' }))
   ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const filtered = allItems.filter(o => o._supplier === 'esimaccess');
   const o = filtered[idx];
@@ -1038,7 +1109,8 @@ async function esimRwLoadEaProfile(idx) {
 async function esimRwEaAction(action, idx, btnEl) {
   const allItems = [
     ...(window._rwEcOrders || []).map(o => ({ ...o, _supplier: 'esimcard' })),
-    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' }))
+    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' })),
+    ...(window._rwIrOrders || []).map(o => ({ ...o, _supplier: 'iroamly' }))
   ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const filtered = allItems.filter(o => o._supplier === 'esimaccess');
   const o = filtered[idx];
@@ -1091,7 +1163,8 @@ async function esimRwSisaData(supplier, idx, e) {
   if (e) e.stopPropagation();
   const allItems = [
     ...(window._rwEcOrders || []).map(o => ({ ...o, _supplier: 'esimcard' })),
-    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' }))
+    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' })),
+    ...(window._rwIrOrders || []).map(o => ({ ...o, _supplier: 'iroamly' }))
   ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const filtered = allItems.filter(o => o._supplier === supplier);
   const o = filtered[idx];
@@ -1148,7 +1221,8 @@ async function esimRwSisaData(supplier, idx, e) {
 function esimRwCopyWA(supplier, idx) {
   const allItems = [
     ...(window._rwEcOrders || []).map(o => ({ ...o, _supplier: 'esimcard' })),
-    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' }))
+    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' })),
+    ...(window._rwIrOrders || []).map(o => ({ ...o, _supplier: 'iroamly' }))
   ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const filtered = allItems.filter(o => o._supplier === supplier);
   const o = filtered[idx];
@@ -1373,7 +1447,8 @@ async function esimAccessDoPurchase(packageCode, packageName, buyIDR) {
 async function esimRwEaTopup(idx) {
   const allItems = [
     ...(window._rwEcOrders || []).map(o => ({ ...o, _supplier: 'esimcard' })),
-    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' }))
+    ...(window._rwEaOrders || []).map(o => ({ ...o, _supplier: 'esimaccess' })),
+    ...(window._rwIrOrders || []).map(o => ({ ...o, _supplier: 'iroamly' }))
   ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const filtered = allItems.filter(o => o._supplier === 'esimaccess');
   const o = filtered[idx];
