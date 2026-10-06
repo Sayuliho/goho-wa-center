@@ -158,7 +158,7 @@ function iroamlyGetRegion(countryName) {
 function parsePackageNotes(name) {
   const notes = [];
   const n = (name || '').toLowerCase();
-  if (n.includes('nonhkip')) notes.push('⚠️ Tidak berlaku di HK/India/Pakistan');
+  if (n.includes('nonhkip')) notes.push('🌐 IP Exit: bukan HK');
   if (n.includes('iij'))     notes.push('IIJ');
   if (n.includes('ntt'))     notes.push('NTT');
   return notes;
