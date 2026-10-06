@@ -1077,29 +1077,30 @@ async function esimRwLoadEaProfile(idx) {
       return;
     }
     const e = data.esimList[0];
-    const smdpColor  = { 'RELEASED': '#1d4ed8', 'INSTALLED': '#166534', 'ENABLED': '#166534', 'DELETED': '#991b1b' };
-    const esimColor  = { '1': '#166534', '0': '#6b7280' };
-    const smdpLabel  = e.smdpStatus || '-';
-    const esimLabel  = e.esimStatus === '1' ? '✅ Aktif' : (e.esimStatus === '0' ? '⏸ Nonaktif' : e.esimStatus || '-');
-    const sc         = smdpColor[smdpLabel] || '#374151';
-    const ec         = esimColor[e.esimStatus] || '#374151';
-    const device     = [e.brandName, e.model].filter(Boolean).join(' ');
-    const osType     = e.osType === '1' ? 'iOS' : e.osType === '2' ? 'Android' : (e.osType || '');
-    const installed  = e.installedTime ? e.installedTime.replace('T', ' ').substring(0, 16) : '';
-    const expired    = e.expiredTime || e.expired_time || '';
+    const smdpColor = { 'RELEASED': '#1d4ed8', 'DISABLED': '#92400e', 'INSTALLED': '#166534', 'ENABLED': '#166534', 'DELETED': '#991b1b', 'GOT_RESOURCE': '#0891b2' };
+    const smdpLabel = e.smdpStatus || '-';
+    const esimLabel = e.statusLabel || e.esimStatus || '-';
+    const sc        = smdpColor[smdpLabel] || '#374151';
+    const expired   = e.expiredTime || e.expired_time || '';
+    const usageFormatted  = e.usageFormatted || '';
+    const totalFormatted  = e.totalVolumeFormatted || '';
+    const pkgName   = e.packages?.[0]?.packageName || '';
+    const eid       = e.eid || '';
+    // Sisa data dalam persen
+    const usagePct  = (e.totalVolume && e.usageBytes != null)
+      ? Math.round((1 - e.usageBytes / e.totalVolume) * 100)
+      : null;
     profileEl.innerHTML = `
-      <div style="background:#f8fafc;border-radius:6px;padding:8px;font-size:10px;margin-bottom:4px;">
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:10px;margin-bottom:4px;">
         <div style="font-weight:700;color:#374151;margin-bottom:6px;">📡 Status Live eSIM</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">
           <span style="background:#e0e7ff;color:${sc};border-radius:3px;padding:1px 6px;font-weight:600;">SMDP: ${escH(smdpLabel)}</span>
-          <span style="background:#f0fdf4;color:${ec};border-radius:3px;padding:1px 6px;font-weight:600;">${escH(esimLabel)}</span>
-          ${osType ? `<span style="background:#f1f5f9;border-radius:3px;padding:1px 6px;">${escH(osType)}</span>` : ''}
+          <span style="background:#f0fdf4;color:#374151;border-radius:3px;padding:1px 6px;font-weight:600;">${escH(esimLabel)}</span>
         </div>
-        ${device ? `<div>📱 Perangkat: <b>${escH(device)}</b></div>` : ''}
-        ${installed ? `<div>📅 Install: ${escH(installed)}</div>` : ''}
-        ${expired ? `<div>⏱ Expired: ${escH(expired.replace('T',' ').substring(0,16))}</div>` : ''}
-        ${e.appleInstallUrl ? `<div style="margin-top:4px;"><a href="${escH(e.appleInstallUrl)}" target="_blank" style="color:#6366f1;font-size:10px;">🍎 Link Install iOS</a></div>` : ''}
-        ${e.googlePlayUrl ? `<div><a href="${escH(e.googlePlayUrl)}" target="_blank" style="color:#16a34a;font-size:10px;">🤖 Link Install Android</a></div>` : ''}
+        ${pkgName ? `<div style="margin-bottom:3px;">📦 Paket: <b>${escH(pkgName)}</b></div>` : ''}
+        ${(usageFormatted || totalFormatted) ? `<div style="margin-bottom:3px;">📶 Data: <b>${escH(usageFormatted)}</b> terpakai dari <b>${escH(totalFormatted)}</b>${usagePct !== null ? ` · <span style="color:#166534;font-weight:700;">${usagePct}% sisa</span>` : ''}</div>` : ''}
+        ${expired ? `<div style="margin-bottom:3px;">⏱ Expired: <b>${escH(expired.replace('T',' ').substring(0,16))}</b></div>` : ''}
+        ${eid ? `<div style="margin-bottom:3px;color:var(--text-muted);">EID: ${escH(eid)}</div>` : ''}
       </div>`;
   } catch(err) {
     profileEl.innerHTML = `<div style="font-size:10px;color:var(--red);">Error: ${escH(err.message)}</div>`;
