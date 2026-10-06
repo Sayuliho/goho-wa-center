@@ -603,7 +603,7 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
         const notes   = parsePackageNotes(pkg.name || '');
         const noteHtml = notes.length ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">${notes.join(' · ')}</div>` : '';
         const locList = pkg.locationNetworkList || [];
-        const ops     = locList.flatMap(l => (l.networkList || []).map(n => n.operatorName || '')).filter(Boolean).slice(0, 3);
+        const ops     = locList.flatMap(l => (l.operatorList || l.networkList || []).map(n => n.operatorName || '')).filter(Boolean).slice(0, 3);
         const opStr   = ops.length ? ops.join(' · ') : '';
         const pkgId  = 'ea-' + (pkg.packageCode||'').replace(/[^a-zA-Z0-9]/g,'_');
         window._eaPkgCache = window._eaPkgCache || {};
@@ -617,6 +617,9 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
             ${pkg.speed ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(pkg.speed)}</span>` : ''}
             ${pkg.volumeFormatted ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📦 ${escH(pkg.volumeFormatted)}</span>` : ''}
             ${pkg.hotspot ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ✅</span>` : ''}
+            ${pkg.supportsTopUp ? `<span style="font-size:9px;background:#d1fae5;color:#065f46;border-radius:3px;padding:1px 6px;">🔄 Top-up</span>` : ''}
+            ${pkg.ipExport && pkg.ipExport !== 'HK' ? `<span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 6px;">🌐 IP: ${escH(pkg.ipExport)}</span>` : ''}
+            ${pkg.fupPolicy ? `<span style="font-size:9px;background:#fef9c3;color:#713f12;border-radius:3px;padding:1px 6px;">⚡ FUP</span>` : ''}
           </div>
           ${opStr ? `<div style="font-size:9px;color:#6366f1;margin-bottom:4px;">📡 ${escH(opStr)}</div>` : ''}
           <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
@@ -1011,9 +1014,9 @@ async function esimRwSisaData(supplier, idx, e) {
       const u = data.usageList[0];
       usageEl.innerHTML = `<div style="background:#f0fdf4;border-radius:6px;padding:8px;font-size:10px;margin-bottom:6px;">
         <div style="font-weight:700;color:#166534;margin-bottom:4px;">📊 Sisa Data (eSIM Access)</div>
-        <div>Total: <b>${u.totalVolumeFormatted}</b> · Terpakai: <b>${u.usedVolumeFormatted}</b></div>
-        <div style="color:#166534;font-weight:600;margin-top:2px;">Sisa: <b>${u.remainingFormatted}</b></div>
-        ${u.expiredTime ? `<div style="color:#92400e;margin-top:2px;">Expired: ${u.expiredTime.replace('T',' ').substring(0,16)}</div>` : ''}
+        <div>Total: <b>${u.totalDataFormatted||u.totalVolumeFormatted||'-'}</b> · Terpakai: <b>${u.dataUsageFormatted||u.usedVolumeFormatted||'-'}</b></div>
+        <div style="color:#166534;font-weight:600;margin-top:2px;">Sisa: <b>${u.remainingFormatted||'-'}</b></div>
+        ${u.lastUpdateTime ? `<div style="color:#92400e;margin-top:2px;">Update: ${u.lastUpdateTime.replace('T',' ').substring(0,16)}</div>` : ''}
         <div style="background:#e2e8f0;border-radius:3px;height:5px;margin-top:6px;">
           <div style="background:#16a34a;border-radius:3px;height:5px;width:${Math.min(100,u.usagePct||0)}%;"></div>
         </div>
@@ -1163,8 +1166,8 @@ async function eaCheckUsage(idx, e) {
     usageEl.innerHTML = `
       <div style="background:#f0fdf4;border-radius:6px;padding:8px;font-size:10px;margin-bottom:6px;">
         <div style="font-weight:700;color:#166534;margin-bottom:4px;">📊 Sisa Data</div>
-        <div>Total: <b>${u.totalVolumeFormatted}</b> · Terpakai: <b>${u.usedVolumeFormatted}</b></div>
-        <div style="color:#166534;font-weight:600;margin-top:2px;">Sisa: <b>${u.remainingFormatted}</b></div>
+        <div>Total: <b>${u.totalDataFormatted||u.totalVolumeFormatted||'-'}</b> · Terpakai: <b>${u.dataUsageFormatted||u.usedVolumeFormatted||'-'}</b></div>
+        <div style="color:#166534;font-weight:600;margin-top:2px;">Sisa: <b>${u.remainingFormatted||'-'}</b></div>
         <div style="background:#e2e8f0;border-radius:3px;height:5px;margin-top:6px;">
           <div style="background:#16a34a;border-radius:3px;height:5px;width:${Math.min(100,u.usagePct||0)}%;"></div>
         </div>
