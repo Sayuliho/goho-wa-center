@@ -694,56 +694,82 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
       window._iroamlyCache[cacheKey] = rawData;
     }
 
-    const totalPkgs = rawData.filter(p => p.type === 'Total');
-    const workIR    = (totalPkgs.length ? totalPkgs : rawData).filter(p => parseInt(p.duration) >= lamaHari);
+    // Tampilkan SEMUA tipe paket (Total & Daily) — jangan filter hanya Total
+    const workIR = rawData.filter(p => parseInt(p.duration) >= lamaHari);
     if (!workIR.length) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket iRoamly untuk ≥ ${lamaHari} hari</div>`; return; }
 
-    const byDurIR = new Map();
+    // Kelompokkan per tipe (Total / Daily) lalu per durasi
+    const TYPE_ORDER = ['Total', 'Daily'];
+    const byType = {};
     workIR.forEach(p => {
+      const t = p.type || 'Total';
+      if (!byType[t]) byType[t] = new Map();
       const d = parseInt(p.duration);
-      if (!byDurIR.has(d)) byDurIR.set(d, []);
-      byDurIR.get(d).push(p);
+      if (!byType[t].has(d)) byType[t].set(d, []);
+      byType[t].get(d).push(p);
     });
 
+    const TYPE_LABEL = {
+      Total: '📦 Paket Total (kuota tetap)',
+      Daily: '🔄 Paket Daily (kuota reset harian)',
+    };
+
     let html = '';
-    [...byDurIR.entries()].sort((a,b) => a[0]-b[0]).forEach(([validity, dayPkgs]) => {
-      const isExactDur = validity === lamaHari;
-      html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
-        📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#7c3aed;">(perbandingan)</span>' : ''}
+    const typesFound = TYPE_ORDER.filter(t => byType[t]);
+    typesFound.forEach((pkgType, ti) => {
+      const byDurIR = byType[pkgType];
+      const typeLabel = TYPE_LABEL[pkgType] || pkgType;
+      html += `<div style="font-size:10px;font-weight:700;color:${pkgType==='Daily'?'#0369a1':'#374151'};background:${pkgType==='Daily'?'#e0f2fe':'#f1f5f9'};border-radius:5px;padding:4px 8px;margin:${ti>0?'14px':'0'} 0 8px;letter-spacing:0.3px;">
+        ${typeLabel}
       </div>`;
-      dayPkgs.sort((a, b) => parseFloat(a.credit||0) - parseFloat(b.credit||0));
-      dayPkgs.forEach(pkg => {
-        const buyUSD  = parseFloat(pkg.credit || 0);
-        const buyIDR  = Math.round(buyUSD * kurs);
-        const sellIDR = Math.round(buyIDR * (1 + markup / 100));
-        const isCheaper  = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
-        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
-        const bg     = isCheaper ? '#f0fdf4' : 'white';
-        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
-        const canHotspot = pkg.hotspot !== false;
-        const coverage   = IROAMLY_REGIONS[pkg.region_index || ''] || '';
-        const dayQuota   = pkg.day_quota || pkg.daily_quota || '';
-        const speedInfo  = dayQuota ? `${dayQuota}/hari full speed` : '';
-        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
-            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.data||'-')} · ${validity}h</span>${cheapBadge}
-          </div>
-          ${coverage ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:4px;display:inline-block;">🌏 ${escH(coverage)}</div>` : ''}
-          <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.operator||'')}</div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
-            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(pkg.network_type||'4G')}</span>
-            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot?'✅':'❌'}</span>
-          </div>
-          ${speedInfo ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${escH(speedInfo)}</div>` : ''}
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
-            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
-            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
-            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
-            <span style="font-size:13px;font-weight:700;color:#7c3aed;">${hargaFmtIDR(sellIDR)}</span>
-          </div>
+      [...byDurIR.entries()].sort((a,b) => a[0]-b[0]).forEach(([validity, dayPkgs]) => {
+        const isExactDur = validity === lamaHari;
+        html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+          📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#7c3aed;">(perbandingan)</span>' : ''}
         </div>`;
+        dayPkgs.sort((a, b) => parseFloat(a.credit||0) - parseFloat(b.credit||0));
+        dayPkgs.forEach(pkg => {
+          const buyUSD  = parseFloat(pkg.credit || 0);
+          const buyIDR  = Math.round(buyUSD * kurs);
+          const sellIDR = Math.round(buyIDR * (1 + markup / 100));
+          const isCheaper  = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+          const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+          const bg     = isCheaper ? '#f0fdf4' : 'white';
+          const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+          const canHotspot = pkg.hotspot !== false;
+          const coverage   = IROAMLY_REGIONS[pkg.region_index || ''] || '';
+          // Daily: tampilkan info kuota harian + keterangan throttle
+          const isDaily    = (pkg.type || 'Total') === 'Daily';
+          const dayQuota   = pkg.day_quota || pkg.daily_quota || pkg.data || '';
+          const speedInfo  = isDaily && dayQuota
+            ? `${dayQuota}/hari · jika melebihi → throttle 384kbps, reset besok`
+            : (!isDaily && (pkg.day_quota || pkg.daily_quota))
+              ? `${pkg.day_quota || pkg.daily_quota}/hari full speed`
+              : '';
+          const typeBadge  = isDaily
+            ? '<span style="background:#0ea5e9;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">DAILY</span>'
+            : '';
+          html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+              <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.data||'-')} · ${validity}h</span>${typeBadge}${cheapBadge}
+            </div>
+            ${coverage ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:4px;display:inline-block;">🌏 ${escH(coverage)}</div>` : ''}
+            <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.operator||'')}</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+              <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(pkg.network_type||'4G')}</span>
+              <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot?'✅':'❌'}</span>
+            </div>
+            ${speedInfo ? `<div style="font-size:9px;color:${isDaily?'#0369a1':'#b45309'};background:${isDaily?'#e0f2fe':'#fef3c7'};border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${escH(speedInfo)}</div>` : ''}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+              <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+              <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+              <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+              <span style="font-size:13px;font-weight:700;color:#7c3aed;">${hargaFmtIDR(sellIDR)}</span>
+            </div>
+          </div>`;
+        });
       });
     });
     el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket</span>';
