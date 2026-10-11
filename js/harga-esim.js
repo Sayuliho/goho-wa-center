@@ -701,14 +701,20 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
       const locList = p.locationNetworkList || [];
       // 1. Buang paket yg namanya mengandung keyword regional/global
       if (REGIONAL_KW.some(kw => name.includes(kw))) return false;
-      // 2. Buang paket combo 2+ negara berdasarkan nama (e.g. "Japan & South Korea")
-      if (/ & /i.test(name)) return false;
+      // 2. Buang paket combo 2+ negara berdasarkan nama (e.g. "Japan & South Korea", "Japan&Korea")
+      if (/\s*&\s*/i.test(name)) return false;   // match & dengan/tanpa spasi
       if (/ and /i.test(name)) return false;
       // 3. Buang paket yg punya > 1 entry di locationNetworkList (per API docs: 1 entry = 1 negara)
+      // Hanya berlaku kalau locList tidak kosong (beberapa paket mungkin tidak ada field ini)
       if (locList.length > 1) return false;
       return true;
     };
     const purePkgs = rawPackages.filter(isPure);
+    // DEBUG — lihat di console apa nama paket yang lolos/tidak
+    console.log('[EA DEBUG] rawPackages count:', rawPackages.length);
+    console.log('[EA DEBUG] purePkgs count:', purePkgs.length);
+    console.log('[EA DEBUG] rawPackages names:', rawPackages.map(p => p.name + ' | loc:' + (p.locationNetworkList||[]).length));
+    console.log('[EA DEBUG] purePkgs names:', purePkgs.map(p => p.name));
     // Fallback ke semua paket hanya kalau purePkgs benar-benar kosong
     let allEAPkgs = purePkgs.length ? purePkgs : rawPackages;
 
@@ -2046,12 +2052,4 @@ eSIM aktif otomatis saat pertama connect ke jaringan.
 Selamat berlibur! ✈️</div>
         </div>`;
     } else if (attempt < maxAttempts) {
-      statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size:11px;color:#92400e;">⏳ Diproses... (${attempt}/${maxAttempts})</div>`;
-      setTimeout(() => eaPollResult(orderNo, statusEl, beliBtn, packageName, attempt + 1), 5000);
-    } else {
-      statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:11px;color:#991b1b;">⚠️ Masih diproses. Order No: <b>${escH(orderNo)}</b><br>Cek di Riwayat eSIM Access.</div>`;
-    }
-  } catch(err) {
-    if (attempt < maxAttempts) setTimeout(() => eaPollResult(orderNo, statusEl, beliBtn, packageName, attempt + 1), 5000);
-  }
-}
+      statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size
