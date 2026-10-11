@@ -517,6 +517,11 @@ async function hargaShowResult() {
   if (!displayName) { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Pilih negara dulu</div>'; return; }
   if (!lamaHari)    { resultEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Isi lama perjalanan (hari)</div>'; return; }
 
+  // Init filter state (tidak di-reset saat re-render karena filter berubah)
+  if (!window._esimFilter) window._esimFilter = { tipe: 'fixed', cakupan: 'negara' };
+  const filterTipe    = window._esimFilter.tipe    || 'fixed';
+  const filterCakupan = window._esimFilter.cakupan || 'negara';
+
   const markup     = hargaGetMarkup();
   const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === displayName);
 
@@ -593,10 +598,38 @@ async function hargaShowResult() {
     });
   }
 
+  // Aviroam hanya punya paket Negara — gate filterCakupan
+  if (filterCakupan === 'regional' || filterCakupan === 'global') {
+    aviroamCards = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket ${filterCakupan} untuk Aviroam</div>`;
+  }
+
+  // ── Filter bar HTML ──────────────────────────────────────────
+  function fBtn(key, val, label) {
+    const active = (key === 'tipe' ? filterTipe : filterCakupan) === val;
+    const bg     = active ? '#2563eb' : '#f1f5f9';
+    const color  = active ? 'white'   : 'var(--text-muted)';
+    const border = active ? '#2563eb' : 'var(--border)';
+    const fw     = active ? '700' : '400';
+    return `<button onclick="esimFilterSet('${key}','${val}')" style="font-size:10px;padding:4px 9px;border:1px solid ${border};border-radius:5px;background:${bg};color:${color};cursor:pointer;font-family:var(--font);font-weight:${fw};">${label}</button>`;
+  }
+  const tipeRow    = fBtn('tipe','fixed','Fixed Data') + fBtn('tipe','unlimited','Unlimited') + fBtn('tipe','semua','Semua');
+  const cakupanRow = fBtn('cakupan','negara','Negara Ini') + fBtn('cakupan','regional','Regional') + fBtn('cakupan','global','Global') + fBtn('cakupan','semua','Semua');
+  const filterBar = `<div style="margin-bottom:12px;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+    <div>
+      <div style="font-size:9px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">📊 Tipe Data</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">${tipeRow}</div>
+    </div>
+    <div>
+      <div style="font-size:9px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">🌐 Cakupan</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">${cakupanRow}</div>
+    </div>
+  </div>`;
+
   resultEl.innerHTML = `
-    <div style="font-size:11px;background:#f1f5f9;border-radius:6px;padding:4px 10px;color:var(--text-muted);margin-bottom:12px;display:inline-block;">
+    <div style="font-size:11px;background:#f1f5f9;border-radius:6px;padding:4px 10px;color:var(--text-muted);margin-bottom:10px;display:inline-block;">
       ${escH(displayName)} · ${lamaHari} hari
     </div>
+    ${filterBar}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;">
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">🌐 Aviroam</div>
@@ -650,6 +683,15 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
       window._esimAccessCache[cacheKey] = rawPackages;
     }
 
+    const filterTipeEA    = window._esimFilter?.tipe    || 'fixed';
+    const filterCakupanEA = window._esimFilter?.cakupan || 'negara';
+
+    // eSIM Access hanya punya paket negara — gate cakupan
+    if (filterCakupanEA === 'regional' || filterCakupanEA === 'global') {
+      el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket ${filterCakupanEA} untuk eSIM Access</div>`;
+      return;
+    }
+
     const REGIONAL_KW = ['asia', 'global', 'worldwide', 'global139', 'global (', 'asia-20', 'aukus', 'oceania'];
     const isPure = p => {
       const name = (p.name || '').toLowerCase();
@@ -657,28 +699,44 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
       return !REGIONAL_KW.some(kw => name.includes(kw)) && locList.length <= 2;
     };
     const purePkgs = rawPackages.filter(isPure);
-    const workingPkgs = (purePkgs.length ? purePkgs : rawPackages).filter(p => parseInt(p.duration || 0) >= lamaHari);
+    let allEAPkgs = purePkgs.length ? purePkgs : rawPackages;
 
-    if (!workingPkgs.length) {
-      el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIM Access untuk ≥ ${lamaHari} hari</div>`;
+    // Apply filterTipe: cek volumeFormatted atau nama untuk unlimited
+    const isUnlimEA = p => {
+      const vol = (p.volumeFormatted || '').toLowerCase();
+      const nm  = (p.name           || '').toLowerCase();
+      return vol.includes('unlimited') || nm.includes('unlimited');
+    };
+    if (filterTipeEA === 'fixed')     allEAPkgs = allEAPkgs.filter(p => !isUnlimEA(p));
+    if (filterTipeEA === 'unlimited') allEAPkgs = allEAPkgs.filter(p =>  isUnlimEA(p));
+
+    if (!allEAPkgs.length) {
+      el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIM Access sesuai filter</div>`;
       return;
     }
 
+    // Kelompok: >= lamaHari duluan (ascending), < lamaHari di bawah (descending, label merah)
     const byDurEA = new Map();
-    workingPkgs.forEach(p => {
+    allEAPkgs.forEach(p => {
       const d = parseInt(p.duration || 0);
       if (!byDurEA.has(d)) byDurEA.set(d, []);
       byDurEA.get(d).push(p);
     });
-    [...byDurEA.keys()].sort((a,b) => a-b).forEach(d => {
+    [...byDurEA.keys()].forEach(d => {
       byDurEA.get(d).sort((a,b) => (a.priceRaw||0) - (b.priceRaw||0));
     });
+    const mainEA  = [...byDurEA.entries()].filter(([d]) => d >= lamaHari).sort((a,b) => a[0]-b[0]);
+    const shortEA = [...byDurEA.entries()].filter(([d]) => d <  lamaHari).sort((a,b) => b[0]-a[0]);
 
     let html = '';
-    [...byDurEA.entries()].sort((a,b) => a[0]-b[0]).forEach(([dur, pkgs]) => {
+    [...mainEA, ...shortEA].forEach(([dur, pkgs]) => {
       const isExactDur = dur === lamaHari;
+      const isShorter  = dur < lamaHari;
+      const durLabel = isShorter
+        ? `📅 ${dur} Hari <span style="font-size:9px;font-weight:400;color:#dc2626;">(kurang dari ${lamaHari} hari)</span>`
+        : `📅 ${dur} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#6366f1;">(perbandingan)</span>' : ''}`;
       html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
-        📅 ${dur} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#6366f1;">(perbandingan)</span>' : ''}
+        ${durLabel}
       </div>`;
       pkgs.forEach(pkg => {
         const buyUSD  = (pkg.priceRaw || 0) / 10000;
@@ -751,14 +809,35 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
       window._iroamlyCache[cacheKey] = rawData;
     }
 
+    // Baca filter aktif dari window._esimFilter
+    const filterTipeIR    = window._esimFilter?.tipe    || 'fixed';
+    const filterCakupanIR = window._esimFilter?.cakupan || 'negara';
+
+    // iRoamly hanya punya paket negara — beri notif jika filter regional/global
+    if (filterCakupanIR === 'regional' || filterCakupanIR === 'global') {
+      el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket ${filterCakupanIR} untuk iRoamly</div>`;
+      return;
+    }
+
     // Tampilkan SEMUA tipe paket (Total & Daily) — jangan filter hanya Total
-    const workIR = rawData.filter(p => parseInt(p.duration) >= lamaHari);
-    if (!workIR.length) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket iRoamly untuk ≥ ${lamaHari} hari</div>`; return; }
+    // Tipe: Total = fixed, Daily + Unlimited = unlimited
+    const isUnlimIR = p => {
+      const t = (p.type || '').toLowerCase();
+      return t === 'daily' || t === 'unlimited';
+    };
+    let allIR = [...rawData];
+    if (filterTipeIR === 'fixed')     allIR = allIR.filter(p => !isUnlimIR(p));
+    if (filterTipeIR === 'unlimited') allIR = allIR.filter(p =>  isUnlimIR(p));
+
+    if (!allIR.length) {
+      el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket iRoamly untuk filter ini</div>`;
+      return;
+    }
 
     // Kelompokkan per tipe (Total / Daily / Unlimited) lalu per durasi
     const TYPE_ORDER = ['Total', 'Daily', 'Unlimited'];
     const byType = {};
-    workIR.forEach(p => {
+    allIR.forEach(p => {
       const t = p.type || 'Total';
       if (!byType[t]) byType[t] = new Map();
       const d = parseInt(p.duration);
@@ -780,10 +859,17 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
       html += `<div style="font-size:10px;font-weight:700;color:${meta.color};background:${meta.bg};border-radius:5px;padding:4px 8px;margin:${ti>0?'14px':'0'} 0 8px;letter-spacing:0.3px;">
         ${meta.label}
       </div>`;
-      [...byDurIR.entries()].sort((a,b) => a[0]-b[0]).forEach(([validity, dayPkgs]) => {
-        const isExactDur = validity === lamaHari;
-        html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
-          📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#7c3aed;">(perbandingan)</span>' : ''}
+      // >= lamaHari dulu ascending, < lamaHari di bawah descending dengan label merah
+      const mainIR  = [...byDurIR.entries()].filter(([d]) => d >= lamaHari).sort((a,b) => a[0]-b[0]);
+      const shortIR = [...byDurIR.entries()].filter(([d]) => d <  lamaHari).sort((a,b) => b[0]-a[0]);
+      [...mainIR, ...shortIR].forEach(([validity, dayPkgs], idx) => {
+        const isExactDur  = validity === lamaHari;
+        const isShorterIR = validity < lamaHari;
+        const durLabel = isShorterIR
+          ? `📅 ${validity} Hari <span style="font-size:9px;font-weight:400;color:#dc2626;">(kurang dari ${lamaHari} hari)</span>`
+          : `📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#7c3aed;">(perbandingan)</span>' : ''}`;
+        html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${idx>0?'8px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+          ${durLabel}
         </div>`;
         dayPkgs.sort((a, b) => parseFloat(a.credit||0) - parseFloat(b.credit||0));
         dayPkgs.forEach(pkg => {
@@ -842,32 +928,20 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
 }
 
 // ── loadEsimCardPrice ─────────────────────────────────────────
-// Global helper: ubah filter & re-render eSIMCard column
-function esimcardFilterSet(key, val) {
-  const el = document.getElementById('esimcard-result');
-  if (!el) return;
-  if (key === 'tipe')    el.dataset.filterTipe    = val;
-  if (key === 'cakupan') el.dataset.filterCakupan = val;
-  loadEsimCardPrice(
-    el.dataset.ecCountry,
-    parseInt(el.dataset.ecLamaHari  || 0),
-    parseFloat(el.dataset.ecKurs    || 1),
-    parseFloat(el.dataset.ecMarkup  || 0),
-    parseFloat(el.dataset.ecAviroam || 0)
-  );
+// Global helper: ubah filter & re-render semua supplier
+function esimFilterSet(key, val) {
+  if (!window._esimFilter) window._esimFilter = { tipe: 'fixed', cakupan: 'negara' };
+  if (key === 'tipe')    window._esimFilter.tipe    = val;
+  if (key === 'cakupan') window._esimFilter.cakupan = val;
+  hargaShowResult();
 }
+// Alias lama untuk backward compat
+function esimcardFilterSet(key, val) { esimFilterSet(key, val); }
 
 async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartnerEsim) {
   const el = document.getElementById('esimcard-result');
   if (!el) return;
   try {
-    // Simpan params di dataset agar bisa di-reload saat filter berubah
-    el.dataset.ecCountry  = country       || '';
-    el.dataset.ecLamaHari = lamaHari      || 0;
-    el.dataset.ecKurs     = kurs          || 1;
-    el.dataset.ecMarkup   = markup        || 0;
-    el.dataset.ecAviroam  = aviroamPartnerEsim || 0;
-
     const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
     const iso = (countryObj?.iso || '').toLowerCase();
 
@@ -1017,29 +1091,14 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
           .then(r=>r.json()).then(d => { window._esimcardCache['_global'] = d; return d; })
           .catch(()=>({ok:false}));
 
-    // Baca filter aktif (disimpan di el agar persist saat re-render)
-    const filterTipe     = el.dataset.filterTipe     || 'fixed';   // fixed | unlimited | semua
-    const filterCakupan  = el.dataset.filterCakupan  || 'negara';  // negara | regional | global | semua
+    // Baca filter aktif dari global window._esimFilter (dikelola oleh esimFilterSet)
+    const filterTipe     = window._esimFilter?.tipe    || 'fixed';   // fixed | unlimited | semua
+    const filterCakupan  = window._esimFilter?.cakupan || 'negara';  // negara | regional | global | semua
 
     el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Memuat paket eSIMCard…</span>';
     const [countryData, regionalData, globalData] = await Promise.all([fetchCountry, fetchRegional, fetchGlobal]);
 
-    // ── Filter buttons ──────────────────────────────────────────
-    function filterBtn(key, val, label, active) {
-      const bg     = active ? '#2563eb' : '#f1f5f9';
-      const color  = active ? 'white'   : 'var(--text-muted)';
-      const border = active ? '#2563eb' : 'var(--border)';
-      return `<button onclick="esimcardFilterSet('${key}','${val}')" style="font-size:10px;padding:4px 9px;border:1px solid ${border};border-radius:5px;background:${bg};color:${color};cursor:pointer;font-family:var(--font);font-weight:${active?'700':'400'};">${label}</button>`;
-    }
-    const tipeRow    = ['fixed','unlimited','semua'].map((v,i) => filterBtn('tipe',v,['Fixed Data','Unlimited','Semua'][i], filterTipe===v)).join('');
-    const cakupanRow = ['negara','regional','global','semua'].map((v,i) => filterBtn('cakupan',v,['Negara Ini','Regional','Global','Semua'][i], filterCakupan===v)).join('');
-
-    let html = `<div style="margin-bottom:10px;padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
-  <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">📊 Tipe Data</div>
-  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;">${tipeRow}</div>
-  <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">🌐 Cakupan</div>
-  <div style="display:flex;gap:5px;flex-wrap:wrap;">${cakupanRow}</div>
-</div>`;
+    let html = '';
 
     // ── SECTION 1: Single Country ───────────────────────────────
     const showNegara   = filterCakupan === 'negara'   || filterCakupan === 'semua';
