@@ -259,7 +259,7 @@ async function hargaLoadSettings() {
     if (!window._appSettings) window._appSettings = {};
     const results = await Promise.all(
       keys.map(key =>
-        fetch(`${API}?action=getSetting&key=${key}`)
+        fetch(`${API}?action=getSetting&key=${key}`, { cache: 'no-store' })
           .then(r => r.json())
           .then(data => ({ key, data }))
           .catch(err => { console.error('[hargaLoadSettings] fetch gagal untuk key:', key, err); return { key, data: null }; })
@@ -291,7 +291,7 @@ async function hargaSaveSetting(key, value) {
     return;
   }
   try {
-    const res  = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveSetting', key, value }) });
+    const res  = await fetch(API, { method: 'POST', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveSetting', key, value }) });
     const data = await res.json();
     if (!data.ok) console.error('[hargaSaveSetting] server error:', data);
   } catch(e) {
