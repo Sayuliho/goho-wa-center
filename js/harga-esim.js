@@ -862,8 +862,9 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
     }
 
     function renderCountryCard(pkg, kurs, markup, aviroamPartnerEsim) {
-      const validity  = parseInt(pkg.package_validity || 0) || parseValidityFromName(pkg) || 0;
-      const buyUSD    = parseFloat(pkg.price || 0);
+      // Worker normalize: validity, priceReseller, dataQuantity, dataUnit
+      const validity  = parseInt(pkg.validity || 0) || parseValidityFromName(pkg) || 0;
+      const buyUSD    = parseFloat(pkg.priceReseller ?? pkg.price ?? 0);
       const buyIDR    = Math.round(buyUSD * kurs);
       const sellIDR   = Math.round(buyIDR * (1 + markup / 100));
       const dataQty   = pkgDataLabel(pkg);
@@ -873,25 +874,27 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
       const canRenew   = pkg.can_renew === true;
       const canHotspot = pkg.tether === true;
-      const coverageArr = pkg.coverage || pkg.network_coverage || [];
-      const operators   = [...new Set(coverageArr.map(n => n.network_code || n.network_name || '').filter(Boolean))];
-      const operatorStr = operators.slice(0, 4).join(' · ');
+      const coverageArr = pkg.coverage || pkg.network_coverage || pkg.supportedNetworks || [];
+      const operators   = Array.isArray(coverageArr)
+        ? [...new Set(coverageArr.map(n => n.network_code || n.network_name || '').filter(Boolean))].slice(0, 4)
+        : [];
+      const operatorStr = operators.join(' · ');
       let connectivity = pkg.connectivity || '';
-      if (!connectivity && coverageArr.length) {
+      if (!connectivity && Array.isArray(coverageArr) && coverageArr.length) {
         const hasG5 = coverageArr.some(n => n.five_G || n.fiv_5G);
         const hasG4 = coverageArr.some(n => n.four_G || n['for-4G']);
         const hasG3 = coverageArr.some(n => n.three_g || n.th_3G);
         connectivity = hasG5 ? '2G,3G,4G,5G' : hasG4 ? '2G,3G,4G' : hasG3 ? '2G,3G' : '4G';
       }
       const isThrottle  = pkg.throttle === true;
-      const throttleSpd = pkg.throttle_speed || '';
-      const unthrottle  = pkg.unthrottle_data || '';
+      const throttleSpd = pkg.throttleSpeed || pkg.throttle_speed || '';
+      const unthrottle  = pkg.unthrottleData || pkg.unthrottle_data || '';
       let speedInfo = '';
       if (isThrottle && unthrottle && unthrottle !== 'Unlimited') {
         speedInfo = `${escH(unthrottle)}/hari full speed → throttle ${escH(throttleSpd || '256kbps')}`;
       } else if (isThrottle && throttleSpd) {
         speedInfo = `Setelah kuota: throttle ${escH(throttleSpd)}`;
-      } else if (!isThrottle && pkg.data_quantity <= 0) {
+      } else if (!isThrottle && (pkg.dataQuantity ?? pkg.data_quantity) <= 0) {
         speedInfo = 'Full speed unlimited (tanpa throttle)';
       }
       const actType = pkg.activation_type || '';
@@ -993,16 +996,17 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
     // ── SECTION 1: Single Country ───────────────────────────────
     if (iso) {
       const pkgs = countryData?.data?.data || [];
-      // Tampilkan semua paket; yang < lamaHari tetap muncul sebagai perbandingan
-      // Helper: baca validity dari field atau parse dari nama paket
+      // Tampilkan semua paket; yang < lamaHari tetap muncul sebagai perbandingan di bawah
+      // Helper: baca validity dari field yang sudah dinormalisasi worker, atau parse dari nama
       function getPkgValidity(p) {
-        const v = parseInt(p.package_validity || 0);
+        const v = parseInt(p.validity || 0);
         if (v > 0) return v;
         return parseValidityFromName(p) || 0;
       }
       pkgs.sort((a,b) => {
-        const dd = getPkgValidity(a) - getPkgValidity(b);
-        return dd !== 0 ? dd : parseFloat(a.price||0) - parseFloat(b.price||0);
+        const va = getPkgValidity(a), vb = getPkgValidity(b);
+        const dd = va - vb;
+        return dd !== 0 ? dd : parseFloat(a.priceReseller||a.price||0) - parseFloat(b.priceReseller||b.price||0);
       });
       const byDur = new Map();
       pkgs.forEach(p => {
@@ -1013,13 +1017,16 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
 
       html += sectionHeader(`🌏 ${escH(country)} · Single Country`, true);
       if (byDur.size) {
-        [...byDur.entries()].sort((a,b)=>a[0]-b[0]).forEach(([validity, dayPkgs]) => {
-          const isExact = validity === lamaHari;
+        // Tampil >= lamaHari duluan (ascending), lalu yang lebih pendek di bawah (descending)
+        const mainEntries  = [...byDur.entries()].filter(([v]) => v >= lamaHari).sort((a,b)=>a[0]-b[0]);
+        const shortEntries = [...byDur.entries()].filter(([v]) => v < lamaHari).sort((a,b)=>b[0]-a[0]);
+        [...mainEntries, ...shortEntries].forEach(([validity, dayPkgs], idx) => {
+          const isExact   = validity === lamaHari;
           const isShorter = validity < lamaHari;
           const label = isShorter
             ? `📅 ${validity} Hari <span style="font-size:9px;font-weight:400;color:#dc2626;">(kurang dari ${lamaHari} hari)</span>`
             : `📅 ${validity} Hari${!isExact?' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>':''}`;
-          html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html.length>200?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+          html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${idx>0?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
             ${label}
           </div>`;
           dayPkgs.forEach(pkg => { html += renderCountryCard(pkg, kurs, markup, aviroamPartnerEsim); });
