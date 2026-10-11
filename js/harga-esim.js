@@ -8,6 +8,47 @@
 var hargaData   = typeof hargaData   !== 'undefined' ? hargaData   : [];
 var hargaLoaded = typeof hargaLoaded !== 'undefined' ? hargaLoaded : false;
 
+// Mapping ISO → eSIMCard continent name (untuk filter paket Regional)
+const ISO_TO_ESIMCARD_CONTINENT = {
+  // Asia
+  JP:'Asia', KR:'Asia', CN:'Asia', TH:'Asia', SG:'Asia', MY:'Asia', ID:'Asia',
+  PH:'Asia', VN:'Asia', IN:'Asia', BD:'Asia', NP:'Asia', LK:'Asia', MM:'Asia',
+  KH:'Asia', LA:'Asia', MO:'Asia', HK:'Asia', TW:'Asia', MN:'Asia', UZ:'Asia',
+  KZ:'Asia', AZ:'Asia', GE:'Asia', AM:'Asia', PK:'Asia', AF:'Asia', BT:'Asia',
+  MV:'Asia', BN:'Asia', TL:'Asia',
+  // Middle East
+  AE:'Middle East', SA:'Middle East', QA:'Middle East', KW:'Middle East',
+  OM:'Middle East', BH:'Middle East', IQ:'Middle East', JO:'Middle East',
+  LB:'Middle East', IL:'Middle East', TR:'Middle East', YE:'Middle East', SY:'Middle East',
+  // Oceania
+  AU:'Oceania', NZ:'Oceania', FJ:'Oceania', PG:'Oceania', WS:'Oceania',
+  TO:'Oceania', VU:'Oceania', SB:'Oceania',
+  // Europe
+  GB:'Europe', DE:'Europe', FR:'Europe', IT:'Europe', ES:'Europe', PT:'Europe',
+  NL:'Europe', BE:'Europe', CH:'Europe', AT:'Europe', SE:'Europe', NO:'Europe',
+  DK:'Europe', FI:'Europe', IE:'Europe', PL:'Europe', CZ:'Europe', SK:'Europe',
+  HU:'Europe', RO:'Europe', LU:'Europe', EE:'Europe', LV:'Europe', LT:'Europe',
+  SI:'Europe', MT:'Europe', CY:'Europe', IS:'Europe', GR:'Europe',
+  // Balkans (Europe+Balkans)
+  HR:'Europe', BG:'Europe', RS:'Europe', BA:'Europe', ME:'Europe', MK:'Europe',
+  AL:'Europe', XK:'Europe',
+  // North America
+  US:'North America', CA:'North America', MX:'North America',
+  // Caribbean
+  CU:'Caribbean', DO:'Caribbean', JM:'Caribbean', HT:'Caribbean', TT:'Caribbean',
+  BB:'Caribbean', LC:'Caribbean', VC:'Caribbean', GD:'Caribbean', AG:'Caribbean',
+  // Latin America / South America
+  BR:'South America', AR:'South America', CO:'South America', CL:'South America',
+  PE:'South America', VE:'South America', EC:'South America', BO:'South America',
+  PY:'South America', UY:'South America', GY:'South America', SR:'South America',
+  // Africa
+  ZA:'Africa', EG:'Africa', NG:'Africa', KE:'Africa', TZ:'Africa', GH:'Africa',
+  ET:'Africa', UG:'Africa', TN:'Africa', MA:'Africa', DZ:'Africa', SN:'Africa',
+  CM:'Africa', CI:'Africa', MZ:'Africa', ZW:'Africa', ZM:'Africa', RW:'Africa',
+  AO:'Africa', MG:'Africa', MW:'Africa', BF:'Africa', ML:'Africa', NE:'Africa',
+  SD:'Africa', LY:'Africa', SO:'Africa', ER:'Africa', DJ:'Africa',
+};
+
 const GOHO_COUNTRIES = [
   { display: 'Korea', iroamly: 'south-korea', iso: 'KR', aviroam: ['korea selatan', 'south korea'] },
   { display: 'United Arab Emirates', iroamly: 'united-arab-emirates', iso: 'AE', aviroam: ['emirates', 'uae', 'dubai'] },
@@ -951,7 +992,11 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
     }
 
     // ── SECTION 2: Regional ─────────────────────────────────────
-    const regionalPkgs = (regionalData?.packages || []).filter(p => parseInt(p.validity||0) >= lamaHari);
+    const countryCont  = ISO_TO_ESIMCARD_CONTINENT[(iso||'').toUpperCase()] || null;
+    const regionalPkgs = (regionalData?.packages || []).filter(p =>
+      parseInt(p.validity||0) >= lamaHari &&
+      (!countryCont || (p.destination||'').toLowerCase() === countryCont.toLowerCase())
+    );
     if (regionalPkgs.length) {
       regionalPkgs.sort((a,b) => {
         const dc = (a.destination||'').localeCompare(b.destination||'');
