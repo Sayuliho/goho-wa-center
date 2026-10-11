@@ -791,112 +791,228 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
   try {
     const countryObj = window._selectedCountry || GOHO_COUNTRIES.find(c => c.display === country);
     const iso = (countryObj?.iso || '').toLowerCase();
-    if (!iso) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Negara tidak tersedia di eSIMCard</span>'; return; }
 
-    const cacheKey = `esimcard_pkgs_${iso}`;
-    let pkgs = window._esimcardCache?.[cacheKey];
-    if (!pkgs) {
-      const res  = await fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`);
-      const data = await res.json();
-      if (!data.ok || !data.data?.data?.length) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket tersedia</span>'; return; }
-      pkgs = data.data.data;
-      if (!window._esimcardCache) window._esimcardCache = {};
-      window._esimcardCache[cacheKey] = pkgs;
-    }
-
+    // ── helpers ─────────────────────────────────────────────────
     function pkgDataLabel(pkg) {
-      const qty  = pkg.data_quantity;
+      // works for both country pkgs (data_quantity) and regional pkgs (dataQuantity)
+      const qty  = pkg.dataQuantity ?? pkg.data_quantity;
+      const unit = pkg.dataUnit     || pkg.data_unit || 'GB';
       const name = (pkg.name || '').toLowerCase();
-      if (qty > 0) return `${qty}${pkg.data_unit || 'GB'}`;
+      if (qty > 0) return `${qty}${unit}`;
       if (name.includes('premium')) return 'Unlimited Premium';
       if (name.includes('plus'))    return 'Unlimited Plus';
       return 'Unlimited';
     }
 
-    const filteredEC = pkgs.filter(p => parseInt(p.package_validity || 0) >= lamaHari);
-    if (!filteredEC.length) { el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIMCard untuk ≥ ${lamaHari} hari</div>`; return; }
+    function renderCountryCard(pkg, kurs, markup, aviroamPartnerEsim) {
+      const validity  = parseInt(pkg.package_validity || 0);
+      const buyUSD    = parseFloat(pkg.price || 0);
+      const buyIDR    = Math.round(buyUSD * kurs);
+      const sellIDR   = Math.round(buyIDR * (1 + markup / 100));
+      const dataQty   = pkgDataLabel(pkg);
+      const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
+      const border    = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
+      const bg        = isCheaper ? '#f0fdf4' : 'white';
+      const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
+      const canRenew   = pkg.can_renew === true;
+      const canHotspot = pkg.tether === true;
+      const coverageArr = pkg.coverage || pkg.network_coverage || [];
+      const operators   = [...new Set(coverageArr.map(n => n.network_code || n.network_name || '').filter(Boolean))];
+      const operatorStr = operators.slice(0, 4).join(' · ');
+      let connectivity = pkg.connectivity || '';
+      if (!connectivity && coverageArr.length) {
+        const hasG5 = coverageArr.some(n => n.five_G || n.fiv_5G);
+        const hasG4 = coverageArr.some(n => n.four_G || n['for-4G']);
+        const hasG3 = coverageArr.some(n => n.three_g || n.th_3G);
+        connectivity = hasG5 ? '2G,3G,4G,5G' : hasG4 ? '2G,3G,4G' : hasG3 ? '2G,3G' : '4G';
+      }
+      const isThrottle  = pkg.throttle === true;
+      const throttleSpd = pkg.throttle_speed || '';
+      const unthrottle  = pkg.unthrottle_data || '';
+      let speedInfo = '';
+      if (isThrottle && unthrottle && unthrottle !== 'Unlimited') {
+        speedInfo = `${escH(unthrottle)}/hari full speed → throttle ${escH(throttleSpd || '256kbps')}`;
+      } else if (isThrottle && throttleSpd) {
+        speedInfo = `Setelah kuota: throttle ${escH(throttleSpd)}`;
+      } else if (!isThrottle && pkg.data_quantity <= 0) {
+        speedInfo = 'Full speed unlimited (tanpa throttle)';
+      }
+      const actType = pkg.activation_type || '';
+      const actInfo = actType === 'manual' ? 'Aktivasi manual via link' : 'Aktif otomatis saat data pertama dipakai';
+      const pkgDataStr = escH(JSON.stringify({ id: pkg.id, name: pkg.name||'', dataQty, validity, buyUSD, buyIDR, sellIDR }));
+      return `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+          <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)} · ${validity}h</span>${cheapBadge}
+        </div>
+        <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.name||'')}</div>
+        ${operatorStr ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">📡 ${escH(operatorStr)}</div>` : ''}
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+          ${connectivity ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(connectivity)}</span>` : ''}
+          <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot?'✅':'❌'}</span>
+          <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔄 Perpanjang: ${canRenew?'✅':'❌'}</span>
+        </div>
+        ${speedInfo ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${speedInfo}</div>` : ''}
+        <div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">🔌 ${escH(actInfo)}</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">⏳ Aktivasi kartu maks. 30 hari</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+          <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+          <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+          <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+          <span style="font-size:13px;font-weight:700;color:#2563eb;">${hargaFmtIDR(sellIDR)}</span>
+        </div>
+        <button onclick="esimcardOpenBeli('${pkgDataStr}')" style="width:100%;margin-top:8px;padding:7px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">🛒 Beli eSIMCard</button>
+      </div>`;
+    }
 
-    filteredEC.sort((a, b) => {
-      const dd = parseInt(a.package_validity) - parseInt(b.package_validity);
-      return dd !== 0 ? dd : parseFloat(a.price||0) - parseFloat(b.price||0);
-    });
+    function parseValidityFromName(pkg) {
+      // e.g. "1GB eSIM Data for 7 Days for Global Lite" → 7
+      const m = (pkg.name || '').match(/for\s+(\d+)\s+Day/i);
+      return m ? parseInt(m[1]) : (parseInt(pkg.validity || 0) || null);
+    }
 
-    const byDurEC = new Map();
-    filteredEC.forEach(p => {
-      const d = parseInt(p.package_validity || 0);
-      if (!byDurEC.has(d)) byDurEC.set(d, []);
-      byDurEC.get(d).push(p);
-    });
+    function renderRegionalCard(pkg, kurs, markup, tier) {
+      const validity   = parseValidityFromName(pkg);
+      const buyUSD     = parseFloat(pkg.priceReseller || 0);
+      const buyIDR     = Math.round(buyUSD * kurs);
+      const sellIDR    = Math.round(buyIDR * (1 + markup / 100));
+      const dataQty    = pkgDataLabel(pkg);
+      const isGlobal   = tier === 'Global';
+      const badgeBg    = isGlobal ? '#7c3aed' : '#d97706';
+      const badgeLabel = isGlobal ? '🌍 GLOBAL' : `🗺️ REGIONAL · ${escH(pkg.destination||'')}`;
+      const pkgDataStr = escH(JSON.stringify({ id: pkg.packageTypeId, name: pkg.name||'', dataQty, validity, buyUSD, buyIDR, sellIDR }));
+      const validityLabel = validity ? `${validity}h` : '';
+      return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:7px;background:white;">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:5px;">
+          <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)}${validityLabel ? ` · ${validityLabel}` : ''}</span>
+          <span style="font-size:9px;background:${badgeBg};color:white;padding:1px 6px;border-radius:3px;font-weight:700;">${badgeLabel}</span>
+        </div>
+        <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">${escH(pkg.name||'')}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
+          <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
+          <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
+          <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
+          <span style="font-size:13px;font-weight:700;color:#2563eb;">${hargaFmtIDR(sellIDR)}</span>
+        </div>
+        <button onclick="esimcardOpenBeli('${pkgDataStr}')" style="width:100%;margin-top:8px;padding:7px;background:#7c3aed;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">🛒 Beli eSIMCard</button>
+      </div>`;
+    }
+
+    function sectionHeader(label, isFirst) {
+      return `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${isFirst?'0':'14px'} 0 6px;padding-bottom:4px;border-bottom:2px solid var(--border);">${label}</div>`;
+    }
+
+    // ── Fetch all three tiers in parallel ───────────────────────
+    const fetchCountry  = iso
+      ? fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`).then(r=>r.json()).catch(()=>({ok:false}))
+      : Promise.resolve({ok:false});
+    const fetchRegional = fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardRegional`).then(r=>r.json()).catch(()=>({ok:false}));
+    const fetchGlobal   = fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardGlobal`).then(r=>r.json()).catch(()=>({ok:false}));
+
+    el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Memuat paket eSIMCard…</span>';
+    const [countryData, regionalData, globalData] = await Promise.all([fetchCountry, fetchRegional, fetchGlobal]);
 
     let html = '';
-    [...byDurEC.entries()].sort((a,b) => a[0]-b[0]).forEach(([validity, dayPkgs]) => {
-      const isExactDur = validity === lamaHari;
-      html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
-        📅 ${validity} Hari${!isExactDur ? ' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>' : ''}
-      </div>`;
-      dayPkgs.forEach(pkg => {
-        const buyUSD   = parseFloat(pkg.price || 0);
-        const buyIDR   = Math.round(buyUSD * kurs);
-        const sellIDR  = Math.round(buyIDR * (1 + markup / 100));
-        const dataQty  = pkgDataLabel(pkg);
-        const isCheaper = aviroamPartnerEsim > 0 && sellIDR < aviroamPartnerEsim;
-        const border = isCheaper ? '2px solid #10b981' : '1px solid var(--border)';
-        const bg     = isCheaper ? '#f0fdf4' : 'white';
-        const cheapBadge = isCheaper ? '<span style="background:#10b981;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;">LEBIH MURAH</span>' : '';
-        const canRenew = pkg.can_renew === true;
-        const canHotspot = pkg.tether === true;
-        const coverageArr    = pkg.coverage || pkg.network_coverage || [];
-        const operators      = [...new Set(coverageArr.map(n => n.network_code || n.network_name || '').filter(Boolean))];
-        const operatorStr    = operators.slice(0, 4).join(' · ');
-        let connectivity = pkg.connectivity || '';
-        if (!connectivity && coverageArr.length) {
-          const hasG5 = coverageArr.some(n => n.five_G || n.fiv_5G);
-          const hasG4 = coverageArr.some(n => n.four_G || n['for-4G']);
-          const hasG3 = coverageArr.some(n => n.three_g || n.th_3G);
-          connectivity = hasG5 ? '2G,3G,4G,5G' : hasG4 ? '2G,3G,4G' : hasG3 ? '2G,3G' : '4G';
-        }
-        const isThrottle  = pkg.throttle === true;
-        const throttleSpd = pkg.throttle_speed || '';
-        const unthrottle  = pkg.unthrottle_data || '';
-        let speedInfo = '';
-        if (isThrottle && unthrottle && unthrottle !== 'Unlimited') {
-          speedInfo = `${escH(unthrottle)}/hari full speed → throttle ${escH(throttleSpd || '256kbps')}`;
-        } else if (isThrottle && throttleSpd) {
-          speedInfo = `Setelah kuota: throttle ${escH(throttleSpd)}`;
-        } else if (!isThrottle && pkg.data_quantity <= 0) {
-          speedInfo = 'Full speed unlimited (tanpa throttle)';
-        }
-        const actType = pkg.activation_type || '';
-        const actInfo = actType === 'manual' ? 'Aktivasi manual via link' : 'Aktif otomatis saat data pertama dipakai';
-        const pkgDataStr  = escH(JSON.stringify({ id: pkg.id, name: pkg.name||'', dataQty, validity, buyUSD, buyIDR, sellIDR }));
 
-        html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
-            <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)} · ${validity}h</span>${cheapBadge}
-          </div>
-          <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.name||'')}</div>
-          ${operatorStr ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">📡 ${escH(operatorStr)}</div>` : ''}
-          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
-            ${connectivity ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(connectivity)}</span>` : ''}
-            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔥 Hotspot: ${canHotspot?'✅':'❌'}</span>
-            <span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">🔄 Perpanjang: ${canRenew?'✅':'❌'}</span>
-          </div>
-          ${speedInfo ? `<div style="font-size:9px;color:#b45309;background:#fef3c7;border-radius:3px;padding:2px 6px;margin-bottom:4px;display:inline-block;">⚡ ${speedInfo}</div>` : ''}
-          <div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">🔌 ${escH(actInfo)}</div>
-          <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">⏳ Aktivasi kartu maks. 30 hari</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
-            <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
-            <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-top:1px solid var(--border);">
-            <span style="font-size:10px;color:var(--text-muted);">Jual <span style="font-size:9px;">(+${markup}%)</span></span>
-            <span style="font-size:13px;font-weight:700;color:#2563eb;">${hargaFmtIDR(sellIDR)}</span>
-          </div>
-          <button onclick="esimcardOpenBeli('${pkgDataStr}')" style="width:100%;margin-top:8px;padding:7px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">🛒 Beli eSIMCard</button>
-        </div>`;
+    // ── SECTION 1: Single Country ───────────────────────────────
+    if (iso) {
+      const pkgs = countryData?.data?.data || [];
+      const filtered = pkgs.filter(p => parseInt(p.package_validity||0) >= lamaHari);
+      filtered.sort((a,b) => {
+        const dd = parseInt(a.package_validity) - parseInt(b.package_validity);
+        return dd !== 0 ? dd : parseFloat(a.price||0) - parseFloat(b.price||0);
       });
-    });
-    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket cocok</span>';
+      const byDur = new Map();
+      filtered.forEach(p => {
+        const d = parseInt(p.package_validity||0);
+        if (!byDur.has(d)) byDur.set(d,[]);
+        byDur.get(d).push(p);
+      });
+
+      if (byDur.size) {
+        html += sectionHeader(`🌏 ${escH(country)} · Single Country`, true);
+        [...byDur.entries()].sort((a,b)=>a[0]-b[0]).forEach(([validity, dayPkgs]) => {
+          const isExact = validity === lamaHari;
+          html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html.length>200?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+            📅 ${validity} Hari${!isExact?' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>':''}
+          </div>`;
+          dayPkgs.forEach(pkg => { html += renderCountryCard(pkg, kurs, markup, aviroamPartnerEsim); });
+        });
+      } else if (pkgs.length === 0 && countryData?.ok === false) {
+        html += sectionHeader(`🌏 ${escH(country)} · Single Country`, true);
+        html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Tidak ada paket negara ini di eSIMCard</div>`;
+      } else if (pkgs.length > 0 && filtered.length === 0) {
+        html += sectionHeader(`🌏 ${escH(country)} · Single Country`, true);
+        html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Tidak ada paket ≥ ${lamaHari} hari</div>`;
+      }
+    }
+
+    // ── SECTION 2: Regional ─────────────────────────────────────
+    const regionalPkgs = (regionalData?.packages || []).filter(p => parseInt(p.validity||0) >= lamaHari);
+    if (regionalPkgs.length) {
+      regionalPkgs.sort((a,b) => {
+        const dc = (a.destination||'').localeCompare(b.destination||'');
+        const dv = parseInt(a.validity||0) - parseInt(b.validity||0);
+        const dp = parseFloat(a.priceReseller||0) - parseFloat(b.priceReseller||0);
+        return dc !== 0 ? dc : dv !== 0 ? dv : dp;
+      });
+      const byCont = new Map();
+      regionalPkgs.forEach(p => {
+        const k = p.destination || 'Regional';
+        if (!byCont.has(k)) byCont.set(k,[]);
+        byCont.get(k).push(p);
+      });
+      html += sectionHeader('🗺️ Regional (Multi-Negara)', !html);
+      byCont.forEach((pkgs, contName) => {
+        html += `<div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 5px;padding:3px 8px;background:#fef3c7;border-radius:4px;">
+          ${escH(contName)}
+        </div>`;
+        const byDur = new Map();
+        pkgs.forEach(p => {
+          const d = parseInt(p.validity||0);
+          if (!byDur.has(d)) byDur.set(d,[]);
+          byDur.get(d).push(p);
+        });
+        [...byDur.entries()].sort((a,b)=>a[0]-b[0]).forEach(([validity, dayPkgs]) => {
+          const isExact = validity === lamaHari;
+          html += `<div style="font-size:10px;color:var(--text-muted);margin:4px 0 4px;padding-bottom:3px;border-bottom:1px dashed var(--border);">
+            📅 ${validity} Hari${!isExact?' <span style="font-size:9px;color:#1d4ed8;">(perbandingan)</span>':''}
+          </div>`;
+          dayPkgs.forEach(pkg => { html += renderRegionalCard(pkg, kurs, markup, 'Regional'); });
+        });
+      });
+    }
+
+    // ── SECTION 3: Global ───────────────────────────────────────
+    const allGlobalPkgs = (globalData?.packages || []);
+    const globalPkgs = allGlobalPkgs.map(p => ({
+      ...p,
+      _parsedValidity: parseValidityFromName(p),
+    })).filter(p => p._parsedValidity === null || p._parsedValidity >= lamaHari);
+    if (globalPkgs.length) {
+      globalPkgs.sort((a,b) => {
+        const dv = (a._parsedValidity||0) - (b._parsedValidity||0);
+        return dv !== 0 ? dv : parseFloat(a.priceReseller||0) - parseFloat(b.priceReseller||0);
+      });
+      html += sectionHeader('🌍 Global (Seluruh Dunia)', !html);
+      const byDur = new Map();
+      globalPkgs.forEach(p => {
+        const d = p._parsedValidity || 0;
+        if (!byDur.has(d)) byDur.set(d,[]);
+        byDur.get(d).push(p);
+      });
+      [...byDur.entries()].sort((a,b)=>a[0]-b[0]).forEach(([validity, dayPkgs]) => {
+        const isExact = validity === lamaHari;
+        const label   = validity ? `📅 ${validity} Hari${!isExact?' <span style="font-size:9px;color:#1d4ed8;">(perbandingan)</span>':''}` : '📅 Durasi dari nama paket';
+        html += `<div style="font-size:10px;color:var(--text-muted);margin:4px 0 4px;padding-bottom:3px;border-bottom:1px dashed var(--border);">${label}</div>`;
+        dayPkgs.forEach(pkg => { html += renderRegionalCard(pkg, kurs, markup, 'Global'); });
+      });
+    }
+
+    el.innerHTML = html || '<span style="font-size:11px;color:var(--text-muted);">Tidak ada paket eSIMCard tersedia</span>';
   } catch(e) {
     if (el) el.innerHTML = `<span style="font-size:11px;color:var(--red);">Error: ${escH(e.message)}</span>`;
   }
