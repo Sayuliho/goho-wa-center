@@ -946,12 +946,28 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       return `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${isFirst?'0':'14px'} 0 6px;padding-bottom:4px;border-bottom:2px solid var(--border);">${label}</div>`;
     }
 
-    // ── Fetch all three tiers in parallel ───────────────────────
-    const fetchCountry  = iso
-      ? fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`).then(r=>r.json()).catch(()=>({ok:false}))
+    // ── Fetch all three tiers in parallel (Regional & Global cached globally) ──
+    if (!window._esimcardCache) window._esimcardCache = {};
+
+    const fetchCountry = iso
+      ? (window._esimcardCache[`country_${iso}`]
+          ? Promise.resolve(window._esimcardCache[`country_${iso}`])
+          : fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`)
+              .then(r=>r.json()).then(d => { window._esimcardCache[`country_${iso}`] = d; return d; })
+              .catch(()=>({ok:false})))
       : Promise.resolve({ok:false});
-    const fetchRegional = fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardRegional`).then(r=>r.json()).catch(()=>({ok:false}));
-    const fetchGlobal   = fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardGlobal`).then(r=>r.json()).catch(()=>({ok:false}));
+
+    const fetchRegional = window._esimcardCache['_regional']
+      ? Promise.resolve(window._esimcardCache['_regional'])
+      : fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardRegional`)
+          .then(r=>r.json()).then(d => { window._esimcardCache['_regional'] = d; return d; })
+          .catch(()=>({ok:false}));
+
+    const fetchGlobal = window._esimcardCache['_global']
+      ? Promise.resolve(window._esimcardCache['_global'])
+      : fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardGlobal`)
+          .then(r=>r.json()).then(d => { window._esimcardCache['_global'] = d; return d; })
+          .catch(()=>({ok:false}));
 
     el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Memuat paket eSIMCard…</span>';
     const [countryData, regionalData, globalData] = await Promise.all([fetchCountry, fetchRegional, fetchGlobal]);
@@ -961,33 +977,33 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
     // ── SECTION 1: Single Country ───────────────────────────────
     if (iso) {
       const pkgs = countryData?.data?.data || [];
-      const filtered = pkgs.filter(p => parseInt(p.package_validity||0) >= lamaHari);
-      filtered.sort((a,b) => {
-        const dd = parseInt(a.package_validity) - parseInt(b.package_validity);
+      // Tampilkan semua paket; yang < lamaHari tetap muncul sebagai perbandingan
+      pkgs.sort((a,b) => {
+        const dd = parseInt(a.package_validity||0) - parseInt(b.package_validity||0);
         return dd !== 0 ? dd : parseFloat(a.price||0) - parseFloat(b.price||0);
       });
       const byDur = new Map();
-      filtered.forEach(p => {
+      pkgs.forEach(p => {
         const d = parseInt(p.package_validity||0);
         if (!byDur.has(d)) byDur.set(d,[]);
         byDur.get(d).push(p);
       });
 
+      html += sectionHeader(`🌏 ${escH(country)} · Single Country`, true);
       if (byDur.size) {
-        html += sectionHeader(`🌏 ${escH(country)} · Single Country`, true);
         [...byDur.entries()].sort((a,b)=>a[0]-b[0]).forEach(([validity, dayPkgs]) => {
           const isExact = validity === lamaHari;
+          const isShorter = validity < lamaHari;
+          const label = isShorter
+            ? `📅 ${validity} Hari <span style="font-size:9px;font-weight:400;color:#dc2626;">(kurang dari ${lamaHari} hari)</span>`
+            : `📅 ${validity} Hari${!isExact?' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>':''}`;
           html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${html.length>200?'10px':'0'} 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
-            📅 ${validity} Hari${!isExact?' <span style="font-size:9px;font-weight:400;color:#1d4ed8;">(perbandingan)</span>':''}
+            ${label}
           </div>`;
           dayPkgs.forEach(pkg => { html += renderCountryCard(pkg, kurs, markup, aviroamPartnerEsim); });
         });
-      } else if (pkgs.length === 0 && countryData?.ok === false) {
-        html += sectionHeader(`🌏 ${escH(country)} · Single Country`, true);
+      } else {
         html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Tidak ada paket negara ini di eSIMCard</div>`;
-      } else if (pkgs.length > 0 && filtered.length === 0) {
-        html += sectionHeader(`🌏 ${escH(country)} · Single Country`, true);
-        html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Tidak ada paket ≥ ${lamaHari} hari</div>`;
       }
     }
 
