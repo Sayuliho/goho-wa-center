@@ -428,6 +428,22 @@ async function fetchHargaDataBackground() {
       } catch(e) {}
     }
   } catch(e) { hargaLoaded = true; window._hargaCountries = GOHO_COUNTRIES.map(c => c.display); }
+  // Pre-fetch eSIMCard Regional & Global di background supaya sudah siap saat user search
+  esimcardPrefetchCache();
+}
+
+function esimcardPrefetchCache() {
+  if (!window._esimcardCache) window._esimcardCache = {};
+  if (!window._esimcardCache['_regional']) {
+    fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimCardRegional')
+      .then(r => r.json()).then(d => { window._esimcardCache['_regional'] = d; })
+      .catch(() => {});
+  }
+  if (!window._esimcardCache['_global']) {
+    fetch('https://goho-proxy.gohotravel.workers.dev?action=getEsimCardGlobal')
+      .then(r => r.json()).then(d => { window._esimcardCache['_global'] = d; })
+      .catch(() => {});
+  }
 }
 
 // ── Country dropdown ──────────────────────────────────────────
@@ -846,7 +862,7 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
     }
 
     function renderCountryCard(pkg, kurs, markup, aviroamPartnerEsim) {
-      const validity  = parseInt(pkg.package_validity || 0);
+      const validity  = parseInt(pkg.package_validity || 0) || parseValidityFromName(pkg) || 0;
       const buyUSD    = parseFloat(pkg.price || 0);
       const buyIDR    = Math.round(buyUSD * kurs);
       const sellIDR   = Math.round(buyIDR * (1 + markup / 100));
@@ -978,13 +994,19 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
     if (iso) {
       const pkgs = countryData?.data?.data || [];
       // Tampilkan semua paket; yang < lamaHari tetap muncul sebagai perbandingan
+      // Helper: baca validity dari field atau parse dari nama paket
+      function getPkgValidity(p) {
+        const v = parseInt(p.package_validity || 0);
+        if (v > 0) return v;
+        return parseValidityFromName(p) || 0;
+      }
       pkgs.sort((a,b) => {
-        const dd = parseInt(a.package_validity||0) - parseInt(b.package_validity||0);
+        const dd = getPkgValidity(a) - getPkgValidity(b);
         return dd !== 0 ? dd : parseFloat(a.price||0) - parseFloat(b.price||0);
       });
       const byDur = new Map();
       pkgs.forEach(p => {
-        const d = parseInt(p.package_validity||0);
+        const d = getPkgValidity(p);
         if (!byDur.has(d)) byDur.set(d,[]);
         byDur.get(d).push(p);
       });
