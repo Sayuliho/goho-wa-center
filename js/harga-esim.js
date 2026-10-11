@@ -710,11 +710,6 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
       return true;
     };
     const purePkgs = rawPackages.filter(isPure);
-    // DEBUG — lihat di console apa nama paket yang lolos/tidak
-    console.log('[EA DEBUG] rawPackages count:', rawPackages.length);
-    console.log('[EA DEBUG] purePkgs count:', purePkgs.length);
-    console.log('[EA DEBUG] rawPackages names:', rawPackages.map(p => p.name + ' | loc:' + (p.locationNetworkList||[]).length));
-    console.log('[EA DEBUG] purePkgs names:', purePkgs.map(p => p.name));
     // Fallback ke semua paket hanya kalau purePkgs benar-benar kosong
     let allEAPkgs = purePkgs.length ? purePkgs : rawPackages;
 
@@ -954,6 +949,119 @@ function esimFilterSet(key, val) {
 }
 // Alias lama untuk backward compat
 function esimcardFilterSet(key, val) { esimFilterSet(key, val); }
+
+// ── eSIMCard Beli ──────────────────────────────────────────
+function esimcardOpenBeli(pkgDataStr) {
+  let pkg;
+  try { pkg = typeof pkgDataStr === 'string' ? JSON.parse(pkgDataStr) : pkgDataStr; } catch(e) { showToast('Error: ' + e.message); return; }
+  const old = document.getElementById('esimcard-beli-modal');
+  if (old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'esimcard-beli-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+  const validityStr = pkg.validity ? `${pkg.validity} hari` : '';
+  const dataStr     = pkg.dataQty  ? `${pkg.dataQty}` : '';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:420px;max-width:95vw;font-family:var(--font);box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:92vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:14px;">🟦 Beli eSIMCard</h3>
+        <button onclick="document.getElementById('esimcard-beli-modal').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px;">${escH(pkg.name||'')}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${escH(dataStr)}${validityStr ? ' · ' + escH(validityStr) : ''}</div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+          <span style="font-size:11px;">Beli: <b>${hargaFmtIDR(pkg.buyIDR||0)}</b> <span style="font-size:10px;color:var(--text-muted);">(USD ${(pkg.buyUSD||0).toFixed(2)})</span></span>
+          <span style="font-size:11px;">Jual: <b style="color:#2563eb;">${hargaFmtIDR(pkg.sellIDR||0)}</b></span>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;margin-bottom:6px;">👤 Data Pembeli <span style="font-weight:400;color:var(--text-muted);">(opsional)</span></div>
+        <input id="ec-nama-pembeli" type="text" placeholder="Nama tamu (mis: Budi Santoso)" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);margin-bottom:6px;outline:none;"/>
+        <input id="ec-hp-pembeli" type="text" placeholder="No HP / WA (mis: 08123456789)" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);outline:none;"/>
+      </div>
+      <div id="ec-status" style="display:none;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('esimcard-beli-modal').remove()" style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">Batal</button>
+        <button id="ec-beli-btn" onclick="esimcardDoPurchase(window._ecBeliPkg)" style="flex:2;padding:9px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">✅ Konfirmasi Beli</button>
+      </div>
+    </div>`;
+  window._ecBeliPkg = pkg;
+  document.body.appendChild(modal);
+}
+
+async function esimcardDoPurchase(pkg) {
+  const statusEl = document.getElementById('ec-status');
+  const beliBtn  = document.getElementById('ec-beli-btn');
+  if (!statusEl || !beliBtn) return;
+  const nama = document.getElementById('ec-nama-pembeli')?.value?.trim() || '';
+  const hp   = document.getElementById('ec-hp-pembeli')?.value?.trim() || '';
+  beliBtn.disabled = true; beliBtn.textContent = '⏳ Memproses...';
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div style="background:#dbeafe;border-radius:8px;padding:10px;font-size:11px;color:#1e40af;">⏳ Mengirim order ke eSIMCard...</div>';
+  try {
+    const res = await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'esimcardPurchase', packageId: pkg.id })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || 'Purchase gagal');
+    const raw = data.raw || {};
+    // raw bisa array (bulk) atau single object
+    const sim = Array.isArray(raw) ? raw[0] : (raw.data || raw);
+    const simId         = sim?.sim_id        || sim?.simId        || '';
+    const iccid         = sim?.iccid         || '';
+    const lpaString     = sim?.lpa_string    || sim?.lpaString    || '';
+    const linkIos       = sim?.ios_link      || sim?.linkIos      || sim?.link_ios || '';
+    const linkAndroid   = sim?.android_link  || sim?.linkAndroid  || sim?.link_android || '';
+    const smdpAddress   = sim?.smdp_address  || sim?.smdpAddress  || '';
+    const activationCode= sim?.activation_code || sim?.activationCode || '';
+    const noWaCust      = hp ? '62' + hp.replace(/^0/,'').replace(/\D/g,'') : '';
+    // Simpan ke D1
+    await fetch('https://goho-proxy.gohotravel.workers.dev', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'saveEsimcardOrder',
+        simId, iccid, packageId: pkg.id, packageName: pkg.name||'',
+        lpaString, linkIos, linkAndroid, smdpAddress, activationCode,
+        status: 'Released',
+        noWaCustomer: noWaCust,
+        namaCustomer: nama,
+        namaPembeli: nama,
+        hpPembeli: hp,
+        staff: currentStaff?.nama || ''
+      })
+    });
+    // Tampilkan hasil
+    const qrLink = linkIos || linkAndroid || '';
+    statusEl.innerHTML = `
+      <div style="background:#dcfce7;border-radius:8px;padding:12px;font-size:11px;color:#166534;">
+        <div style="font-weight:700;margin-bottom:6px;">✅ eSIMCard berhasil dibeli!</div>
+        ${simId  ? `<div>SIM ID: <b>${escH(simId)}</b></div>` : ''}
+        ${iccid  ? `<div>ICCID: <b>${escH(iccid)}</b></div>` : ''}
+        ${lpaString ? `<div style="word-break:break-all;margin-top:4px;">LPA: <span style="font-family:monospace;">${escH(lpaString)}</span></div>` : ''}
+        ${qrLink ? `<div style="margin-top:6px;"><a href="${escH(qrLink)}" target="_blank" style="color:#166534;text-decoration:underline;">📱 Link Instalasi eSIM</a></div>` : ''}
+      </div>`;
+    // Salin pesan WA
+    const paket = pkg.name || '';
+    let pesan = `${nama || 'Kak'} 😊\n\neSIM Anda sudah siap!\n📦 Paket: ${paket}\n`;
+    if (iccid)    pesan += `ICCID: ${iccid}\n`;
+    if (lpaString) pesan += `LPA: ${lpaString}\n`;
+    if (qrLink)   pesan += `📱 Instalasi: ${qrLink}\n`;
+    pesan += '\neSIM aktif otomatis saat pertama connect ke jaringan.\nSelamat berlibur! ✈️';
+    setTimeout(() => {
+      navigator.clipboard.writeText(pesan).then(() => showToast('✅ Pesan WA tersalin!')).catch(() => {
+        const ta = document.createElement('textarea'); ta.value = pesan;
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        showToast('✅ Pesan WA tersalin!');
+      });
+    }, 500);
+    beliBtn.textContent = '✅ Selesai';
+  } catch(e) {
+    statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:11px;color:#991b1b;">❌ ${escH(e.message)}</div>`;
+    beliBtn.disabled = false; beliBtn.textContent = '✅ Coba Lagi';
+  }
+}
 
 async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartnerEsim) {
   const el = document.getElementById('esimcard-result');
@@ -2052,4 +2160,12 @@ eSIM aktif otomatis saat pertama connect ke jaringan.
 Selamat berlibur! ✈️</div>
         </div>`;
     } else if (attempt < maxAttempts) {
-      statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size
+      statusEl.innerHTML = `<div style="background:#fef3c7;border-radius:8px;padding:10px;font-size:11px;color:#92400e;">⏳ Diproses... (${attempt}/${maxAttempts})</div>`;
+      setTimeout(() => eaPollResult(orderNo, statusEl, beliBtn, packageName, attempt + 1), 5000);
+    } else {
+      statusEl.innerHTML = `<div style="background:#fee2e2;border-radius:8px;padding:10px;font-size:11px;color:#991b1b;">⚠️ Masih diproses. Order No: <b>${escH(orderNo)}</b><br>Cek di Riwayat eSIM Access.</div>`;
+    }
+  } catch(err) {
+    if (attempt < maxAttempts) setTimeout(() => eaPollResult(orderNo, statusEl, beliBtn, packageName, attempt + 1), 5000);
+  }
+}
