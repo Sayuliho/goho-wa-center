@@ -889,13 +889,16 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       const isThrottle  = pkg.throttle === true;
       const throttleSpd = pkg.throttleSpeed || pkg.throttle_speed || '';
       const unthrottle  = pkg.unthrottleData || pkg.unthrottle_data || '';
+      const isUnlimited = pkg.unlimited === true || (pkg.dataQuantity ?? pkg.data_quantity) <= 0;
       let speedInfo = '';
       if (isThrottle && unthrottle && unthrottle !== 'Unlimited') {
-        speedInfo = `${escH(unthrottle)}/hari full speed → throttle ${escH(throttleSpd || '256kbps')}`;
+        speedInfo = `${escH(unthrottle)} GB/hari full speed → throttle ${escH(throttleSpd || '256kbps')}`;
       } else if (isThrottle && throttleSpd) {
         speedInfo = `Setelah kuota: throttle ${escH(throttleSpd)}`;
-      } else if (!isThrottle && (pkg.dataQuantity ?? pkg.data_quantity) <= 0) {
-        speedInfo = 'Full speed unlimited (tanpa throttle)';
+      } else if (isUnlimited) {
+        speedInfo = unthrottle && unthrottle !== 'Unlimited'
+          ? `${escH(unthrottle)} GB/hari full speed`
+          : 'Full speed unlimited (tanpa throttle)';
       }
       const actType = pkg.activation_type || '';
       const actInfo = actType === 'manual' ? 'Aktivasi manual via link' : 'Aktif otomatis saat data pertama dipakai';
@@ -1006,7 +1009,12 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       pkgs.sort((a,b) => {
         const va = getPkgValidity(a), vb = getPkgValidity(b);
         const dd = va - vb;
-        return dd !== 0 ? dd : parseFloat(a.priceReseller||a.price||0) - parseFloat(b.priceReseller||b.price||0);
+        if (dd !== 0) return dd;
+        // Dalam group hari yang sama: data berbatas dulu (murah→mahal), unlimited di akhir
+        const aUnlim = a.unlimited === true || (a.dataQuantity ?? a.data_quantity ?? 0) <= 0;
+        const bUnlim = b.unlimited === true || (b.dataQuantity ?? b.data_quantity ?? 0) <= 0;
+        if (aUnlim !== bUnlim) return aUnlim ? 1 : -1;
+        return parseFloat(a.priceReseller||a.price||0) - parseFloat(b.priceReseller||b.price||0);
       });
       const byDur = new Map();
       pkgs.forEach(p => {
