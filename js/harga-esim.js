@@ -250,17 +250,27 @@ function initHargaPanelResize() {
 
 async function hargaLoadSettings() {
   try {
-    // Load markup + per-supplier kurs keys
+    if (typeof API === 'undefined' || !API) {
+      console.error('[hargaLoadSettings] API variable not defined — kurs tidak bisa dimuat dari server');
+      return;
+    }
+    // Load markup + per-supplier kurs keys secara parallel
     const keys = ['esim_markup_pct', ...ESIM_SUPPLIERS.map(s => s.settingKey)];
     if (!window._appSettings) window._appSettings = {};
-    for (const key of keys) {
-      const res  = await fetch(`${API}?action=getSetting&key=${key}`);
-      const data = await res.json();
-      if (data.ok && data.value !== null) {
+    const results = await Promise.all(
+      keys.map(key =>
+        fetch(`${API}?action=getSetting&key=${key}`)
+          .then(r => r.json())
+          .then(data => ({ key, data }))
+          .catch(err => { console.error('[hargaLoadSettings] fetch gagal untuk key:', key, err); return { key, data: null }; })
+      )
+    );
+    results.forEach(({ key, data }) => {
+      if (data && data.ok && data.value !== null && data.value !== undefined) {
         window._appSettings[key] = data.value;
         localStorage.setItem(key, data.value);
       }
-    }
+    });
     // Populate markup input
     const markupEl = document.getElementById('h-markup-pct');
     if (markupEl) markupEl.value = window._appSettings['esim_markup_pct'] || localStorage.getItem('esim_markup_pct') || '20';
@@ -269,16 +279,24 @@ async function hargaLoadSettings() {
       const el = document.getElementById('h-kurs-' + s.id);
       if (el) el.value = window._appSettings[s.settingKey] || localStorage.getItem(s.settingKey) || s.default;
     });
-  } catch(e) { console.warn('[hargaLoadSettings]', e); }
+  } catch(e) { console.error('[hargaLoadSettings] error:', e); }
 }
 
 async function hargaSaveSetting(key, value) {
   if (!window._appSettings) window._appSettings = {};
   window._appSettings[key] = value;
   localStorage.setItem(key, value);
+  if (typeof API === 'undefined' || !API) {
+    console.error('[hargaSaveSetting] API variable tidak terdefinisi — setting tidak tersimpan ke server!');
+    return;
+  }
   try {
-    await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveSetting', key, value }) });
-  } catch(e) {}
+    const res  = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveSetting', key, value }) });
+    const data = await res.json();
+    if (!data.ok) console.error('[hargaSaveSetting] server error:', data);
+  } catch(e) {
+    console.error('[hargaSaveSetting] fetch gagal — kurs hanya tersimpan di localStorage browser ini:', e);
+  }
 }
 
 function closeHargaPanel() {
