@@ -692,13 +692,24 @@ async function loadEsimAccessPrice(countryDisplay, lamaHari, kurs, markup, aviro
       return;
     }
 
+    // Filter paket murni negara tunggal (buang paket regional/combo multi-negara)
+    // Dari API docs: locationNetworkList[] = per negara — 1 entry = 1 negara
+    // Jadi length > 1 berarti multi-country (reliable check dari struktur API)
     const REGIONAL_KW = ['asia', 'global', 'worldwide', 'global139', 'global (', 'asia-20', 'aukus', 'oceania'];
     const isPure = p => {
-      const name = (p.name || '').toLowerCase();
+      const name    = (p.name || '').toLowerCase();
       const locList = p.locationNetworkList || [];
-      return !REGIONAL_KW.some(kw => name.includes(kw)) && locList.length <= 2;
+      // 1. Buang paket yg namanya mengandung keyword regional/global
+      if (REGIONAL_KW.some(kw => name.includes(kw))) return false;
+      // 2. Buang paket combo 2+ negara berdasarkan nama (e.g. "Japan & South Korea")
+      if (/ & /i.test(name)) return false;
+      if (/ and /i.test(name)) return false;
+      // 3. Buang paket yg punya > 1 entry di locationNetworkList (per API docs: 1 entry = 1 negara)
+      if (locList.length > 1) return false;
+      return true;
     };
     const purePkgs = rawPackages.filter(isPure);
+    // Fallback ke semua paket hanya kalau purePkgs benar-benar kosong
     let allEAPkgs = purePkgs.length ? purePkgs : rawPackages;
 
     // Apply filterTipe: cek volumeFormatted atau nama untuk unlimited
@@ -1068,10 +1079,18 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       return `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:${isFirst?'0':'14px'} 0 6px;padding-bottom:4px;border-bottom:2px solid var(--border);">${label}</div>`;
     }
 
-    // ── Fetch all three tiers in parallel (Regional & Global cached globally) ──
     if (!window._esimcardCache) window._esimcardCache = {};
 
-    const fetchCountry = iso
+    // Baca filter aktif dari global window._esimFilter (dikelola oleh esimFilterSet)
+    const filterTipe     = window._esimFilter?.tipe    || 'fixed';   // fixed | unlimited | semua
+    const filterCakupan  = window._esimFilter?.cakupan || 'negara';  // negara | regional | global | semua
+
+    const needNegara   = filterCakupan === 'negara'   || filterCakupan === 'semua';
+    const needRegional = filterCakupan === 'regional' || filterCakupan === 'semua';
+    const needGlobal   = filterCakupan === 'global'   || filterCakupan === 'semua';
+
+    // Fetch hanya yang dibutuhkan sesuai filter — hemat waktu load
+    const fetchCountry = (iso && needNegara)
       ? (window._esimcardCache[`country_${iso}`]
           ? Promise.resolve(window._esimcardCache[`country_${iso}`])
           : fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardPricing&country=${iso}`)
@@ -1079,21 +1098,21 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
               .catch(()=>({ok:false})))
       : Promise.resolve({ok:false});
 
-    const fetchRegional = window._esimcardCache['_regional']
-      ? Promise.resolve(window._esimcardCache['_regional'])
-      : fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardRegional`)
-          .then(r=>r.json()).then(d => { window._esimcardCache['_regional'] = d; return d; })
-          .catch(()=>({ok:false}));
+    const fetchRegional = needRegional
+      ? (window._esimcardCache['_regional']
+          ? Promise.resolve(window._esimcardCache['_regional'])
+          : fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardRegional`)
+              .then(r=>r.json()).then(d => { window._esimcardCache['_regional'] = d; return d; })
+              .catch(()=>({ok:false})))
+      : Promise.resolve({ok:false});
 
-    const fetchGlobal = window._esimcardCache['_global']
-      ? Promise.resolve(window._esimcardCache['_global'])
-      : fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardGlobal`)
-          .then(r=>r.json()).then(d => { window._esimcardCache['_global'] = d; return d; })
-          .catch(()=>({ok:false}));
-
-    // Baca filter aktif dari global window._esimFilter (dikelola oleh esimFilterSet)
-    const filterTipe     = window._esimFilter?.tipe    || 'fixed';   // fixed | unlimited | semua
-    const filterCakupan  = window._esimFilter?.cakupan || 'negara';  // negara | regional | global | semua
+    const fetchGlobal = needGlobal
+      ? (window._esimcardCache['_global']
+          ? Promise.resolve(window._esimcardCache['_global'])
+          : fetch(`https://goho-proxy.gohotravel.workers.dev?action=getEsimCardGlobal`)
+              .then(r=>r.json()).then(d => { window._esimcardCache['_global'] = d; return d; })
+              .catch(()=>({ok:false})))
+      : Promise.resolve({ok:false});
 
     el.innerHTML = '<span style="font-size:11px;color:var(--text-muted);">Memuat paket eSIMCard…</span>';
     const [countryData, regionalData, globalData] = await Promise.all([fetchCountry, fetchRegional, fetchGlobal]);
