@@ -910,9 +910,26 @@ async function loadIroamlyPrice(country, lamaHari, kurs, markup, aviroamPartnerE
           const typeBadge = meta.badge || '';
           const speedColor = isDaily ? '#0369a1' : isUnlim ? '#065f46' : '#b45309';
           const speedBg    = isDaily ? '#e0f2fe'  : isUnlim ? '#d1fae5'  : '#fef3c7';
+          // Deteksi Voice / SMS dari field mentah iRoamly
+          const irPlanName = (pkg.plan_name || pkg.plan || pkg.data || '');
+          const irPlanType = (pkg.type || '').toLowerCase();
+          const irHasVoice = irPlanType.includes('call') || irPlanType.includes('voice')
+                           || /data\s*&\s*call/i.test(irPlanName) || /\bvoice\b/i.test(irPlanName);
+          const irHasSms   = irPlanType.includes('sms')
+                           || /\bsms\b/i.test(irPlanName)
+                           || /data\s*&\s*sms/i.test(irPlanName);
+          let irPkgType = 'Data Only';
+          if (irHasVoice && irHasSms) irPkgType = 'Data + Call + SMS';
+          else if (irHasVoice)         irPkgType = 'Data + Call';
+          else if (irHasSms)           irPkgType = 'Data + SMS';
+          const irVoiceBadge = irHasVoice ? '<span style="background:#7c3aed;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;">📞 Voice</span>' : '';
+          const irSmsBadge   = irHasSms   ? '<span style="background:#0891b2;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;">💬 SMS</span>' : '';
+          const irPkgTypeBadge = (irHasVoice || irHasSms)
+            ? `<span style="background:#f3e8ff;color:#6d28d9;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;">${escH(irPkgType)}</span>`
+            : '';
           html += `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
-              <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.data||'-')} · ${validity}h</span>${typeBadge}${cheapBadge}
+              <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(pkg.data||'-')} · ${validity}h</span>${typeBadge}${cheapBadge}${irVoiceBadge}${irSmsBadge}${irPkgTypeBadge}
             </div>
             ${coverage ? `<div style="font-size:9px;color:#6366f1;background:#ede9fe;border-radius:4px;padding:2px 6px;margin-bottom:4px;display:inline-block;">🌏 ${escH(coverage)}</div>` : ''}
             <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.operator||'')}</div>
@@ -1127,12 +1144,18 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       }
       const actType = pkg.activation_type || '';
       const actInfo = actType === 'manual' ? 'Aktivasi manual via link' : 'Aktif otomatis saat data pertama dipakai';
+      // Voice / SMS dari field normalisasi goho-proxy
+      const ecVoice = pkg.voice === true;
+      const ecSms   = pkg.sms   === true;
+      const ecPkgType = pkg.package_type || (ecVoice && ecSms ? 'Data + Call + SMS' : ecVoice ? 'Data + Call' : ecSms ? 'Data + SMS' : 'Data Only');
+      const ecVoiceBadge = ecVoice ? '<span style="background:#7c3aed;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;">📞 Voice</span>' : '';
+      const ecSmsBadge   = ecSms   ? '<span style="background:#0891b2;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;">💬 SMS</span>' : '';
       const pkgDataStr = escH(JSON.stringify({ id: pkg.id, name: pkg.name||'', dataQty, validity, buyUSD, buyIDR, sellIDR }));
       return `<div style="border:${border};border-radius:8px;padding:8px 10px;margin-bottom:7px;background:${bg};">
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
-          <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)} · ${validity}h</span>${cheapBadge}
+          <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)} · ${validity}h</span>${cheapBadge}${ecVoiceBadge}${ecSmsBadge}
         </div>
-        <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.name||'')}</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">${escH(pkg.name||'')}${(ecVoice||ecSms) ? ` <span style="color:#6d28d9;font-weight:600;">[${escH(ecPkgType)}]</span>` : ''}</div>
         ${operatorStr ? `<div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">📡 ${escH(operatorStr)}</div>` : ''}
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
           ${connectivity ? `<span style="font-size:9px;background:#f1f5f9;border-radius:3px;padding:1px 6px;">📶 ${escH(connectivity)}</span>` : ''}
@@ -1169,14 +1192,20 @@ async function loadEsimCardPrice(country, lamaHari, kurs, markup, aviroamPartner
       const isGlobal   = tier === 'Global';
       const badgeBg    = isGlobal ? '#7c3aed' : '#d97706';
       const badgeLabel = isGlobal ? '🌍 GLOBAL' : `🗺️ REGIONAL · ${escH(pkg.destination||'')}`;
+      // Voice / SMS dari field normalisasi goho-proxy
+      const ecVoice = pkg.voice === true;
+      const ecSms   = pkg.sms   === true;
+      const ecPkgType = pkg.package_type || (ecVoice && ecSms ? 'Data + Call + SMS' : ecVoice ? 'Data + Call' : ecSms ? 'Data + SMS' : 'Data Only');
+      const ecVoiceBadge = ecVoice ? '<span style="background:#7c3aed;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;">📞 Voice</span>' : '';
+      const ecSmsBadge   = ecSms   ? '<span style="background:#0891b2;color:white;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;">💬 SMS</span>' : '';
       const pkgDataStr = escH(JSON.stringify({ id: pkg.packageTypeId, name: pkg.name||'', dataQty, validity, buyUSD, buyIDR, sellIDR }));
       const validityLabel = validity ? `${validity}h` : '';
       return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:7px;background:white;">
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:5px;">
           <span style="font-size:11px;font-weight:600;color:var(--text);">${escH(dataQty)}${validityLabel ? ` · ${validityLabel}` : ''}</span>
-          <span style="font-size:9px;background:${badgeBg};color:white;padding:1px 6px;border-radius:3px;font-weight:700;">${badgeLabel}</span>
+          <span style="font-size:9px;background:${badgeBg};color:white;padding:1px 6px;border-radius:3px;font-weight:700;">${badgeLabel}</span>${ecVoiceBadge}${ecSmsBadge}
         </div>
-        <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">${escH(pkg.name||'')}</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-bottom:5px;">${escH(pkg.name||'')}${(ecVoice||ecSms) ? ` <span style="color:#6d28d9;font-weight:600;">[${escH(ecPkgType)}]</span>` : ''}</div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">
           <span style="font-size:10px;color:var(--text-muted);">Beli <span style="font-size:9px;">(USD ${buyUSD.toFixed(2)})</span></span>
           <span style="font-size:12px;font-weight:600;color:var(--text);">${hargaFmtIDR(buyIDR)}</span>
