@@ -300,7 +300,7 @@ body {
 }
 .ocr-modal.dragging {
   cursor: grabbing;
-}  
+}
 </style>
 </head>
 <body>
@@ -578,21 +578,11 @@ function openOriginal() {
 }
 
 // ===== RENAME DOKUMEN =====
-// Dipanggil dari tombol ✏️ di header-customer. Hanya aktif kalau viewer
-// dibuka dengan docId di URL (artinya dibuka dari Document Hub, bukan
-// dari bubble chat biasa). Update label NAMA_FILE di sheet CUSTOMER_DOCS
-// lewat action 'renameCustomerDoc' — tidak rename file fisik di Drive.
-//
-// v32: prompt sekarang hanya minta NAMA saja (tanpa ekstensi). Ekstensi
-// otomatis diambil dari nama file LAMA dan ditempel ke nama baru, supaya
-// staff tidak perlu ingat ketik ".jpeg"/".png" setiap kali. Kalau staff
-// kebetulan tetap mengetik ekstensi sendiri, itu dipakai apa adanya
-// (tidak ditempel dobel).
 function getFileExtension(namaFile) {
   if (!namaFile) return '';
   const dotIdx = namaFile.lastIndexOf('.');
-  if (dotIdx <= 0) return ''; // tidak ada titik, atau titik di posisi 0 (hidden file)
-  return namaFile.substring(dotIdx); // termasuk titiknya, misal ".jpeg"
+  if (dotIdx <= 0) return '';
+  return namaFile.substring(dotIdx);
 }
 
 async function renameCurrentDoc() {
@@ -849,7 +839,6 @@ async function bacaPaspor() {
 
   try {
     // Step 1: Ambil base64 dari img yang sudah loaded di browser
-    // Tidak perlu fetch ulang dari Drive — gambar sudah ada di <img>
     const img = document.getElementById('passport-img');
     if (!img || !img.naturalWidth) throw new Error('Gambar belum loaded');
     const canvas = document.createElement('canvas');
@@ -896,11 +885,10 @@ let _ocrBaseX = 0, _ocrBaseY = 0;
 function _initOcrDrag() {
   const modal = document.querySelector('.ocr-modal');
   if (!modal) return;
-  if (modal.dataset.dragInit) return; // jangan pasang listener dobel
+  if (modal.dataset.dragInit) return;
   modal.dataset.dragInit = '1';
 
   modal.addEventListener('mousedown', (e) => {
-    // Jangan drag kalau klik di input/button/label
     const tag = (e.target.tagName || '').toUpperCase();
     if (['INPUT', 'BUTTON', 'LABEL', 'SELECT', 'TEXTAREA', 'A'].includes(tag)) return;
     _ocrDragging = true;
@@ -937,15 +925,25 @@ function _resetOcrDrag() {
   modal.dataset.dy = '0';
 }
 
-// GANTI fungsi tampilkanHasilOcr yang lama dengan ini:
+// ===== FIX: Mapping field nama worker → form input =====
 function tampilkanHasilOcr(data) {
-  // Mapping field Code.gs → form input
-  document.getElementById('ocr-nama').value        = data.nama_lengkap || '';
-  document.getElementById('ocr-no-paspor').value   = data.no_paspor    || '';
-  document.getElementById('ocr-tgl-lahir').value   = data.tgl_lahir    || '';
-  document.getElementById('ocr-expired').value     = data.tgl_expired  || '';
-  document.getElementById('ocr-nationality').value = data.nationality   || '';
-  document.getElementById('ocr-gender').value      = data.jenis_kelamin || '';
+  // Worker mengembalikan: passport_number, surname, given_names, nationality,
+  // date_of_birth, sex, place_of_birth, date_of_issue, date_of_expiry, mrz_line1, mrz_line2
+  // Form input pakai: ocr-nama, ocr-no-paspor, ocr-tgl-lahir, ocr-expired, ocr-nationality, ocr-gender
+
+  // Nama lengkap: gabung given_names + surname (atau fallback ke nama_lengkap kalau ada)
+  const givenNames = (data.given_names || '').trim();
+  const surname    = (data.surname    || '').trim();
+  const namaLengkap = data.nama_lengkap
+    || (givenNames && surname ? givenNames + ' ' + surname : givenNames || surname)
+    || '';
+
+  document.getElementById('ocr-nama').value        = namaLengkap;
+  document.getElementById('ocr-no-paspor').value   = data.passport_number || data.no_paspor    || '';
+  document.getElementById('ocr-tgl-lahir').value   = data.date_of_birth   || data.tgl_lahir    || '';
+  document.getElementById('ocr-expired').value     = data.date_of_expiry  || data.tgl_expired  || '';
+  document.getElementById('ocr-nationality').value = data.nationality                           || '';
+  document.getElementById('ocr-gender').value      = data.sex             || data.jenis_kelamin || '';
 
   // Sub info
   const sub = data.mrz_line1
@@ -962,10 +960,11 @@ function tampilkanHasilOcr(data) {
   // Pasang drag listener (hanya sekali)
   _initOcrDrag();
 }
+
 function tutupOcrModal() {
   document.getElementById('ocr-overlay').style.display = 'none';
 }
-  
+
 async function simpanPassenger() {
   const nama = document.getElementById('ocr-nama').value.trim();
   const noPaspor = document.getElementById('ocr-no-paspor').value.trim();
