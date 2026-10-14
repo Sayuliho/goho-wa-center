@@ -419,7 +419,7 @@ async function loadHargaData() {
 
 async function fetchHargaDataBackground() {
   try {
-    const res = await apiGet({ action: 'getHargaSim' });
+    const res = await fetch('/api/harga-sim').then(r => r.json());
     if (res.ok && res.data && res.data.length > 0) {
       hargaData = res.data.map(r => { r[0] = (r[0] || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(); return r; });
       hargaLoaded = true;
