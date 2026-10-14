@@ -144,6 +144,9 @@ const GOHO_COUNTRIES = [
   { display: 'Ecuador', iroamly: 'ecuador', iso: 'EC', aviroam: ['ecuador'] },
 ];
 
+// Populate country list immediately so dropdown works before API loads
+window._hargaCountries = GOHO_COUNTRIES.map(c => c.display);
+
 // ── iRoamly region map ───────────────────────────────────────
 const IROAMLY_COUNTRY_MAP = {
   'Japan': 'japan', 'Korea': 'south-korea', 'Malaysia': 'malaysia',
@@ -454,7 +457,7 @@ function hargaFilterCountry(query) {
   const countries = window._hargaCountries || [];
   const q = (query || '').toLowerCase().trim();
   const filtered = q ? countries.filter(c => c.toLowerCase().includes(q)) : countries;
-  if (!filtered.length || !hargaLoaded) { dd.style.display = 'none'; return; }
+  if (!filtered.length) { dd.style.display = 'none'; return; }
   window._hargaFiltered = filtered.slice(0, 30);
   dd.innerHTML = window._hargaFiltered.map((c, i) =>
     `<div onclick="hargaSelectByIndex(${i})" style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='white'">${c}</div>`
