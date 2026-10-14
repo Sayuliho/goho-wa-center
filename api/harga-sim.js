@@ -1,4 +1,6 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbycdw7-ZYJaPY5J2varxb82LagiCKAlmDfkLOxCZZYEZwi5ZrpH9GLkZYFX-fg6se2t/exec';
+// Serve Aviroam SIM/eSIM pricing data from static JSON
+// Data source: data/harga-sim.json (generated from Excel Aviroam)
+// No dependency on GAS for this action.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -6,34 +8,23 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-export async function onRequestGet({ request }) {
+export async function onRequestGet({ request, env }) {
   try {
-    const resp = await fetch(GAS_URL + '?action=getHargaSim', {
-      redirect: 'follow',
-      headers: { 'Cache-Control': 'no-cache' },
-    });
+    // Read static JSON file bundled with Pages deployment
+    const url = new URL(request.url);
+    const origin = url.origin;
+    const jsonUrl = origin + '/data/harga-sim.json';
+
+    const resp = await fetch(jsonUrl);
+    if (!resp.ok) {
+      return new Response(JSON.stringify({ ok: false, msg: 'harga-sim.json not found: ' + resp.status }), {
+        status: 200,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+      });
+    }
 
     const text = await resp.text();
-
-    // Detect HTML error page from GAS
-    if (text.trim().startsWith('<')) {
-      return new Response(JSON.stringify({ ok: false, msg: 'GAS returned HTML — action not found or auth required' }), {
-        status: 200,
-        headers: { ...CORS, 'Content-Type': 'application/json' },
-      });
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch (e) {
-      return new Response(JSON.stringify({ ok: false, msg: 'GAS response not JSON: ' + text.slice(0, 100) }), {
-        status: 200,
-        headers: { ...CORS, 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify(parsed), {
+    return new Response(text, {
       status: 200,
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
