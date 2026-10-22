@@ -1817,13 +1817,23 @@ function esimRwCopyWA(supplier, idx) {
   const iccid   = o.iccid || '-';
   const expired = o.expired_at || o.expiredTime || o.expiry_date || '';
   const expiredFmt = expired ? new Date(expired).toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
-  const installLink = o.universal_link || o.linkIos || '';
-  const scanLink    = o.short_url || o.activation_url || '';
+  const scanLink = o.short_url || o.activation_url || '';
+
+  // Construct iOS & Android install links
+  const smdp = o.smdp_address || '';
+  const code = o.activation_code || '';
+  const lpaCarddata = smdp && code ? `LPA:1$${smdp}$${code}` : (o.lpa_string || o.universal_link || '');
+  const iosLink     = o.link_ios || o.linkIos || (lpaCarddata ? `https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=${lpaCarddata}` : '');
+  const androidLink = o.link_android || o.linkAndroid || (lpaCarddata ? `https://esimsetup.android.com/esim_qrcode_provisioning?carddata=${lpaCarddata}` : '');
 
   let pesan = `${nama} 😊\n\neSIM Anda sudah siap! 🎉\n📦 Paket: ${paket}\nICCID: ${iccid}\n`;
   if (expiredFmt) pesan += `⏳ Berlaku s/d: ${expiredFmt}\n`;
   pesan += '\n';
-  if (installLink) pesan += `📲 Install eSIM (klik dari HP yang akan dipakai):\n${installLink}\n`;
+  if (iosLink || androidLink) {
+    pesan += `📲 Install eSIM (klik dari HP yang akan dipakai):\n`;
+    if (iosLink)     pesan += `• iPhone: ${iosLink}\n`;
+    if (androidLink) pesan += `• Android: ${androidLink}\n`;
+  }
   if (scanLink) pesan += `🖥️ Atau scan QR: ${scanLink}\n`;
   pesan += '\neSIM aktif otomatis saat pertama connect ke jaringan.\nSelamat berlibur! ✈️';
   navigator.clipboard.writeText(pesan).then(() => showToast('✅ Pesan WA tersalin!')).catch(() => {
