@@ -1535,16 +1535,18 @@ function esimRwDetailHtml(o, isEc, idx) {
   const isIr     = o._supplier === 'iroamly';
   const iccid    = o.iccid || '-';
   const orderNo  = o.order_no || o.esim_tran_no || o.order_id || '-';
-  const qr       = o.qr_code_url || o.qrcode_url || o.qrcode || '';
-  const shortUrl = o.short_url || o.activation_url || '';
+  const qr          = o.qr_code_url || o.qrcode_url || o.qrcode || '';
+  const shortUrl     = o.short_url || o.activation_url || '';
+  const universalLink = o.universal_link || o.linkIos || '';
   const hargaBeli = o.harga_beli || o.hargaBeli || 0;
   let html = '';
-  if (qr) {
+  if (qr || universalLink) {
     html += `<div style="text-align:center;margin-bottom:10px;">
-      <img src="${escH(qr)}" style="width:150px;height:150px;border:1px solid var(--border);border-radius:8px;padding:4px;background:white;" onerror="this.style.display='none'"/>
-      <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;">
-        ${shortUrl ? `<a href="${escH(shortUrl)}" target="_blank" style="font-size:10px;padding:3px 8px;background:#6366f1;color:white;border-radius:4px;text-decoration:none;">🔗 Link</a>` : ''}
-        <button onclick="esimRwCopy('${escH(qr)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy URL QR</button>
+      ${qr ? `<img src="${escH(qr)}" style="width:150px;height:150px;border:1px solid var(--border);border-radius:8px;padding:4px;background:white;" onerror="this.style.display='none'"/>` : ''}
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap;">
+        ${universalLink ? `<button onclick="esimRwCopy('${escH(universalLink)}',this)" style="font-size:10px;padding:3px 8px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;">📲 Copy Install Link</button>` : ''}
+        ${shortUrl ? `<a href="${escH(shortUrl)}" target="_blank" style="font-size:10px;padding:3px 8px;background:#6366f1;color:white;border-radius:4px;text-decoration:none;">🔗 Link QR</a>` : ''}
+        ${qr ? `<button onclick="esimRwCopy('${escH(qr)}',this)" style="font-size:10px;padding:3px 8px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">📋 Copy URL QR</button>` : ''}
       </div>
     </div>`;
   }
@@ -1810,13 +1812,19 @@ function esimRwCopyWA(supplier, idx) {
   const filtered = allItems.filter(o => o._supplier === supplier);
   const o = filtered[idx];
   if (!o) return;
-  const nama  = o.nama_customer ? `Halo ${o.nama_customer}` : 'Halo Kak';
-  // FIX: prioritaskan catatan sebelum package_code
-  const paket = o.package_name || o.catatan || o.package_code || '-';
-  const iccid = o.iccid || '-';
-  const link  = o.short_url || o.activation_url || '';
-  let pesan   = `${nama} 😊\n\neSIM Anda sudah siap!\n📦 Paket: ${paket}\nICCID: ${iccid}\n`;
-  if (link) pesan += `📱 Scan QR: ${link}\n`;
+  const nama    = o.nama_customer ? `Halo ${o.nama_customer}` : 'Halo Kak';
+  const paket   = o.package_name || o.catatan || o.package_code || '-';
+  const iccid   = o.iccid || '-';
+  const expired = o.expired_at || o.expiredTime || o.expiry_date || '';
+  const expiredFmt = expired ? new Date(expired).toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+  const installLink = o.universal_link || o.linkIos || '';
+  const scanLink    = o.short_url || o.activation_url || '';
+
+  let pesan = `${nama} 😊\n\neSIM Anda sudah siap! 🎉\n📦 Paket: ${paket}\nICCID: ${iccid}\n`;
+  if (expiredFmt) pesan += `⏳ Berlaku s/d: ${expiredFmt}\n`;
+  pesan += '\n';
+  if (installLink) pesan += `📲 Install eSIM (klik dari HP yang akan dipakai):\n${installLink}\n`;
+  if (scanLink) pesan += `🖥️ Atau scan QR: ${scanLink}\n`;
   pesan += '\neSIM aktif otomatis saat pertama connect ke jaringan.\nSelamat berlibur! ✈️';
   navigator.clipboard.writeText(pesan).then(() => showToast('✅ Pesan WA tersalin!')).catch(() => {
     const ta = document.createElement('textarea'); ta.value = pesan;
