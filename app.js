@@ -38,6 +38,8 @@ function initApp(staff) {
   startPolling(); loadChats(); showSoundActivation();
 loadTicker();
 setInterval(loadTicker, 5 * 60 * 1000);
+loadFlightTicker();
+setInterval(loadFlightTicker, 30 * 60 * 1000);
   initClipboardPaste();
   setTimeout(() => loadHargaData(), 3000);
 }
@@ -3027,6 +3029,30 @@ function openReminderModal() {
   }
   document.getElementById('modal-reminders-body').innerHTML = html;
   modal.style.display = 'flex';
+}
+
+// ===================== TICKER PENERBANGAN INTERNASIONAL =====================
+async function loadFlightTicker() {
+  try {
+    const res = await apiGet({ action: 'getFlightTomorrow' });
+    const bar = document.getElementById('flight-ticker-bar');
+    const track = document.getElementById('flight-ticker-track');
+    const text = document.getElementById('flight-ticker-text');
+    if (!res.ok || !res.flights || res.flights.length === 0) {
+      bar.style.display = 'none';
+      return;
+    }
+    const parts = res.flights.map(f => {
+      const arah = f.arah === 'KELUAR' ? '🛫' : '🛬';
+      return `${arah} ${escH(f.nama)} · ${escH(f.maskapai)} · ${escH(f.rute)} · PNR: ${escH(f.pnr)}`;
+    });
+    const sep = '<span style="color:#fbbf24;margin:0 28px;font-weight:900;">┃</span>';
+    text.innerHTML = parts.join(sep);
+    bar.style.display = 'block';
+    track.style.animation = 'none';
+    track.offsetHeight;
+    track.style.animation = '';
+  } catch(e) {}
 }
 
 // ===================== GLOBAL REMINDER MODAL =====================
