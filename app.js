@@ -3054,7 +3054,7 @@ async function loadFlightTicker() {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const contW = scroll.offsetWidth;
       const trackW = track.scrollWidth;
-      const duration = (contW + trackW) / 80; // 80px per detik
+      const duration = (contW + trackW) / 150; // 150px per detik
       let styleEl = document.getElementById('flight-ticker-style');
       if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'flight-ticker-style'; document.head.appendChild(styleEl); }
       styleEl.textContent = `@keyframes flightTickerScroll { from { transform: translateX(${contW}px); } to { transform: translateX(-${trackW}px); } }`;
