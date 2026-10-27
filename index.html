@@ -53,7 +53,7 @@
   letter-spacing: 0.2px; 
 }
 #ticker-bar:hover #ticker-track { animation-play-state: paused; }
-#flight-ticker-bar:hover #flight-ticker-track { animation-play-state: paused; }
+#flight-ticker-scroll:hover #flight-ticker-track { animation-play-state: paused !important; }
 .layanan-item {
   display: flex;
   align-items: center;
@@ -111,10 +111,12 @@
     </div>
   </div>
   <!-- TICKER PENERBANGAN INTERNASIONAL BESOK -->
-  <div id="flight-ticker-bar" style="display:none;background:#7c1d1d;border-bottom:1px solid rgba(255,255,255,0.1);overflow:hidden;height:28px;">
-    <div id="flight-ticker-track" style="display:inline-flex;align-items:center;height:100%;white-space:nowrap;animation:tickerScroll 60s linear infinite;">
-      <span style="color:rgba(255,255,255,0.6);font-size:10px;padding-left:12px;margin-right:12px;flex-shrink:0;">✈️ TERBANG BESOK:</span>
-      <span id="flight-ticker-text" style="font-size:11px;color:#fde68a;font-weight:500;"></span>
+  <div id="flight-ticker-bar" style="display:none;background:#7c1d1d;border-bottom:1px solid rgba(255,255,255,0.1);height:28px;align-items:center;">
+    <span style="flex-shrink:0;color:rgba(255,255,255,0.75);font-size:10px;font-weight:600;padding:0 10px 0 12px;white-space:nowrap;border-right:1px solid rgba(255,255,255,0.2);letter-spacing:0.3px;">✈️ TERBANG BESOK</span>
+    <div id="flight-ticker-scroll" style="flex:1;overflow:hidden;height:100%;position:relative;">
+      <div id="flight-ticker-track" style="position:absolute;top:0;left:0;height:100%;display:inline-flex;align-items:center;white-space:nowrap;">
+        <span id="flight-ticker-text" style="font-size:11px;color:#fde68a;font-weight:500;padding-right:60px;"></span>
+      </div>
     </div>
   </div>
   <div class="main-tabs" id="main-tabs">

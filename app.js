@@ -3036,6 +3036,7 @@ async function loadFlightTicker() {
   try {
     const res = await apiGet({ action: 'getFlightTomorrow' });
     const bar = document.getElementById('flight-ticker-bar');
+    const scroll = document.getElementById('flight-ticker-scroll');
     const track = document.getElementById('flight-ticker-track');
     const text = document.getElementById('flight-ticker-text');
     if (!res.ok || !res.flights || res.flights.length === 0) {
@@ -3048,10 +3049,19 @@ async function loadFlightTicker() {
     });
     const sep = '<span style="color:#fbbf24;margin:0 28px;font-weight:900;">┃</span>';
     text.innerHTML = parts.join(sep);
-    bar.style.display = 'block';
-    track.style.animation = 'none';
-    track.offsetHeight;
-    track.style.animation = '';
+    bar.style.display = 'flex';
+    // Hitung lebar setelah DOM render, lalu set animasi dari kanan ke kiri
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const contW = scroll.offsetWidth;
+      const trackW = track.scrollWidth;
+      const duration = (contW + trackW) / 80; // 80px per detik
+      let styleEl = document.getElementById('flight-ticker-style');
+      if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'flight-ticker-style'; document.head.appendChild(styleEl); }
+      styleEl.textContent = `@keyframes flightTickerScroll { from { transform: translateX(${contW}px); } to { transform: translateX(-${trackW}px); } }`;
+      track.style.animation = 'none';
+      track.offsetHeight;
+      track.style.animation = `flightTickerScroll ${duration}s linear infinite`;
+    }));
   } catch(e) {}
 }
 
